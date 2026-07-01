@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, BookOpen, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { passwordRules } from '../utils/passwordPolicy';  
 import toast from 'react-hot-toast';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -153,17 +154,7 @@ const Signup: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('password', { 
-                    required: 'Password is required',
-                    minLength: {
-                      value: 8,
-                      message: 'Password must be at least 8 characters'
-                    },
-                    pattern: {
-                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                      message: 'Password must contain uppercase, lowercase, and number'
-                    }
-                  })}
+                  {...register('password', passwordRules)}
                   type={showPassword ? 'text' : 'password'}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Create a strong password"

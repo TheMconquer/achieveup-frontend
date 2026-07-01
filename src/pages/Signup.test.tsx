@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { passwordRules } from '../utils/passwordPolicy';
 import '@testing-library/jest-dom';
 import Signup from './Signup';
 
@@ -129,10 +130,27 @@ describe('Signup Component', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument();
+      expect(screen.getByText('passwordRules.minLength.message')).toBeInTheDocument();
     });
   });
 
+  test('validates password complexity', async () => {
+    render(
+      <SignupWrapper>
+        <Signup />
+      </SignupWrapper>
+    );
+
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+
+    fireEvent.change(passwordInput, { target: { value: 'password' } }); // No uppercase or digit
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('passwordRules.pattern.message')).toBeInTheDocument();
+    });
+  });
   test('validates password confirmation', async () => {
     render(
       <SignupWrapper>

@@ -1,3 +1,5 @@
+// This fails contains the password policy rules for the application.
+
 export const PASSWORD_MIN_LENGTH = 8;
 
 // Requires at least one lowercase letter, one uppercase letter, and one digit

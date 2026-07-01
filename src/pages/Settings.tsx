@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { validatePassword } from '../utils/passwordPolicy';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -174,8 +175,9 @@ const Settings: React.FC = () => {
       toast.error('New passwords do not match');
       return;
     }
-    if (profile.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long');
+    const passwordError = validatePassword(profile.newPassword);
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
     setLoading(true);

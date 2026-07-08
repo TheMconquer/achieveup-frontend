@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, BookOpen, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { passwordRules } from '../utils/passwordPolicy';  
 import toast from 'react-hot-toast';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -99,13 +100,14 @@ const Signup: React.FC = () => {
           {/* Signup Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('name', { 
+                  id="name"
+                  {...register('name', {
                     required: 'Name is required',
                     minLength: {
                       value: 2,
@@ -123,13 +125,14 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('email', { 
+                  id="email"
+                  {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -147,23 +150,14 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('password', { 
-                    required: 'Password is required',
-                    minLength: {
-                      value: 8,
-                      message: 'Password must be at least 8 characters'
-                    },
-                    pattern: {
-                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                      message: 'Password must contain uppercase, lowercase, and number'
-                    }
-                  })}
+                  id="password"
+                  {...register('password', passwordRules)}
                   type={showPassword ? 'text' : 'password'}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Create a strong password"
@@ -186,13 +180,14 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('confirmPassword', { 
+                  id="confirmPassword"
+                  {...register('confirmPassword', {
                     required: 'Please confirm your password',
                     validate: value => value === password || 'Passwords do not match'
                   })}
@@ -218,12 +213,13 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="canvasApiToken" className="block text-sm font-medium text-gray-700 mb-2">
                 Canvas API Token <span className="text-gray-500 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
+                  id="canvasApiToken"
                   {...register('canvasApiToken')}
                   type="password"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"

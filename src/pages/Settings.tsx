@@ -115,6 +115,10 @@ const Settings: React.FC = () => {
       toast.error('Please enter a Canvas API token');
       return;
     }
+    if (!profile.canvasTokenType) {
+      toast.error('Please select a Canvas token type');
+      return;
+    }
     
     setLoading(true);
     try {

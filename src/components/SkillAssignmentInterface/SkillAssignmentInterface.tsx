@@ -913,52 +913,6 @@ const SkillAssignmentInterface: React.FC = () => {
     );
   }
 
-  // Token validation utility to help debug authentication issues
-  const validateAndTestToken = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found');
-        toast.error('Please log in to access skill matrices.');
-        return false;
-      }
-
-      console.log('Testing authentication token...');
-
-      // Test token with a simple API call
-      const { authAPI } = await import('../../services/api');
-      const userResponse = await authAPI.me();
-
-      console.log('Token validation successful:', {
-        user: userResponse.data.user || userResponse.data,
-        tokenValid: true
-      });
-
-      // Check if user has instructor permissions
-      const userData = userResponse.data.user || userResponse.data;
-      if (userData.canvasTokenType !== 'instructor' && userData.role !== 'instructor') {
-        toast.error('Instructor permissions required. Please check your account type.');
-        return false;
-      }
-
-      toast.success('Authentication verified. Instructor permissions confirmed.');
-      return true;
-
-    } catch (error: any) {
-      console.error('Token validation failed:', error);
-
-      if (error.response?.status === 401) {
-        toast.error('Authentication token is invalid or expired. Please log in again.');
-      } else if (error.response?.status === 403) {
-        toast.error('Your account does not have instructor permissions.');
-      } else {
-        toast.error('Failed to validate authentication. Please check your connection.');
-      }
-
-      return false;
-    }
-  };
-
   return (
     <div className="max-w-7xl mx-auto p-6">
       <Card

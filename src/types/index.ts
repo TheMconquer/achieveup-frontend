@@ -5,7 +5,7 @@ export interface User {
   email: string;
   role: 'instructor' | 'admin';
   hasCanvasToken?: boolean;
-  canvasTokenType: 'instructor' |'student';
+  canvasTokenType: 'instructor' | 'student';
   canvas_token_created_at?: string;
   canvas_token_last_validated?: string;
 }

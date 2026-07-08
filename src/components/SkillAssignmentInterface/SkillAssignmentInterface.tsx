@@ -986,14 +986,6 @@ const SkillAssignmentInterface: React.FC = () => {
               {errors.courseId && (
                 <p className="mt-1 text-sm text-red-600">{errors.courseId.message}</p>
               )}
-              {/* Debug: Authentication Test Button */}
-              <button
-                type="button"
-                onClick={validateAndTestToken}
-                className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
-              >
-                🔍 Test Authentication
-              </button>
             </div>
 
             <div>

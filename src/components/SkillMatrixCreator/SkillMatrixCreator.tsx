@@ -429,10 +429,6 @@ const saveInlineEdit = async (matrixId: string) => {
       
       if (Array.isArray(response.data)) {
         suggestions = response.data;
-      } else if (response.data && Array.isArray((response.data as any).suggestedSkills)) {
-        suggestions = (response.data as any).suggestedSkills;
-      } else if (response.data && (response.data as any).data && Array.isArray((response.data as any).data)) {
-        suggestions = (response.data as any).data;
       }
       
       // Ensure suggestions have the right format

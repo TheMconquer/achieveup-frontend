@@ -15,6 +15,7 @@ interface StudentBadgeStatus {
     progress: number; // 0-100
     earnedAt?: string;
     skillScore?: number;
+    badgeLevel?: 'beginner' | 'intermediate' | 'advanced' | 'expert'; 
 }
 
 interface BadgeData {
@@ -112,7 +113,8 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                             if (student.skillBreakdown && student.skillBreakdown[skillName]) {
                                 const skillData = student.skillBreakdown[skillName];
                                 const skillScore = skillData.score || 0;
-                                const hasEarned = skillScore >= 80; // Badge earned at 80% or higher
+                                const badgeLevel = skillData.badgeLevel || undefined; 
+                                const hasEarned = !!badgeLevel; 
 
                                 const studentStatus: StudentBadgeStatus = {
                                     id: student.id,
@@ -120,7 +122,8 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                     earned: hasEarned,
                                     progress: skillScore,
                                     skillScore: skillScore,
-                                    earnedAt: hasEarned ? new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString() : undefined
+                                    badgeLevel: badgeLevel,
+                                    earnedAt: skillData.badgeEarnedAt || undefined
                                 };
 
                                 if (hasEarned) {
@@ -169,9 +172,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
 
 
     const getProgressColor = (progress: number) => {
-        if (progress >= 90) return 'bg-green-500';
-        if (progress >= 70) return 'bg-yellow-500';
-        if (progress >= 50) return 'bg-orange-500';
+        if (progress >= 75) return 'bg-green-500';
+        if (progress >= 50) return 'bg-yellow-500';
+        if (progress >= 25) return 'bg-orange-500';
         return 'bg-red-500';
     };
 
@@ -225,7 +228,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                     <Target className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
                         <strong>One badge per skill:</strong> Each skill in your course has a corresponding badge.
-                        Students earn badges by achieving 80% or higher proficiency in each skill.
+                        Students earn higher tiers as their score grows: Beginner at 25%, Intermediate at 50%, Advanced at 75%, and Expert at 90%. 
                     </div>
                 </div>
             </div>
@@ -348,7 +351,10 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
-                                                                        <p className="text-xs text-gray-500">Earned on {formatDate(student.earnedAt)}</p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {student.badgeLevel && <span className="capitalize font-medium">{student.badgeLevel} · 
+                                                                                </span>}
+                                                                            Earned on {formatDate(student.earnedAt)}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
@@ -382,14 +388,14 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className={`text-lg font-semibold ${student.progress >= 80 ? 'text-green-600' :
-                                                                        student.progress >= 60 ? 'text-yellow-600' :
+                                                                    <div className={`text-lg font-semibold ${student.progress >= 25 ? 'text-green-600' :
+                                                                        student.progress >= 15 ? 'text-yellow-600' :
                                                                             'text-orange-600'
                                                                         }`}>
                                                                         {student.progress}%
                                                                     </div>
                                                                     <div className="text-xs text-gray-500">
-                                                                        {student.progress >= 80 ? 'Ready to earn!' : `${(80 - student.progress).toFixed(2)}% to badge`}
+                                                                        {student.progress >= 25 ? 'Ready to earn!' : `${(25 - student.progress).toFixed(2)}% to first badge`}
                                                                     </div>
                                                                 </div>
                                                             </div>

@@ -352,8 +352,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
                                                                         <p className="text-xs text-gray-500">
-                                                                            {student.badgeLevel && <span className="capitalize font-medium">{student.badgeLevel} · 
-                                                                                </span>}
+                                                                            {student.badgeLevel && <span className="capitalize font-medium">{student.badgeLevel} · </span>}
                                                                             Earned on {formatDate(student.earnedAt)}</p>
                                                                     </div>
                                                                 </div>

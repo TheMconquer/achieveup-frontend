@@ -37,20 +37,25 @@ const Signup: React.FC = () => {
         name: data.name,
         email: data.email,
         password: data.password,
-        canvasApiToken: data.canvasApiToken || '', // Allow empty token
-        canvasTokenType: 'instructor' as const,
+        canvasApiToken: data.canvasApiToken || "", // Allow empty token
+        canvasTokenType: "instructor" as const,
       };
 
-      await signup(signupData);
-      navigate('/');
-      
-      if (!data.canvasApiToken) {
-        toast.success('Account created! Add your Canvas token in Settings to unlock all features.');
+      const success = await signup(signupData);
+      if (success) {
+        navigate("/");
+        if (!data.canvasApiToken) {
+          toast.success(
+            "Account created! Add your Canvas token in Settings to unlock all features.",
+          );
+        } else {
+          toast.success("Instructor account created successfully!");
+        }
       } else {
-        toast.success('Instructor account created successfully!');
+        toast.error("Signup failed. Please try again.");
       }
     } catch (error: any) {
-      toast.error(error.message || 'Signup failed. Please try again.');
+      toast.error(error.message || "Signup failed. Please try again.");
     }
   };
 

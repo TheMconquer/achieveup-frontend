@@ -25,11 +25,19 @@ const Login: React.FC = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      await login(data.email, data.password);
-      navigate('/');
-      toast.success('Welcome back, instructor!');
+      const success = await login(data.email, data.password);
+      if (success) {
+        navigate("/");
+        toast.success("Welcome back, instructor!");
+      } else {
+        toast.error(
+          "This portal is for instructors only. Student accounts must use student portal.",
+        );
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please check your credentials.');
+      toast.error(
+        error.message || "Login failed. Please check your credentials.",
+      );
     }
   };
 

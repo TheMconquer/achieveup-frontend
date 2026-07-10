@@ -29,7 +29,7 @@ const Login: React.FC = () => {
       navigate('/');
       toast.success('Welcome back, instructor!');
     } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please check your credentials.');
+      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
     }
   };
 

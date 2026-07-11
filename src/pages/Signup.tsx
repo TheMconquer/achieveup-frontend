@@ -50,7 +50,7 @@ const Signup: React.FC = () => {
         toast.success('Instructor account created successfully!');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Signup failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
     }
   };
 

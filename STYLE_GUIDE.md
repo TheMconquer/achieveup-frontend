@@ -37,6 +37,7 @@ Enforced by Prettier (`.prettierrc`). Run `npm run format` before committing, or
 | Indentation | 2 spaces |
 | Trailing commas | Multiline literals only (ES5-valid) |
 | Line width | 100 characters |
+| Line endings | LF (not CRLF) — avoids diff noise across Windows/Mac |
 
 If this table and `.prettierrc` ever disagree, `.prettierrc` is what actually runs — update both when changing a rule.
 

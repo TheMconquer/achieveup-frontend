@@ -28,7 +28,7 @@ Local-only prop types (nothing else uses them) can live in the component file in
 
 ## Formatting
 
-2-space indent, single quotes, semicolons, trailing commas in multiline literals. This is enforced by Prettier — run `npm run format` before committing, or set up format-on-save (Prettier extension + `"editor.formatOnSave": true`). Config is in `.prettierrc`.
+Enforced by Prettier, not described here — see `.prettierrc` for the actual rules. Run `npm run format` before committing, or set up format-on-save (Prettier extension + `"editor.formatOnSave": true`).
 
 `npm run format:check` runs in CI-friendly mode without writing changes.
 
@@ -143,6 +143,6 @@ Relative imports (`../../types`) — no path alias configured.
 
 ## Tooling
 
-- ESLint: `react-app` / `react-app/jest` (CRA default) plus `no-console` and `@typescript-eslint/no-explicit-any`, both `warn`, set in `package.json` → `eslintConfig`. Runs automatically on `npm start` / `npm run build`.
+- ESLint: rules live in `package.json` → `eslintConfig`, not here. Runs automatically on `npm start` / `npm run build`.
 - Prettier: config in `.prettierrc`. `npm run format` to write, `npm run format:check` to check without writing.
 - Existing files aren't Prettier-formatted yet. Reformatting the whole `src/` tree should be one isolated commit, not mixed into feature work.

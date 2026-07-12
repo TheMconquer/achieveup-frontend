@@ -28,7 +28,17 @@ Local-only prop types (nothing else uses them) can live in the component file in
 
 ## Formatting
 
-Enforced by Prettier, not described here — see `.prettierrc` for the actual rules. Run `npm run format` before committing, or set up format-on-save (Prettier extension + `"editor.formatOnSave": true`).
+Enforced by Prettier (`.prettierrc`). Run `npm run format` before committing, or set up format-on-save (Prettier extension + `"editor.formatOnSave": true`).
+
+| Rule | Value |
+|---|---|
+| Quotes | Single (`'like this'`) |
+| Semicolons | Required |
+| Indentation | 2 spaces |
+| Trailing commas | Multiline literals only (ES5-valid) |
+| Line width | 100 characters |
+
+If this table and `.prettierrc` ever disagree, `.prettierrc` is what actually runs — update both when changing a rule.
 
 `npm run format:check` runs in CI-friendly mode without writing changes.
 
@@ -143,6 +153,10 @@ Relative imports (`../../types`) — no path alias configured.
 
 ## Tooling
 
-- ESLint: rules live in `package.json` → `eslintConfig`, not here. Runs automatically on `npm start` / `npm run build`.
+- ESLint: `react-app` / `react-app/jest` (CRA default) plus two added rules (`package.json` → `eslintConfig`):
+  - `no-console` — warn (`console.warn` / `console.error` still allowed)
+  - `@typescript-eslint/no-explicit-any` — warn
+  
+  Runs automatically on `npm start` / `npm run build`. Same note as above: `package.json` is the source of truth if this list drifts.
 - Prettier: config in `.prettierrc`. `npm run format` to write, `npm run format:check` to check without writing.
 - Existing files aren't Prettier-formatted yet. Reformatting the whole `src/` tree should be one isolated commit, not mixed into feature work.

@@ -5,8 +5,8 @@ import { User, SignupRequest } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: SignupRequest) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (data: SignupRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setUser(null);
         setBackendAvailable(true);
@@ -47,32 +47,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Verify token and get user info
       const response = await authAPI.me();
       const userData = response.data.user || response.data;
-      
+
       // More flexible role checking - allow users who signed up without Canvas tokens
-      const isInstructor = userData.canvasTokenType === 'instructor' || 
-                         userData.role === 'instructor' || 
-                         userData.role === 'admin' ||
-                         !userData.canvasTokenType; // Allow users without Canvas token
-      
+      const isInstructor =
+        userData.canvasTokenType === 'instructor' ||
+        userData.role === 'instructor' ||
+        userData.role === 'admin' ||
+        !userData.canvasTokenType; // Allow users without Canvas token
+
       if (!isInstructor) {
         console.warn('Non-instructor user detected, logging out');
         localStorage.removeItem('token');
         setUser(null);
         return;
       }
-      
+
       setUser(userData);
       setBackendAvailable(true);
     } catch (error: any) {
       console.error('Auth check failed:', error);
-      
+
       // Handle different error types
       if (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch')) {
         setBackendAvailable(false);
       } else {
         setBackendAvailable(true);
       }
-      
+
       // Clear invalid token
       localStorage.removeItem('token');
       setUser(null);
@@ -85,62 +86,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
-      console.log('Attempting login for:', email);
-      
+
       const response = await authAPI.login({ email, password });
-      console.log('Login response:', response.data);
-      
+
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        
-        // Get user data
+
+        // Get user data. Any authenticated account is let in and which dashboard they will be determined by routing,
+        // not a login-time gate.
         try {
           const userResponse = await authAPI.me();
           const userData = userResponse.data.user || userResponse.data;
-          console.log('User data after login:', userData);
-          
-          // More flexible role checking - allow users who signed up without Canvas tokens
-          const isInstructor = userData.canvasTokenType === 'instructor' || 
-                             userData.role === 'instructor' || 
-                             userData.role === 'admin' ||
-                             !userData.canvasTokenType; // Allow users without Canvas token
-          
-          if (!isInstructor) {
-            console.warn('Non-instructor user detected, logging out');
-            localStorage.removeItem('token');
-            setUser(null);
-            return false;
-          }
-          
           setUser(userData);
           setBackendAvailable(true);
-          return true;
+          return;
         } catch (meError: any) {
           console.error('Failed to get user data after login:', meError);
-          // Even if me() fails, we still have a token, so consider login successful
-          setUser(response.data.user || { 
-            email, 
-            role: 'instructor', 
-            canvasTokenType: 'instructor',
-            hasCanvasToken: false // Indicate no Canvas token for UI warnings
-          });
+          setUser(response.data.user);
           setBackendAvailable(true);
-          return true;
+          return;
         }
       }
-      
-      return false;
+
+      throw new Error('Login failed. Please try again.');
     } catch (error: any) {
       console.error('Login failed:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
+
       if (error.code === 'NETWORK_ERROR') {
         setBackendAvailable(false);
       }
@@ -150,56 +124,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (data: SignupRequest): Promise<boolean> => {
+  const signup = async (data: SignupRequest): Promise<void> => {
     try {
       setLoading(true);
-      
+
       // Ensure only instructor signups are allowed
       const signupData = {
         ...data,
         canvasTokenType: 'instructor' as const,
-        role: 'instructor' as const
+        role: 'instructor' as const,
       };
-      
-      console.log('Attempting signup with data:', { ...signupData, password: '[HIDDEN]' });
-      
+
       const response = await authAPI.signup(signupData);
-      console.log('Signup response:', response.data);
-      
+
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        
+
         // Get user data after successful signup
         try {
           const userResponse = await authAPI.me();
           const userData = userResponse.data.user || userResponse.data;
-          console.log('User data after signup:', userData);
           setUser(userData);
           setBackendAvailable(true);
-          return true;
+          return;
         } catch (meError: any) {
           console.error('Failed to get user data after signup:', meError);
-          // Even if me() fails, we still have a token, so consider signup successful
-          setUser(response.data.user || { 
-            ...data, 
-            role: 'instructor', 
-            canvasTokenType: 'instructor',
-            hasCanvasToken: false // Indicate no Canvas token for UI warnings
-          });
+          setUser(response.data.user);
           setBackendAvailable(true);
-          return true;
+          return;
         }
       }
-      
-      return false;
+
+      throw new Error('Signup failed. Please try again.');
     } catch (error: any) {
       console.error('Signup failed:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
+
       if (error.code === 'NETWORK_ERROR') {
         setBackendAvailable(false);
       }
@@ -218,19 +177,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authAPI.me();
       const userData = response.data.user || response.data;
-      
+
       // More flexible role checking - allow users who signed up without Canvas tokens
-      const isInstructor = userData.canvasTokenType === 'instructor' || 
-                         userData.role === 'instructor' || 
-                         userData.role === 'admin' ||
-                         !userData.canvasTokenType; // Allow users without Canvas token
-      
+      const isInstructor =
+        userData.canvasTokenType === 'instructor' ||
+        userData.role === 'instructor' ||
+        userData.role === 'admin' ||
+        !userData.canvasTokenType; // Allow users without Canvas token
+
       if (!isInstructor) {
         console.warn('Non-instructor user detected, logging out');
         logout();
         return;
       }
-      
+
       setUser(userData);
     } catch (error) {
       console.error('Failed to refresh user:', error);
@@ -249,9 +209,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     backendAvailable,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}; 
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

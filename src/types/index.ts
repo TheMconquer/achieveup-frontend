@@ -3,7 +3,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'instructor' | 'admin';
+  role: 'instructor' | 'student';
   hasCanvasToken?: boolean;
   canvasTokenType: 'instructor' | 'student';
   canvas_token_created_at?: string;

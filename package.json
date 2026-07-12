@@ -37,13 +37,27 @@
     "test:performance": "npx ts-node src/test-utils/test-runner.ts performance",
     "test:ci": "npm test -- --coverage --watchAll=false --testResultsProcessor=jest-sonar-reporter",
     "test:debug": "react-scripts --inspect-brk test --runInBand --no-cache",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "no-console": [
+        "warn",
+        {
+          "allow": [
+            "warn",
+            "error"
+          ]
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "warn"
+    }
   },
   "browserslist": {
     "production": [
@@ -57,5 +71,7 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "^3.9.5"
+  }
 }

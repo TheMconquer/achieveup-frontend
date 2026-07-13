@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const isInstructor =
         userData.canvasTokenType === 'instructor' ||
         userData.role === 'instructor' ||
-        userData.role === 'admin' ||
+        userData.role === 'student' ||
         !userData.canvasTokenType; // Allow users without Canvas token
 
       if (!isInstructor) {
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const isInstructor =
         userData.canvasTokenType === 'instructor' ||
         userData.role === 'instructor' ||
-        userData.role === 'admin' ||
+        userData.role === 'student' ||
         !userData.canvasTokenType; // Allow users without Canvas token
 
       if (!isInstructor) {

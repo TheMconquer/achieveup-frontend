@@ -491,7 +491,7 @@ const Dashboard: React.FC = () => {
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
                     To access your courses and use AchieveUp features, you need to add your Canvas API token.
-                    Go to <a href="/settings" className="font-medium underline hover:text-yellow-600">Settings</a> to configure it.
+                    Go to <Link to="/settings" className="font-medium underline hover:text-yellow-600">Settings</Link> to configure it.
                   </p>
                 </div>
               </div>

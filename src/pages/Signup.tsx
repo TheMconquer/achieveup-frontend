@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, BookOpen, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { passwordRules } from '../utils/passwordPolicy';  
+import { passwordRules } from '../utils/passwordPolicy';
 import toast from 'react-hot-toast';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -26,7 +26,7 @@ const Signup: React.FC = () => {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<SignupFormInputs>();
 
   const password = watch('password');
@@ -43,23 +43,26 @@ const Signup: React.FC = () => {
 
       await signup(signupData);
       navigate('/');
-      
       if (!data.canvasApiToken) {
         toast.success('Account created! Add your Canvas token in Settings to unlock all features.');
       } else {
         toast.success('Instructor account created successfully!');
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
+      toast.error(
+        error.response?.data?.message || error.message || 'Signup failed. Please try again.'
+      );
     }
   };
 
   const getCanvasTokenInstructions = () => (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-      <h3 className="text-sm font-medium text-blue-900 mb-2">Canvas API Token (Optional for Signup)</h3>
+      <h3 className="text-sm font-medium text-blue-900 mb-2">
+        Canvas API Token (Optional for Signup)
+      </h3>
       <p className="text-sm text-blue-800 mb-3">
-        You can create your account now and add your Canvas token later in Settings. 
-        However, you'll need it to access courses and use AchieveUp features.
+        You can create your account now and add your Canvas token later in Settings. However, you'll
+        need it to access courses and use AchieveUp features.
       </p>
       <h4 className="text-sm font-medium text-blue-900 mb-2">How to get your Canvas API Token:</h4>
       <ol className="text-sm text-blue-800 space-y-1">
@@ -86,12 +89,8 @@ const Signup: React.FC = () => {
             <div className="flex items-center justify-center mb-4">
               <BookOpen className="w-12 h-12 text-primary-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create Instructor Account
-            </h1>
-            <p className="text-gray-600">
-              Join AchieveUp to track student skills with AI
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Instructor Account</h1>
+            <p className="text-gray-600">Join AchieveUp to track student skills with AI</p>
           </div>
 
           {/* Canvas Token Instructions */}
@@ -111,17 +110,15 @@ const Signup: React.FC = () => {
                     required: 'Name is required',
                     minLength: {
                       value: 2,
-                      message: 'Name must be at least 2 characters'
-                    }
+                      message: 'Name must be at least 2 characters',
+                    },
                   })}
                   type="text"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your full name"
                 />
               </div>
-              {errors.name && (
-                <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
@@ -136,17 +133,15 @@ const Signup: React.FC = () => {
                     required: 'Email is required',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Please enter a valid email address'
-                    }
+                      message: 'Please enter a valid email address',
+                    },
                   })}
                   type="email"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your email address"
                 />
               </div>
-              {errors.email && (
-                <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -167,11 +162,7 @@ const Signup: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -180,7 +171,10 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -189,7 +183,7 @@ const Signup: React.FC = () => {
                   id="confirmPassword"
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
-                    validate: value => value === password || 'Passwords do not match'
+                    validate: (value) => value === password || 'Passwords do not match',
                   })}
                   type={showConfirmPassword ? 'text' : 'password'}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -213,7 +207,10 @@ const Signup: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="canvasApiToken" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="canvasApiToken"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Canvas API Token <span className="text-gray-500 font-normal">(Optional)</span>
               </label>
               <div className="relative">
@@ -234,12 +231,7 @@ const Signup: React.FC = () => {
               </p>
             </div>
 
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              className="w-full"
-            >
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               Create Account
             </Button>
           </form>
@@ -248,10 +240,7 @@ const Signup: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
+              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Sign in
               </Link>
             </p>
@@ -285,4 +274,4 @@ const Signup: React.FC = () => {
   );
 };
 
-export default Signup; 
+export default Signup;

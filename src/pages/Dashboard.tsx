@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { canvasInstructorAPI, instructorAPI } from '../services/api';
 import { CanvasCourse } from '../types';
+import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import {
   Home, Target, Award, Users, TrendingUp, Brain, Settings,
@@ -154,6 +155,9 @@ const Dashboard: React.FC = () => {
               totalMatrices = matrixResults.reduce((acc, result) => acc + result.data.length, 0);
             } catch (error) {
               console.log('Could not load skill matrices count, using 0');
+              if (user?.hasCanvasToken) {
+                toast.error('Could not load skill matrices count. Data shown may be incomplete.');
+              }
               totalMatrices = 0;
             }
           }
@@ -167,38 +171,6 @@ const Dashboard: React.FC = () => {
 
             actualStudentCount = dashboardResponse.data.students || 0;
 
-            // If the backend returns 0 students but we have courses, calculate a realistic number
-            if (actualStudentCount === 0 && coursesResponse.data.length > 0) {
-              console.log('Backend returned 0 students but we have courses, calculating realistic count');
-              coursesResponse.data.forEach(course => {
-                const courseName = (course.name || '').toLowerCase();
-                const courseId = course.id || '';
-
-                // Create a deterministic hash from course name and ID
-                let hash = 0;
-                const courseString = courseName + courseId;
-                for (let i = 0; i < courseString.length; i++) {
-                  const char = courseString.charCodeAt(i);
-                  hash = ((hash << 5) - hash) + char;
-                  hash = hash & hash; // Convert to 32-bit integer
-                }
-
-                // Use hash to determine student count (consistent for same course)
-                const hashMod = Math.abs(hash) % 100;
-
-                if (courseName.includes('lab') || courseName.includes('workshop') || courseName.includes('seminar')) {
-                  // Small courses: 10-15 students
-                  actualStudentCount += 10 + (hashMod % 6);
-                } else if (courseName.includes('intro') || courseName.includes('fundamentals') || courseName.includes('survey')) {
-                  // Large courses: 40-60 students
-                  actualStudentCount += 40 + (hashMod % 21);
-                } else {
-                  // Medium courses: 20-30 students
-                  actualStudentCount += 20 + (hashMod % 11);
-                }
-              });
-            }
-
             setInstructorStats({
               totalCourses: coursesResponse.data.length,
               totalStudents: actualStudentCount,
@@ -206,45 +178,14 @@ const Dashboard: React.FC = () => {
               recentActivity: dashboardResponse.data.recentActivity || generateMockActivity(coursesResponse.data.length, totalMatrices)
             });
           } catch (error) {
-            console.log('Instructor dashboard API failed, using realistic mock data');
             console.error('Dashboard API error:', error);
-            // Use realistic mock data when backend isn't available
-            // Calculate based on actual courses with more realistic numbers
-            let mockStudentCount = 0;
-            if (coursesResponse.data.length > 0) {
-              // Deterministic calculation based on course name hash
-              coursesResponse.data.forEach(course => {
-                const courseName = (course.name || '').toLowerCase();
-                const courseId = course.id || '';
-
-                // Create a deterministic hash from course name and ID
-                let hash = 0;
-                const courseString = courseName + courseId;
-                for (let i = 0; i < courseString.length; i++) {
-                  const char = courseString.charCodeAt(i);
-                  hash = ((hash << 5) - hash) + char;
-                  hash = hash & hash; // Convert to 32-bit integer
-                }
-
-                // Use hash to determine student count (consistent for same course)
-                const hashMod = Math.abs(hash) % 100;
-
-                if (courseName.includes('lab') || courseName.includes('workshop') || courseName.includes('seminar')) {
-                  // Small courses: 10-15 students
-                  mockStudentCount += 10 + (hashMod % 6);
-                } else if (courseName.includes('intro') || courseName.includes('fundamentals') || courseName.includes('survey')) {
-                  // Large courses: 40-60 students
-                  mockStudentCount += 40 + (hashMod % 21);
-                } else {
-                  // Medium courses: 20-30 students
-                  mockStudentCount += 20 + (hashMod % 11);
-                }
-              });
+            if (user?.hasCanvasToken) {
+              toast.error('Could not load instructor dashboard data. Data shown may be incomplete.');
             }
 
             setInstructorStats({
               totalCourses: coursesResponse.data.length,
-              totalStudents: mockStudentCount,
+              totalStudents: 0,
               averageProgress: 0,
               recentActivity: generateMockActivity(coursesResponse.data.length, totalMatrices)
             });
@@ -252,6 +193,11 @@ const Dashboard: React.FC = () => {
         } catch (error) {
           // If Canvas API fails, still provide useful interface
           console.error('Error loading courses:', error);
+          if (user?.hasCanvasToken) {
+            toast.error('Could not load courses from Canvas. Please try refreshing.'); 
+          }
+
+          
           setCourses([]);
           setSkillMatricesCount(0);
           setInstructorStats({
@@ -274,6 +220,7 @@ const Dashboard: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
+      toast.error('Something went wrong loading the dashboard. Please try refreshing.');
 
       // Provide fallback data so dashboard remains functional
       setCourses([]);

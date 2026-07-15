@@ -46,8 +46,10 @@ const Login: React.FC = () => {
             <div className="flex items-center justify-center mb-4">
               <BookOpen className="w-12 h-12 text-primary-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">AchieveUp Instructor Portal</h1>
-            <p className="text-gray-600">AI-powered skill tracking for educators</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">AchieveUp Portal</h1>
+            <p className="text-gray-600">
+              Skill tracking and insights for students and instructors
+            </p>
           </div>
 
           {/* Login Form */}
@@ -126,7 +128,7 @@ const Login: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
-                Track student progress and skill mastery
+                Track course progress and skill mastery
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>

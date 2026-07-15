@@ -209,7 +209,7 @@ const InstructorDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [generateMockActivity]);
+  }, [generateMockActivity, user?.hasCanvasToken]);
 
   useEffect(() => {
     loadDashboardData();
@@ -500,7 +500,7 @@ const InstructorDashboard: React.FC = () => {
 
       {/* Enhanced Quick Actions */}
       <Card
-        title={"Essential Tools"}
+        title="Essential Tools"
         className="mb-8"
         headerActions={
           <Link

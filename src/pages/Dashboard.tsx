@@ -37,13 +37,6 @@ interface WorkflowStep {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-interface DashboardStats {
-  totalSkills: number;
-  earnedBadges: number;
-  averageScore: number;
-  recentActivity: Activity[];
-}
-
 interface InstructorDashboardStats {
   totalCourses: number;
   totalStudents: number;
@@ -55,12 +48,6 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<CanvasCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalSkills: 0,
-    earnedBadges: 0,
-    averageScore: 0,
-    recentActivity: []
-  });
   const [instructorStats, setInstructorStats] = useState<InstructorDashboardStats>({
     totalCourses: 0,
     totalStudents: 0,
@@ -68,8 +55,6 @@ const Dashboard: React.FC = () => {
     recentActivity: []
   });
   const [skillMatricesCount, setSkillMatricesCount] = useState<number>(0);
-
-  const isInstructor = user?.canvasTokenType === 'instructor';
 
   // Generate realistic mock activity for demonstration
   const generateMockActivity = useCallback((coursesLength: number, matricesCount: number): Activity[] => {
@@ -137,7 +122,7 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      if (isInstructor) {
+
         // Load instructor-specific data
         try {
           const coursesResponse = await canvasInstructorAPI.getInstructorCourses();
@@ -207,42 +192,24 @@ const Dashboard: React.FC = () => {
             recentActivity: generateMockActivity(0, 0)
           });
         }
-      } else {
-        // Load student data (existing logic)
-        const response = await canvasInstructorAPI.getInstructorCourses().catch(() => ({ data: [] }));
-        setCourses(response.data);
-        setStats({
-          totalSkills: 0,
-          earnedBadges: 0,
-          averageScore: 0,
-          recentActivity: []
-        });
-      }
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       toast.error('Something went wrong loading the dashboard. Please try refreshing.');
 
       // Provide fallback data so dashboard remains functional
       setCourses([]);
-      if (isInstructor) {
+      
         setInstructorStats({
           totalCourses: 0,
           totalStudents: 0,
           averageProgress: 0,
           recentActivity: generateMockActivity(0, 0)
         });
-      } else {
-        setStats({
-          totalSkills: 0,
-          earnedBadges: 0,
-          averageScore: 0,
-          recentActivity: []
-        });
-      }
+  
     } finally {
       setLoading(false);
     }
-  }, [isInstructor, generateMockActivity]); // Added dependencies for generateMockActivity
+  }, [generateMockActivity]);
 
   useEffect(() => {
     loadDashboardData();
@@ -351,13 +318,12 @@ const Dashboard: React.FC = () => {
               {getGreeting()}, {user?.name || 'Instructor'}!
             </h1>
             <p className="text-gray-600 mt-2">
-              {isInstructor
-                ? 'Transform your assessments into comprehensive skill tracking with AI-powered insights.'
-                : 'Track your learning progress and skill development across all your courses.'
+              {
+              'Transform your assessments into comprehensive skill tracking with AI-powered insights.'
               }
             </p>
           </div>
-          {isInstructor && (
+          {(
             <div className="hidden md:flex items-center space-x-3">
               <Link
                 to="/skill-matrix"
@@ -372,13 +338,12 @@ const Dashboard: React.FC = () => {
 
         {/* Enhanced Status Indicators */}
         <div className="mt-4 flex items-center gap-3 flex-wrap">
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${isInstructor
-              ? 'bg-purple-100 text-purple-800'
-              : 'bg-blue-100 text-blue-800'
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            'bg-purple-100 text-purple-800'
             }`}>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-current rounded-full mr-2"></div>
-              {isInstructor ? 'Instructor Dashboard' : 'Student Dashboard'}
+              {'Instructor Dashboard'}
             </div>
           </div>
           {user?.hasCanvasToken ? (
@@ -428,7 +393,7 @@ const Dashboard: React.FC = () => {
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {isInstructor ? (
+        {(
           <>
             <Card className="text-center hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
@@ -468,45 +433,11 @@ const Dashboard: React.FC = () => {
               <div className="text-xs text-gray-500 mt-1">Smart suggestions</div>
             </Card>
           </>
-        ) : (
-          <>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
-                <Target className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalSkills}</div>
-              <div className="text-sm text-gray-600">Skills Tracked</div>
-            </Card>
-
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg mx-auto mb-4">
-                <Award className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.earnedBadges}</div>
-              <div className="text-sm text-gray-600">Badges Earned</div>
-            </Card>
-
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.averageScore}%</div>
-              <div className="text-sm text-gray-600">Average Score</div>
-            </Card>
-
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-4">
-                <Home className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
-              <div className="text-sm text-gray-600">Enrolled Courses</div>
-            </Card>
-          </>
         )}
       </div>
 
       {/* Instructor-specific Workflow Guide */}
-      {isInstructor && (
+      {(
         <Card title="AchieveUp Workflow" className="mb-8">
           <div className="space-y-6">
             <p className="text-gray-600">
@@ -579,17 +510,17 @@ const Dashboard: React.FC = () => {
 
       {/* Enhanced Quick Actions */}
       <Card
-        title={isInstructor ? "Essential Tools" : "Quick Actions"}
+        title={"Essential Tools"}
         className="mb-8"
         headerActions={
-          isInstructor ? (
+          (
             <Link
               to="/skill-matrix"
               className="text-sm text-ucf-gold hover:text-yellow-700 font-medium"
             >
               Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
             </Link>
-          ) : undefined
+          )
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

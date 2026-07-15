@@ -5,9 +5,20 @@ import { CanvasCourse } from '../types';
 import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import {
-  Home, Target, Users, Brain, Settings,
-  BookOpen, ArrowRight, CheckCircle, AlertTriangle,
-  Zap, BarChart3, Plus, Lightbulb, ArrowUpRight
+  Home,
+  Target,
+  Users,
+  Brain,
+  Settings,
+  BookOpen,
+  ArrowRight,
+  CheckCircle,
+  AlertTriangle,
+  Zap,
+  BarChart3,
+  Plus,
+  Lightbulb,
+  ArrowUpRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -50,84 +61,81 @@ const InstructorDashboard: React.FC = () => {
     try {
       setLoading(true);
 
+      // Load instructor-specific data
+      try {
+        const coursesResponse = await canvasInstructorAPI.getInstructorCourses();
+        setCourses(coursesResponse.data);
 
-        // Load instructor-specific data
-        try {
-          const coursesResponse = await canvasInstructorAPI.getInstructorCourses();
-          setCourses(coursesResponse.data);
-
-          // Try to get skill matrices count from all courses
-          let totalMatrices = 0;
-          if (coursesResponse.data.length > 0) {
-            try {
-              const { skillMatrixAPI } = await import('../services/api');
-              const matrixPromises = coursesResponse.data.map(course =>
-                skillMatrixAPI.getAllByCourse(course.id).catch(() => ({ data: [] }))
-              );
-              const matrixResults = await Promise.all(matrixPromises);
-              totalMatrices = matrixResults.reduce((acc, result) => acc + result.data.length, 0);
-            } catch (error) {
-              if (user?.hasCanvasToken) {
-                toast.error('Could not load skill matrices count. Data shown may be incomplete.');
-              }
-              totalMatrices = 0;
-            }
-          }
-          setSkillMatricesCount(totalMatrices);
-
-          // Try to get instructor dashboard data, but don't fail if it's not available
-          let actualStudentCount = 0;
+        // Try to get skill matrices count from all courses
+        let totalMatrices = 0;
+        if (coursesResponse.data.length > 0) {
           try {
-            const dashboardResponse = await instructorAPI.getInstructorDashboard();
-
-            actualStudentCount = dashboardResponse.data.students || 0;
-
-            setInstructorStats({
-              totalCourses: coursesResponse.data.length,
-              totalStudents: actualStudentCount,
-              averageProgress: dashboardResponse.data.averageProgress || 0,
-            });
+            const { skillMatrixAPI } = await import('../services/api');
+            const matrixPromises = coursesResponse.data.map((course) =>
+              skillMatrixAPI.getAllByCourse(course.id).catch(() => ({ data: [] }))
+            );
+            const matrixResults = await Promise.all(matrixPromises);
+            totalMatrices = matrixResults.reduce((acc, result) => acc + result.data.length, 0);
           } catch (error) {
-            console.error('Dashboard API error:', error);
             if (user?.hasCanvasToken) {
-              toast.error('Could not load instructor dashboard data. Data shown may be incomplete.');
+              toast.error('Could not load skill matrices count. Data shown may be incomplete.');
             }
-
-            setInstructorStats({
-              totalCourses: coursesResponse.data.length,
-              totalStudents: 0,
-              averageProgress: 0,
-            });
+            totalMatrices = 0;
           }
-        } catch (error) {
-          // If Canvas API fails, still provide useful interface
-          console.error('Error loading courses:', error);
-          if (user?.hasCanvasToken) {
-            toast.error('Could not load courses from Canvas. Please try refreshing.'); 
-          }
+        }
+        setSkillMatricesCount(totalMatrices);
 
-          
-          setCourses([]);
-          setSkillMatricesCount(0);
+        // Try to get instructor dashboard data, but don't fail if it's not available
+        let actualStudentCount = 0;
+        try {
+          const dashboardResponse = await instructorAPI.getInstructorDashboard();
+
+          actualStudentCount = dashboardResponse.data.students || 0;
+
           setInstructorStats({
-            totalCourses: 0,
+            totalCourses: coursesResponse.data.length,
+            totalStudents: actualStudentCount,
+            averageProgress: dashboardResponse.data.averageProgress || 0,
+          });
+        } catch (error) {
+          console.error('Dashboard API error:', error);
+          if (user?.hasCanvasToken) {
+            toast.error('Could not load instructor dashboard data. Data shown may be incomplete.');
+          }
+
+          setInstructorStats({
+            totalCourses: coursesResponse.data.length,
             totalStudents: 0,
             averageProgress: 0,
           });
         }
+      } catch (error) {
+        // If Canvas API fails, still provide useful interface
+        console.error('Error loading courses:', error);
+        if (user?.hasCanvasToken) {
+          toast.error('Could not load courses from Canvas. Please try refreshing.');
+        }
+
+        setCourses([]);
+        setSkillMatricesCount(0);
+        setInstructorStats({
+          totalCourses: 0,
+          totalStudents: 0,
+          averageProgress: 0,
+        });
+      }
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
       toast.error('Something went wrong loading the dashboard. Please try refreshing.');
 
       // Provide fallback data so dashboard remains functional
       setCourses([]);
-      
-        setInstructorStats({
-          totalCourses: 0,
-          totalStudents: 0,
-          averageProgress: 0,
-        });
-  
+
+      setInstructorStats({
+        totalCourses: 0,
+        totalStudents: 0,
+        averageProgress: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -152,7 +160,7 @@ const InstructorDashboard: React.FC = () => {
       description: 'Define the skills students should master in your course',
       status: skillMatricesCount > 0 ? 'completed' : 'current',
       href: '/skill-matrix',
-      icon: Target
+      icon: Target,
     },
     {
       id: 2,
@@ -160,7 +168,7 @@ const InstructorDashboard: React.FC = () => {
       description: 'Map quiz questions to specific skills using AI assistance',
       status: skillMatricesCount > 0 ? 'current' : 'upcoming',
       href: '/skill-assignment',
-      icon: Brain
+      icon: Brain,
     },
     {
       id: 3,
@@ -168,8 +176,8 @@ const InstructorDashboard: React.FC = () => {
       description: 'Monitor individual student skill development in real-time',
       status: 'upcoming',
       href: '/progress',
-      icon: BarChart3
-    }
+      icon: BarChart3,
+    },
   ];
 
   // Enhanced quick actions with priorities
@@ -180,7 +188,7 @@ const InstructorDashboard: React.FC = () => {
       icon: Target,
       href: '/skill-matrix',
       color: 'bg-blue-500',
-      priority: 'high'
+      priority: 'high',
     },
     {
       title: 'AI Skill Assignment',
@@ -188,7 +196,7 @@ const InstructorDashboard: React.FC = () => {
       icon: Brain,
       href: '/skill-assignment',
       color: 'bg-purple-500',
-      priority: 'high'
+      priority: 'high',
     },
     {
       title: 'Student Progress',
@@ -196,7 +204,7 @@ const InstructorDashboard: React.FC = () => {
       icon: BarChart3,
       href: '/progress',
       color: 'bg-green-500',
-      priority: 'medium'
+      priority: 'medium',
     },
     {
       title: 'Settings',
@@ -204,10 +212,9 @@ const InstructorDashboard: React.FC = () => {
       icon: Settings,
       href: '/settings',
       color: 'bg-gray-500',
-      priority: 'low'
-    }
+      priority: 'low',
+    },
   ];
-
 
   if (loading) {
     return (
@@ -230,7 +237,7 @@ const InstructorDashboard: React.FC = () => {
             </h1>
             <p className="text-gray-600 mt-2">
               {
-              'Transform your assessments into comprehensive skill tracking with AI-powered insights.'
+                'Transform your assessments into comprehensive skill tracking with AI-powered insights.'
               }
             </p>
           </div>
@@ -283,13 +290,15 @@ const InstructorDashboard: React.FC = () => {
                 <AlertTriangle className="h-5 w-5 text-yellow-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Canvas Integration Required
-                </h3>
+                <h3 className="text-sm font-medium text-yellow-800">Canvas Integration Required</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    To access your courses and use AchieveUp features, you need to add your Canvas API token.
-                    Go to <Link to="/settings" className="font-medium underline hover:text-yellow-600">Settings</Link> to configure it.
+                    To access your courses and use AchieveUp features, you need to add your Canvas
+                    API token. Go to{' '}
+                    <Link to="/settings" className="font-medium underline hover:text-yellow-600">
+                      Settings
+                    </Link>{' '}
+                    to configure it.
                   </p>
                 </div>
               </div>
@@ -341,73 +350,92 @@ const InstructorDashboard: React.FC = () => {
 
       {/* Instructor-specific Workflow Guide */}
       <Card title="AchieveUp Workflow" className="mb-8">
-          <div className="space-y-6">
-            <p className="text-gray-600">
-              Set up skill tracking for your courses in three simple steps:
-            </p>
+        <div className="space-y-6">
+          <p className="text-gray-600">
+            Set up skill tracking for your courses in three simple steps:
+          </p>
 
-            <div className="space-y-4">
-              {workflowSteps.map((step, index) => {
-                const Icon = step.icon;
-                const isLast = index === workflowSteps.length - 1;
+          <div className="space-y-4">
+            {workflowSteps.map((step, index) => {
+              const Icon = step.icon;
+              const isLast = index === workflowSteps.length - 1;
 
-                return (
-                  <div key={step.id} className="relative">
-                    <div className={`flex items-center p-4 rounded-lg border-2 transition-all ${step.status === 'current'
+              return (
+                <div key={step.id} className="relative">
+                  <div
+                    className={`flex items-center p-4 rounded-lg border-2 transition-all ${
+                      step.status === 'current'
                         ? 'border-ucf-gold bg-yellow-50'
                         : step.status === 'completed'
                           ? 'border-green-300 bg-green-50'
                           : 'border-gray-200 bg-gray-50'
-                      }`}>
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 ${step.status === 'current'
+                    }`}
+                  >
+                    <div
+                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
+                        step.status === 'current'
                           ? 'bg-ucf-gold text-white'
                           : step.status === 'completed'
                             ? 'bg-green-500 text-white'
                             : 'bg-gray-300 text-gray-600'
-                        }`}>
-                        {step.status === 'completed' ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : (
-                          <Icon className="w-5 h-5" />
-                        )}
-                      </div>
-
-                      <div className="flex-1">
-                        <h3 className={`font-medium ${step.status === 'current' ? 'text-yellow-900'
-                            : step.status === 'completed' ? 'text-green-900'
-                              : 'text-gray-700'
-                          }`}>
-                          Step {step.id}: {step.title}
-                        </h3>
-                        <p className={`text-sm ${step.status === 'current' ? 'text-yellow-700'
-                          : step.status === 'completed' ? 'text-green-700'
-                            : 'text-gray-600'
-                          }`}>
-                          {step.description}
-                        </p>
-                      </div>
-
-                      {step.status === 'current' && (
-                        <Link
-                          to={step.href}
-                          className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-ucf-gold bg-yellow-100 hover:bg-yellow-200 transition-colors"
-                        >
-                          Start
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </Link>
+                      }`}
+                    >
+                      {step.status === 'completed' ? (
+                        <CheckCircle className="w-5 h-5" />
+                      ) : (
+                        <Icon className="w-5 h-5" />
                       )}
                     </div>
 
-                    {!isLast && (
-                      <div className={`absolute left-9 top-16 w-0.5 h-6 ${step.status === 'completed' ? 'bg-green-300' : 'bg-gray-200'
-                        }`}></div>
+                    <div className="flex-1">
+                      <h3
+                        className={`font-medium ${
+                          step.status === 'current'
+                            ? 'text-yellow-900'
+                            : step.status === 'completed'
+                              ? 'text-green-900'
+                              : 'text-gray-700'
+                        }`}
+                      >
+                        Step {step.id}: {step.title}
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          step.status === 'current'
+                            ? 'text-yellow-700'
+                            : step.status === 'completed'
+                              ? 'text-green-700'
+                              : 'text-gray-600'
+                        }`}
+                      >
+                        {step.description}
+                      </p>
+                    </div>
+
+                    {step.status === 'current' && (
+                      <Link
+                        to={step.href}
+                        className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-ucf-gold bg-yellow-100 hover:bg-yellow-200 transition-colors"
+                      >
+                        Start
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
                     )}
                   </div>
-                );
-              })}
-            </div>
+
+                  {!isLast && (
+                    <div
+                      className={`absolute left-9 top-16 w-0.5 h-6 ${
+                        step.status === 'completed' ? 'bg-green-300' : 'bg-gray-200'
+                      }`}
+                    ></div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </Card>
+        </div>
+      </Card>
 
       {/* Enhanced Quick Actions */}
       <Card
@@ -432,7 +460,9 @@ const InstructorDashboard: React.FC = () => {
                 className="group block p-6 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-lg transition-all duration-200"
               >
                 <div className="text-center">
-                  <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}>
+                  <div
+                    className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}
+                  >
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-medium text-gray-900 group-hover:text-gray-700 mb-2">
@@ -456,73 +486,79 @@ const InstructorDashboard: React.FC = () => {
         </div>
       </Card>
 
-        {/* Course Overview / Tips */}
-        <Card title={courses.length > 0 ? "Your Courses" : "Getting Started Tips"} className="h-fit">
-          {courses.length > 0 ? (
-            <div className="space-y-3">
-              {courses.slice(0, 5).map((course, index) => (
-                <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {course.name}
-                      </p>
-                      <p className="text-xs text-gray-600">{course.code}</p>
-                    </div>
+      {/* Course Overview / Tips */}
+      <Card title={courses.length > 0 ? 'Your Courses' : 'Getting Started Tips'} className="h-fit">
+        {courses.length > 0 ? (
+          <div className="space-y-3">
+            {courses.slice(0, 5).map((course, index) => (
+              <div
+                key={course.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
                   </div>
-                  <Link
-                    to={`/skill-matrix?course=${course.id}`}
-                    className="text-xs text-ucf-gold hover:text-yellow-700 font-medium"
-                  >
-                    Setup
-                  </Link>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 truncate">{course.name}</p>
+                    <p className="text-xs text-gray-600">{course.code}</p>
+                  </div>
                 </div>
-              ))}
-              {courses.length > 5 && (
-                <p className="text-xs text-gray-500 text-center pt-2">
-                  +{courses.length - 5} more courses
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Set up Canvas Integration</p>
-                  <p className="text-xs text-gray-600">Connect your Canvas account to load courses automatically</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Start with One Course</p>
-                  <p className="text-xs text-gray-600">Choose your most important course and create a skill matrix first</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Use AI Suggestions</p>
-                  <p className="text-xs text-gray-600">Let our AI recommend skills and map them to your quiz questions</p>
-                </div>
-              </div>
-              <div className="pt-3">
                 <Link
-                  to="/settings"
-                  className="inline-flex items-center text-sm text-ucf-gold hover:text-yellow-700 font-medium"
+                  to={`/skill-matrix?course=${course.id}`}
+                  className="text-xs text-ucf-gold hover:text-yellow-700 font-medium"
                 >
-                  Configure Canvas <ArrowRight className="w-4 h-4 ml-1" />
+                  Setup
                 </Link>
               </div>
+            ))}
+            {courses.length > 5 && (
+              <p className="text-xs text-gray-500 text-center pt-2">
+                +{courses.length - 5} more courses
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Set up Canvas Integration</p>
+                <p className="text-xs text-gray-600">
+                  Connect your Canvas account to load courses automatically
+                </p>
+              </div>
             </div>
-          )}
-        </Card>
+            <div className="flex items-start space-x-3">
+              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Start with One Course</p>
+                <p className="text-xs text-gray-600">
+                  Choose your most important course and create a skill matrix first
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Use AI Suggestions</p>
+                <p className="text-xs text-gray-600">
+                  Let our AI recommend skills and map them to your quiz questions
+                </p>
+              </div>
+            </div>
+            <div className="pt-3">
+              <Link
+                to="/settings"
+                className="inline-flex items-center text-sm text-ucf-gold hover:text-yellow-700 font-medium"
+              >
+                Configure Canvas <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
-
-export default InstructorDashboard; 
+export default InstructorDashboard;

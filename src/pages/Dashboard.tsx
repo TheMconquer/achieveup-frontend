@@ -295,7 +295,7 @@ const Dashboard: React.FC = () => {
   ];
 
   // Enhanced quick actions with priorities
-  const instructorQuickActions: QuickAction[] = [
+  const quickActions: QuickAction[] = [
     {
       title: 'Create Skill Matrix',
       description: 'Define skills and competencies with AI suggestions',
@@ -330,27 +330,6 @@ const Dashboard: React.FC = () => {
     }
   ];
 
-  // Student quick actions
-  const studentQuickActions: QuickAction[] = [
-    {
-      title: 'View Progress',
-      description: 'Track your skill development and achievements',
-      icon: TrendingUp,
-      href: '/progress',
-      color: 'bg-green-500',
-      priority: 'high'
-    },
-    {
-      title: 'Settings',
-      description: 'Manage your profile and preferences',
-      icon: Settings,
-      href: '/settings',
-      color: 'bg-gray-500',
-      priority: 'low'
-    }
-  ];
-
-  const quickActions = isInstructor ? instructorQuickActions : studentQuickActions;
 
   if (loading) {
     return (

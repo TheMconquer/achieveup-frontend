@@ -6,18 +6,10 @@ import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import {
   Home, Target, Users, Brain, Settings,
-  BookOpen, ArrowRight, CheckCircle, AlertTriangle, Clock,
+  BookOpen, ArrowRight, CheckCircle, AlertTriangle,
   Zap, BarChart3, Plus, Lightbulb, ArrowUpRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface Activity {
-  type: 'badge' | 'progress' | 'assessment' | 'matrix' | 'assignment';
-  title: string;
-  description: string;
-  time: string;
-  status?: 'completed' | 'in-progress' | 'pending';
-}
 
 interface QuickAction {
   title: string;
@@ -41,7 +33,6 @@ interface InstructorDashboardStats {
   totalCourses: number;
   totalStudents: number;
   averageProgress: number;
-  recentActivity: Activity[];
 }
 
 const InstructorDashboard: React.FC = () => {
@@ -52,71 +43,8 @@ const InstructorDashboard: React.FC = () => {
     totalCourses: 0,
     totalStudents: 0,
     averageProgress: 0,
-    recentActivity: []
   });
   const [skillMatricesCount, setSkillMatricesCount] = useState<number>(0);
-
-  // Generate realistic mock activity for demonstration
-  const generateMockActivity = useCallback((coursesLength: number, matricesCount: number): Activity[] => {
-    const now = new Date();
-
-    // Create contextual activities based on current state
-    const activities: Activity[] = [];
-
-    if (coursesLength === 0) {
-      activities.push({
-        type: 'matrix',
-        title: 'Set up Canvas Integration',
-        description: 'Connect your Canvas account to load courses and get started with AchieveUp',
-        time: new Date(now.getTime() - 2 * 60000).toISOString(),
-        status: 'pending'
-      });
-    } else if (matricesCount === 0) {
-      activities.push({
-        type: 'matrix',
-        title: 'Create Your First Skill Matrix',
-        description: `You have ${coursesLength} course${coursesLength > 1 ? 's' : ''} loaded. Create a skill matrix to get started`,
-        time: new Date(now.getTime() - 5 * 60000).toISOString(),
-        status: 'pending'
-      });
-    } else {
-      activities.push({
-        type: 'matrix',
-        title: 'Skill Matrix Created',
-        description: `Successfully created ${matricesCount} skill matri${matricesCount > 1 ? 'ces' : 'x'}`,
-        time: new Date(now.getTime() - 30 * 60000).toISOString(),
-        status: 'completed'
-      });
-    }
-
-    if (matricesCount > 0) {
-      activities.push({
-        type: 'assignment',
-        title: 'Ready for Skill Assignment',
-        description: 'Use AI to automatically map your quiz questions to the skills you\'ve defined',
-        time: new Date(now.getTime() - 10 * 60000).toISOString(),
-        status: 'pending'
-      });
-    } else {
-      activities.push({
-        type: 'assignment',
-        title: 'AI-Powered Skill Assignment',
-        description: 'Once you create a skill matrix, you can automatically map quiz questions to skills',
-        time: new Date(now.getTime() - 10 * 60000).toISOString(),
-        status: 'pending'
-      });
-    }
-
-    activities.push({
-      type: 'progress',
-      title: 'Student Progress Tracking',
-      description: 'Track student skill development as they complete Canvas assessments',
-      time: new Date(now.getTime() - 15 * 60000).toISOString(),
-      status: 'pending'
-    });
-
-    return activities;
-  }, []);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -139,7 +67,6 @@ const InstructorDashboard: React.FC = () => {
               const matrixResults = await Promise.all(matrixPromises);
               totalMatrices = matrixResults.reduce((acc, result) => acc + result.data.length, 0);
             } catch (error) {
-              console.log('Could not load skill matrices count, using 0');
               if (user?.hasCanvasToken) {
                 toast.error('Could not load skill matrices count. Data shown may be incomplete.');
               }
@@ -152,7 +79,6 @@ const InstructorDashboard: React.FC = () => {
           let actualStudentCount = 0;
           try {
             const dashboardResponse = await instructorAPI.getInstructorDashboard();
-            console.log('Instructor dashboard response:', dashboardResponse.data);
 
             actualStudentCount = dashboardResponse.data.students || 0;
 
@@ -160,7 +86,6 @@ const InstructorDashboard: React.FC = () => {
               totalCourses: coursesResponse.data.length,
               totalStudents: actualStudentCount,
               averageProgress: dashboardResponse.data.averageProgress || 0,
-              recentActivity: dashboardResponse.data.recentActivity || generateMockActivity(coursesResponse.data.length, totalMatrices)
             });
           } catch (error) {
             console.error('Dashboard API error:', error);
@@ -172,7 +97,6 @@ const InstructorDashboard: React.FC = () => {
               totalCourses: coursesResponse.data.length,
               totalStudents: 0,
               averageProgress: 0,
-              recentActivity: generateMockActivity(coursesResponse.data.length, totalMatrices)
             });
           }
         } catch (error) {
@@ -189,7 +113,6 @@ const InstructorDashboard: React.FC = () => {
             totalCourses: 0,
             totalStudents: 0,
             averageProgress: 0,
-            recentActivity: generateMockActivity(0, 0)
           });
         }
     } catch (error: any) {
@@ -203,13 +126,12 @@ const InstructorDashboard: React.FC = () => {
           totalCourses: 0,
           totalStudents: 0,
           averageProgress: 0,
-          recentActivity: generateMockActivity(0, 0)
         });
   
     } finally {
       setLoading(false);
     }
-  }, [generateMockActivity, user?.hasCanvasToken]);
+  }, [user?.hasCanvasToken]);
 
   useEffect(() => {
     loadDashboardData();
@@ -220,17 +142,6 @@ const InstructorDashboard: React.FC = () => {
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
-  };
-
-  const getTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hr ago`;
-    return `${Math.floor(diffInMinutes / 1440)} day ago`;
   };
 
   // Enhanced instructor workflow steps with dynamic status
@@ -545,55 +456,6 @@ const InstructorDashboard: React.FC = () => {
         </div>
       </Card>
 
-      {/* Recent Activity / Getting Started */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Recent Activity */}
-        <Card title="Recent Activity" className="h-fit">
-          {instructorStats.recentActivity.length > 0 ? (
-            <div className="space-y-4">
-              {instructorStats.recentActivity.slice(0, 5).map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${activity.type === 'matrix' ? 'bg-blue-100 text-blue-600' :
-                    activity.type === 'assignment' ? 'bg-purple-100 text-purple-600' :
-                      activity.type === 'progress' ? 'bg-green-100 text-green-600' :
-                        'bg-gray-100 text-gray-600'
-                    }`}>
-                    {activity.type === 'matrix' ? <Target className="w-4 h-4" /> :
-                      activity.type === 'assignment' ? <Brain className="w-4 h-4" /> :
-                        activity.type === 'progress' ? <BarChart3 className="w-4 h-4" /> :
-                          <Clock className="w-4 h-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {activity.title}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {getTimeAgo(activity.time)}
-                    </p>
-                  </div>
-                  {activity.status && (
-                    <div className={`flex-shrink-0 w-2 h-2 rounded-full ${activity.status === 'completed' ? 'bg-green-400' :
-                      activity.status === 'in-progress' ? 'bg-yellow-400' :
-                        'bg-gray-300'
-                      }`}></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">No recent activity</p>
-              <p className="text-sm text-gray-500">
-                Activity will appear here as you use AchieveUp
-              </p>
-            </div>
-          )}
-        </Card>
-
         {/* Course Overview / Tips */}
         <Card title={courses.length > 0 ? "Your Courses" : "Getting Started Tips"} className="h-fit">
           {courses.length > 0 ? (
@@ -659,7 +521,6 @@ const InstructorDashboard: React.FC = () => {
             </div>
           )}
         </Card>
-      </div>
     </div>
   );
 };

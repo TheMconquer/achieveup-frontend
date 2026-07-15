@@ -15,7 +15,7 @@ export interface SignupRequest {
   email: string;
   password: string;
   canvasApiToken: string;
-  canvasTokenType: 'instructor' | 'student';
+  canvasTokenType?: 'instructor' | 'student';
 }
 
 export interface ProfileUpdateRequest {
@@ -309,4 +309,4 @@ export interface InstructorSkillMatrixRequest {
   quiz_questions: {
     [questionId: string]: string[];
   };
-} 
+}

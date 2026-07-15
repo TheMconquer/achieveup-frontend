@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { CheckCircle, AlertTriangle, RefreshCw, ArrowUpRight } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard';
+import InstructorDashboard from './pages/InstructorDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
@@ -677,16 +677,16 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route
-        path="/dashboard"
+        path="/instructor-dashboard"
         element={
           <ProtectedRoute>
             <Layout>
-              <Dashboard />
+              <InstructorDashboard />
             </Layout>
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/instructordashboard" replace />} />
       <Route path="/skill-matrix" element={
         <ProtectedRoute>
           <Layout>

@@ -5,7 +5,7 @@ import { CanvasCourse } from '../types';
 import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import {
-  Home, Target, Award, Users, TrendingUp, Brain, Settings,
+  Home, Target, Users, Brain, Settings,
   BookOpen, ArrowRight, CheckCircle, AlertTriangle, Clock,
   Zap, BarChart3, Plus, Lightbulb, ArrowUpRight
 } from 'lucide-react';
@@ -44,7 +44,7 @@ interface InstructorDashboardStats {
   recentActivity: Activity[];
 }
 
-const Dashboard: React.FC = () => {
+const InstructorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<CanvasCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -323,27 +323,23 @@ const Dashboard: React.FC = () => {
               }
             </p>
           </div>
-          {(
-            <div className="hidden md:flex items-center space-x-3">
-              <Link
-                to="/skill-matrix"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Get Started
-              </Link>
-            </div>
-          )}
+          <div className="hidden md:flex items-center space-x-3">
+            <Link
+              to="/skill-matrix"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Get Started
+            </Link>
+          </div>
         </div>
 
         {/* Enhanced Status Indicators */}
         <div className="mt-4 flex items-center gap-3 flex-wrap">
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-            'bg-purple-100 text-purple-800'
-            }`}>
+          <div className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
             <div className="flex items-center">
               <div className="w-2 h-2 bg-current rounded-full mr-2"></div>
-              {'Instructor Dashboard'}
+              Instructor Dashboard
             </div>
           </div>
           {user?.hasCanvasToken ? (
@@ -393,52 +389,47 @@ const Dashboard: React.FC = () => {
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {(
-          <>
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
-                <Home className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
-              <div className="text-sm text-gray-600">Active Courses</div>
-              <div className="text-xs text-gray-500 mt-1">From Canvas LMS</div>
-            </Card>
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
+            <Home className="w-6 h-6 text-blue-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
+          <div className="text-sm text-gray-600">Active Courses</div>
+          <div className="text-xs text-gray-500 mt-1">From Canvas LMS</div>
+        </Card>
 
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-4">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{instructorStats.totalStudents}</div>
-              <div className="text-sm text-gray-600">Total Students</div>
-              <div className="text-xs text-gray-500 mt-1">Across all courses</div>
-            </Card>
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-4">
+            <Users className="w-6 h-6 text-green-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{instructorStats.totalStudents}</div>
+          <div className="text-sm text-gray-600">Total Students</div>
+          <div className="text-xs text-gray-500 mt-1">Across all courses</div>
+        </Card>
 
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-4">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{skillMatricesCount}</div>
-              <div className="text-sm text-gray-600">Skill Matrices</div>
-              <div className="text-xs text-gray-500 mt-1">
-                {skillMatricesCount === 0 ? 'Ready to create' : 'Across all courses'}
-              </div>
-            </Card>
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-4">
+            <Target className="w-6 h-6 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{skillMatricesCount}</div>
+          <div className="text-sm text-gray-600">Skill Matrices</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {skillMatricesCount === 0 ? 'Ready to create' : 'Across all courses'}
+          </div>
+        </Card>
 
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg mx-auto mb-4">
-                <Brain className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">AI</div>
-              <div className="text-sm text-gray-600">Powered</div>
-              <div className="text-xs text-gray-500 mt-1">Smart suggestions</div>
-            </Card>
-          </>
-        )}
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg mx-auto mb-4">
+            <Brain className="w-6 h-6 text-yellow-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">AI</div>
+          <div className="text-sm text-gray-600">Powered</div>
+          <div className="text-xs text-gray-500 mt-1">Smart suggestions</div>
+        </Card>
       </div>
 
       {/* Instructor-specific Workflow Guide */}
-      {(
-        <Card title="AchieveUp Workflow" className="mb-8">
+      <Card title="AchieveUp Workflow" className="mb-8">
           <div className="space-y-6">
             <p className="text-gray-600">
               Set up skill tracking for your courses in three simple steps:
@@ -506,21 +497,18 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </Card>
-      )}
 
       {/* Enhanced Quick Actions */}
       <Card
         title={"Essential Tools"}
         className="mb-8"
         headerActions={
-          (
-            <Link
-              to="/skill-matrix"
-              className="text-sm text-ucf-gold hover:text-yellow-700 font-medium"
-            >
-              Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
-            </Link>
-          )
+          <Link
+            to="/skill-matrix"
+            className="text-sm text-ucf-gold hover:text-yellow-700 font-medium"
+          >
+            Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
+          </Link>
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -676,4 +664,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default InstructorDashboard; 

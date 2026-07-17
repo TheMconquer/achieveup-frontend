@@ -48,20 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authAPI.me();
       const userData = response.data.user || response.data;
 
-      // More flexible role checking - allow users who signed up without Canvas tokens
-      const isInstructor =
-        userData.canvasTokenType === 'instructor' ||
-        userData.role === 'instructor' ||
-        userData.role === 'student' ||
-        !userData.canvasTokenType; // Allow users without Canvas token
-
-      if (!isInstructor) {
-        console.warn('Non-instructor user detected, logging out');
-        localStorage.removeItem('token');
-        setUser(null);
-        return;
-      }
-
       setUser(userData);
       setBackendAvailable(true);
     } catch (error: any) {
@@ -128,14 +114,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
 
-      // Ensure only instructor signups are allowed
-      const signupData = {
-        ...data,
-        canvasTokenType: 'instructor' as const,
-        role: 'instructor' as const,
-      };
+      if (!data.canvasApiToken) {
+        throw new Error('A Canvas API token is required to sign up.');
+      }
 
-      const response = await authAPI.signup(signupData);
+      // role/canvas_token_type are not set in frontend - the backend infers them entirely from validating the submitted Canvas API token.
+      const response = await authAPI.signup(data);
 
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -177,19 +161,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authAPI.me();
       const userData = response.data.user || response.data;
-
-      // More flexible role checking - allow users who signed up without Canvas tokens
-      const isInstructor =
-        userData.canvasTokenType === 'instructor' ||
-        userData.role === 'instructor' ||
-        userData.role === 'student' ||
-        !userData.canvasTokenType; // Allow users without Canvas token
-
-      if (!isInstructor) {
-        console.warn('Non-instructor user detected, logging out');
-        logout();
-        return;
-      }
 
       setUser(userData);
     } catch (error) {

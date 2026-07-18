@@ -32,6 +32,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [backendAvailable, setBackendAvailable] = useState(true);
 
+  const isStudent = user?.role === 'student';
+  const isInstructor = user?.role === 'instructor';
+
   // Check authentication status on app load
   const checkAuthStatus = async () => {
     try {

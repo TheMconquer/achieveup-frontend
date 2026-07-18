@@ -1,4 +1,4 @@
-import React from 'react'; 
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -13,80 +13,89 @@ import SkillMatrixCreator from './components/SkillMatrixCreator/SkillMatrixCreat
 import SkillAssignmentInterface from './components/SkillAssignmentInterface/SkillAssignmentInterface';
 import StudentBadgesTest from './components/StudentBadgesTest/StudentBadgesTest';
 import StudentPublicBadges from './pages/StudentPublicBadges';
+import RequireRole from './components/common/RequireRole';
+import RoleHome from './components/common/RoleHome';
 
 // Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Unprotected Routes*/}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+
+      {/* Protected routes for authenticated users*/}
+      <Route element={<RequireRole roles={['student', 'instructor']} />}>
+        <Route path="/" element={<RoleHome />} />
+      </Route>
+
+      {/* Protected routes for instructors*/}
+      <Route element={<RequireRole roles={['instructor']} />}>
+        <Route
+          path="/instructor-dashboard"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+      </Route>
+
+      {/* Protected routes for students*/}
+      <Route element={<RequireRole roles={['student']} />}></Route>
+
       <Route
-        path="/dashboard"
+        path="/skill-matrix"
         element={
           <ProtectedRoute>
             <Layout>
-              <Dashboard />
+              <SkillMatrixCreator />
             </Layout>
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/skill-matrix" element={
-        <ProtectedRoute>
-          <Layout>
-            <SkillMatrixCreator />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/skill-assignment" element={
-        <ProtectedRoute>
-          <Layout>
-            <SkillAssignmentInterface />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/progress" element={
-        <ProtectedRoute>
-          <Layout>
-            <StudentProgress />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Layout>
-            <Settings />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/badges-test" element={
-        <ProtectedRoute>
-          <Layout>
-            <StudentBadgesTest />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/badges/:studentId" element={
-        <StudentPublicBadges />
-      } />
+      <Route
+        path="/skill-assignment"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SkillAssignmentInterface />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/progress"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentProgress />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/badges-test"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentBadgesTest />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
     </Routes>
   );
 };
@@ -113,4 +122,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;

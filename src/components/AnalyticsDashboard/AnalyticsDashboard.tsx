@@ -1,12 +1,50 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Download, Filter, TrendingUp, Users, Target, Award, BarChart3, AlertTriangle, CheckCircle, RefreshCw, ArrowUpRight } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from 'recharts';
+import {
+  Download,
+  Filter,
+  TrendingUp,
+  Users,
+  Target,
+  Award,
+  BarChart3,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  ArrowUpRight,
+} from 'lucide-react';
 import { analyticsAPI, instructorAPI, canvasInstructorAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
-import { AnalyticsDashboardProps, AnalyticsFilters, PerformanceData, SkillDistributionData, TrendData, RadarData } from '../../types';
+import {
+  AnalyticsDashboardProps,
+  AnalyticsFilters,
+  PerformanceData,
+  SkillDistributionData,
+  TrendData,
+  RadarData,
+} from '../../types';
 import toast from 'react-hot-toast';
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => {
@@ -14,7 +52,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
   const [filters, setFilters] = useState<AnalyticsFilters>({
     skillLevel: 'all',
     performanceRange: 'all',
-    dateRange: '30'
+    dateRange: '30',
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedCourse, setSelectedCourse] = useState<string>(courseId || '');
@@ -39,8 +77,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
       totalStudents: 0,
       averageScore: 0,
       badgesEarned: 0,
-      skillsTracked: 0
-    }
+      skillsTracked: 0,
+    },
   });
 
   const [studentAnalytics, setStudentAnalytics] = useState<{
@@ -57,10 +95,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
   }>({
     students: [],
     skillDistribution: {},
-    averageScores: {}
+    averageScores: {},
   });
 
-  const isInstructor = user?.canvasTokenType === 'instructor';
+  const { isInstructor } = useAuth();
   const [syncing, setSyncing] = useState<boolean>(false);
 
   const loadAnalyticsData = useCallback(async (): Promise<void> => {
@@ -71,7 +109,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
         // Load instructor-specific analytics
         const [courseAnalytics, studentData] = await Promise.all([
           instructorAPI.getCourseStudentAnalytics(selectedCourse),
-          analyticsAPI.getIndividualGraphs(selectedCourse)
+          analyticsAPI.getIndividualGraphs(selectedCourse),
         ]);
 
         const studentAnalyticsData = courseAnalytics.data.analytics;
@@ -84,10 +122,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
           radar: studentData.data.radar || [],
           summary: {
             totalStudents: studentAnalyticsData.students.length,
-            averageScore: studentAnalyticsData.students.reduce((acc, s) => acc + s.progress, 0) / studentAnalyticsData.students.length || 0,
+            averageScore:
+              studentAnalyticsData.students.reduce((acc, s) => acc + s.progress, 0) /
+                studentAnalyticsData.students.length || 0,
             badgesEarned: studentAnalyticsData.students.reduce((acc, s) => acc + s.badgesEarned, 0),
-            skillsTracked: Object.keys(studentAnalyticsData.skillDistribution).length
-          }
+            skillsTracked: Object.keys(studentAnalyticsData.skillDistribution).length,
+          },
         });
       } else {
         // Load regular analytics data
@@ -101,11 +141,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
             totalStudents: 0,
             averageScore: 0,
             badgesEarned: 0,
-            skillsTracked: 0
-          }
+            skillsTracked: 0,
+          },
         });
       }
-
     } catch (error) {
       console.error('Error loading analytics data:', error);
       // Set empty data when API fails
@@ -118,13 +157,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
           totalStudents: 0,
           averageScore: 0,
           badgesEarned: 0,
-          skillsTracked: 0
-        }
+          skillsTracked: 0,
+        },
       });
       setStudentAnalytics({
         students: [],
         skillDistribution: {},
-        averageScores: {}
+        averageScores: {},
       });
       toast.error('Failed to load analytics data. Backend endpoints need to be implemented.');
     } finally {
@@ -153,7 +192,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
   }, [loadAnalyticsData]);
 
   const handleFilterChange = (key: keyof AnalyticsFilters, value: string): void => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const exportData = async (): Promise<void> => {
@@ -187,15 +226,19 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
       ['Badges Awarded', data.badgesAwarded || 0],
     ];
 
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
+    return [headers, ...rows].map((row) => row.join(',')).join('\n');
   };
 
   const getRiskLevelColor = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 bg-green-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'high': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'low':
+        return 'text-green-600 bg-green-100';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'high':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -210,7 +253,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
   }
 
   // Check if we have any data
-  const hasData = data.performance.length > 0 || data.distribution.length > 0 || data.trends.length > 0 || data.radar.length > 0 || studentAnalytics.students.length > 0;
+  const hasData =
+    data.performance.length > 0 ||
+    data.distribution.length > 0 ||
+    data.trends.length > 0 ||
+    data.radar.length > 0 ||
+    studentAnalytics.students.length > 0;
 
   if (!hasData) {
     return (
@@ -226,7 +274,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
               >
                 <option value="">Select a course</option>
-                {courses.map(course => (
+                {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name}
                   </option>
@@ -268,14 +316,12 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
           <p className="text-gray-600 mb-4">
             {isInstructor
               ? 'Select a course above, assign skills to questions, then click Sync Now to populate analytics.'
-              : 'Analytics data will appear here once the backend endpoints are implemented and you have course data.'
-            }
+              : 'Analytics data will appear here once the backend endpoints are implemented and you have course data.'}
           </p>
           <p className="text-sm text-gray-500">
             {isInstructor
               ? 'This feature requires: Canvas integration, skill matrices, and student progress data.'
-              : 'This feature requires: Canvas integration, skill matrices, and student progress data.'
-            }
+              : 'This feature requires: Canvas integration, skill matrices, and student progress data.'}
           </p>
         </div>
       </div>
@@ -329,7 +375,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
               >
                 <option value="">Select a course</option>
-                {courses.map(course => (
+                {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name}
                   </option>
@@ -473,9 +519,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
                       {student.badgesEarned}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskLevelColor(student.riskLevel)}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskLevelColor(student.riskLevel)}`}
+                      >
                         {student.riskLevel === 'low' && <CheckCircle className="w-3 h-3 mr-1" />}
-                        {student.riskLevel === 'medium' && <AlertTriangle className="w-3 h-3 mr-1" />}
+                        {student.riskLevel === 'medium' && (
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                        )}
                         {student.riskLevel === 'high' && <AlertTriangle className="w-3 h-3 mr-1" />}
                         {student.riskLevel}
                       </span>
@@ -553,7 +603,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
             <PolarGrid />
             <PolarAngleAxis dataKey="subject" />
             <PolarRadiusAxis angle={30} domain={[0, 100]} />
-            <Radar name="Proficiency" dataKey="A" stroke="#ffca06" fill="#ffca06" fillOpacity={0.6} />
+            <Radar
+              name="Proficiency"
+              dataKey="A"
+              stroke="#ffca06"
+              fill="#ffca06"
+              fillOpacity={0.6}
+            />
             <Tooltip />
           </RadarChart>
         </ResponsiveContainer>
@@ -562,4 +618,4 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ courseId }) => 
   );
 };
 
-export default AnalyticsDashboard; 
+export default AnalyticsDashboard;

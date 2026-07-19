@@ -1,9 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard';
+import InstructorDashboard from './pages/InstructorDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
@@ -16,86 +16,70 @@ import StudentPublicBadges from './pages/StudentPublicBadges';
 import RequireRole from './components/common/RequireRole';
 import RoleHome from './components/common/RoleHome';
 
-// Protected Route Component
-
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Unprotected Routes*/}
+      {/* Public routes - no login required */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
 
-      {/* Protected routes for authenticated users*/}
+      {/* Either role - just needs to be logged in */}
       <Route element={<RequireRole roles={['student', 'instructor']} />}>
         <Route path="/" element={<RoleHome />} />
-      </Route>
-
-      {/* Protected routes for instructors*/}
-      <Route element={<RequireRole roles={['instructor']} />}>
         <Route
-          path="/instructor-dashboard"
+          path="/settings"
           element={
             <Layout>
-              <Dashboard />
+              <Settings />
             </Layout>
           }
         />
       </Route>
 
-      {/* Protected routes for students*/}
-      <Route element={<RequireRole roles={['student']} />}></Route>
-
-      <Route
-        path="/skill-matrix"
-        element={
-          <ProtectedRoute>
+      {/* Instructor only */}
+      <Route element={<RequireRole roles={['instructor']} />}>
+        <Route
+          path="/instructor-dashboard"
+          element={
+            <Layout>
+              <InstructorDashboard />
+            </Layout>
+          }
+        />
+        <Route
+          path="/skill-matrix"
+          element={
             <Layout>
               <SkillMatrixCreator />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/skill-assignment"
-        element={
-          <ProtectedRoute>
+          }
+        />
+        <Route
+          path="/skill-assignment"
+          element={
             <Layout>
               <SkillAssignmentInterface />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/progress"
-        element={
-          <ProtectedRoute>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
             <Layout>
               <StudentProgress />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Settings />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/badges-test"
-        element={
-          <ProtectedRoute>
+          }
+        />
+        <Route
+          path="/badges-test"
+          element={
             <Layout>
               <StudentBadgesTest />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
+          }
+        />
+      </Route>
     </Routes>
   );
 };

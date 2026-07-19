@@ -11,6 +11,8 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   backendAvailable: boolean;
+  isInstructor: boolean;
+  isStudent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -181,6 +183,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     isAuthenticated: !!user,
     backendAvailable,
+    isInstructor,
+    isStudent,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

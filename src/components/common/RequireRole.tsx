@@ -27,7 +27,7 @@ function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
   if (roles && !roles.some((r) => r === user!.role)) {
     return (
       <Navigate
-        to={user!.role === 'instructor' ? '/instructor-dashboard' : '/settings'}
+        to={user!.role === 'instructor' ? '/instructor-dashboard' : '/student-dashboard'}
         replace
       />
     );

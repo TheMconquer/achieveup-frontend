@@ -8,7 +8,7 @@ const RoleHome: React.FC = () => {
   const { user } = useAuth();
   return (
     <Navigate
-      to={user?.role === 'instructor' ? '/instructor-dashboard' : '/settings'}
+      to={user?.role === 'instructor' ? '/instructor-dashboard' : '/student-dashboard'}
       replace
     />
   );

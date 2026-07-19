@@ -80,6 +80,9 @@ const AppRoutes: React.FC = () => {
           }
         />
       </Route>
+
+      {/* Student only */}
+      <Route element={<RequireRole roles={['student']} />}></Route>
     </Routes>
   );
 };

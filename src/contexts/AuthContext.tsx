@@ -11,6 +11,8 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   backendAvailable: boolean;
+  isInstructor: boolean;
+  isStudent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +33,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [backendAvailable, setBackendAvailable] = useState(true);
+
+  const isStudent = user?.role === 'student';
+  const isInstructor = user?.role === 'instructor';
 
   // Check authentication status on app load
   const checkAuthStatus = async () => {
@@ -178,6 +183,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     isAuthenticated: !!user,
     backendAvailable,
+    isInstructor,
+    isStudent,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

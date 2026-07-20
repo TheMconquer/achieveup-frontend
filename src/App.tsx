@@ -1,7 +1,7 @@
-import React from 'react'; 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import InstructorDashboard from './pages/InstructorDashboard';
 import Login from './pages/Login';
@@ -13,29 +13,13 @@ import SkillMatrixCreator from './components/SkillMatrixCreator/SkillMatrixCreat
 import SkillAssignmentInterface from './components/SkillAssignmentInterface/SkillAssignmentInterface';
 import StudentBadgesTest from './components/StudentBadgesTest/StudentBadgesTest';
 import StudentPublicBadges from './pages/StudentPublicBadges';
-
-// Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
+import RequireRole from './components/common/RequireRole';
+import RoleHome from './components/common/RoleHome';
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Public routes - no login required */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route

@@ -18,6 +18,8 @@ const mockAuthContext = {
   login: jest.fn(),
   signup: mockSignup,
   refreshUser: jest.fn(),
+  isInstructor: false,
+  isStudent: false,
 };
 
 jest.mock('../contexts/AuthContext', () => ({

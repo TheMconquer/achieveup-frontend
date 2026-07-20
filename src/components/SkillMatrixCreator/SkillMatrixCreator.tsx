@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { BookOpen, Brain, Save, Edit2, Trash2, Plus, CheckCircle, AlertCircle, Lightbulb } from 'lucide-react';
+import {
+  BookOpen,
+  Brain,
+  Save,
+  Edit2,
+  Trash2,
+  Plus,
+  CheckCircle,
+  AlertCircle,
+  Lightbulb,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { skillMatrixAPI, canvasAPI, courseDescriptionAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,10 +37,7 @@ interface SkillSuggestion {
   description: string;
 }
 
-const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ 
-  courseId, 
-  onMatrixCreated 
-}) => {
+const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMatrixCreated }) => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<CanvasCourse[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>(courseId || '');
@@ -41,16 +48,18 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({
   const [finalSkills, setFinalSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [step, setStep] = useState<'select-course' | 'get-suggestions' | 'review-skills'>('select-course');
+  const [step, setStep] = useState<'select-course' | 'get-suggestions' | 'review-skills'>(
+    'select-course'
+  );
   const [editingSkill, setEditingSkill] = useState<number | null>(null);
   const [newSkill, setNewSkill] = useState('');
-  
+
   // New state for handling existing matrices
   const [existingMatrices, setExistingMatrices] = useState<SkillMatrix[]>([]);
   const [showExistingMatrices, setShowExistingMatrices] = useState(false);
   const [loadingExistingMatrices, setLoadingExistingMatrices] = useState(false);
   const [showImportBox, setShowImportBox] = useState(true);
-  const isInstructor = user?.canvasTokenType === 'instructor';
+  const { isInstructor } = useAuth();
 
   // inline edit state
   const [editingMatrixId, setEditingMatrixId] = useState<string | null>(null);
@@ -63,76 +72,76 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({
   const [courseDescriptionLoading, setCourseDescriptionLoading] = useState(false);
   const [courseDescriptionSaving, setCourseDescriptionSaving] = useState(false);
 
-
   const startInlineEdit = (matrix: SkillMatrix) => {
-  setEditingMatrixId(matrix._id);
-  setEditName(matrix.matrix_name);
-  setEditSkills([...matrix.skills]);
-  setEditNewSkill('');
-};
+    setEditingMatrixId(matrix._id);
+    setEditName(matrix.matrix_name);
+    setEditSkills([...matrix.skills]);
+    setEditNewSkill('');
+  };
 
-const cancelInlineEdit = () => {
-  setEditingMatrixId(null);
-  setEditName('');
-  setEditSkills([]);
-  setEditNewSkill('');
-};
+  const cancelInlineEdit = () => {
+    setEditingMatrixId(null);
+    setEditName('');
+    setEditSkills([]);
+    setEditNewSkill('');
+  };
 
-const addEditSkill = () => {
-  const s = editNewSkill.trim();
-  if (!s) return;
+  const addEditSkill = () => {
+    const s = editNewSkill.trim();
+    if (!s) return;
 
-  if (editSkills.includes(s)) {
-    toast.error('That skill is already in the list');
-    return;
-  }
+    if (editSkills.includes(s)) {
+      toast.error('That skill is already in the list');
+      return;
+    }
 
-  setEditSkills(prev => [...prev, s]);
-  setEditNewSkill('');
-};
+    setEditSkills((prev) => [...prev, s]);
+    setEditNewSkill('');
+  };
 
-const removeEditSkill = (idx: number) => {
-  setEditSkills(prev => prev.filter((_, i) => i !== idx));
-};
+  const removeEditSkill = (idx: number) => {
+    setEditSkills((prev) => prev.filter((_, i) => i !== idx));
+  };
 
-const saveInlineEdit = async (matrixId: string) => {
-  if (!editName.trim()) {
-    toast.error('Matrix name is required');
-    return;
-  }
-  if (editSkills.length === 0) {
-    toast.error('Add at least one skill');
-    return;
-  }
+  const saveInlineEdit = async (matrixId: string) => {
+    if (!editName.trim()) {
+      toast.error('Matrix name is required');
+      return;
+    }
+    if (editSkills.length === 0) {
+      toast.error('Add at least one skill');
+      return;
+    }
 
-  try {
-    setSavingEdit(true);
+    try {
+      setSavingEdit(true);
 
-    // backend expects PUT /achieveup/matrix/<matrix_id> with { skills: [...] }
-    // If your backend also supports updating name, include it — otherwise remove matrix_name.
-    const payload: any = { skills: editSkills };
+      // backend expects PUT /achieveup/matrix/<matrix_id> with { skills: [...] }
+      // If your backend also supports updating name, include it — otherwise remove matrix_name.
+      const payload: any = { skills: editSkills };
 
-    // OPTIONAL: only include this if your backend update route supports it
-    payload.matrix_name = editName.trim();
+      // OPTIONAL: only include this if your backend update route supports it
+      payload.matrix_name = editName.trim();
 
-    const res = await skillMatrixAPI.update(matrixId, payload);
+      const res = await skillMatrixAPI.update(matrixId, payload);
 
-    // update the list locally
-    setExistingMatrices(prev =>
-      prev.map(m => (m._id === matrixId ? { ...m, ...res.data } : m))
-    );
+      // update the list locally
+      setExistingMatrices((prev) =>
+        prev.map((m) => (m._id === matrixId ? { ...m, ...res.data } : m))
+      );
 
-    toast.success('Matrix updated');
-    cancelInlineEdit();
-  } catch (error: any) {
-    console.error('Save edit error:', error);
-    toast.error(error.response?.data?.message || 'Failed to update matrix');
-  } finally {
-    setSavingEdit(false);
-  }
-};
+      toast.success('Matrix updated');
+      cancelInlineEdit();
+    } catch (error: any) {
+      console.error('Save edit error:', error);
+      toast.error(error.response?.data?.message || 'Failed to update matrix');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
-  const getLegacyCourseDescriptionStorageKey = (selectedCourseId: string) => `course_description_${selectedCourseId}`;
+  const getLegacyCourseDescriptionStorageKey = (selectedCourseId: string) =>
+    `course_description_${selectedCourseId}`;
 
   const openCourseDescriptionModal = async () => {
     if (!selectedCourse) {
@@ -152,12 +161,14 @@ const saveInlineEdit = async (matrixId: string) => {
         setCourseDescriptionDraft(persistedDescription);
       } else {
         // Temporary migration fallback for instructors who already saved local drafts.
-        const legacyDescription = localStorage.getItem(getLegacyCourseDescriptionStorageKey(selectedCourse)) || '';
+        const legacyDescription =
+          localStorage.getItem(getLegacyCourseDescriptionStorageKey(selectedCourse)) || '';
         setCourseDescriptionDraft(legacyDescription);
       }
     } catch (error) {
       console.error('Failed to load course description:', error);
-      const legacyDescription = localStorage.getItem(getLegacyCourseDescriptionStorageKey(selectedCourse)) || '';
+      const legacyDescription =
+        localStorage.getItem(getLegacyCourseDescriptionStorageKey(selectedCourse)) || '';
       setCourseDescriptionDraft(legacyDescription);
       toast.error('Failed to load saved description from server');
     } finally {
@@ -192,19 +203,17 @@ const saveInlineEdit = async (matrixId: string) => {
     }
   };
 
-
-  
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue
+    setValue,
   } = useForm<{ matrixName: string; description?: string }>();
 
   const loadCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = isInstructor 
+      const response = isInstructor
         ? await canvasAPI.getInstructorCourses()
         : await canvasAPI.getCourses();
       setCourses(response.data);
@@ -226,36 +235,37 @@ const saveInlineEdit = async (matrixId: string) => {
   };
 
   const getBaseCourseCode = (courseCode?: string) => {
-  if (!courseCode) return '';
-  return courseCode.split('-')[0];
+    if (!courseCode) return '';
+    return courseCode.split('-')[0];
   };
 
   const findPastCourse = (selected: CanvasCourse) => {
     const base = getBaseCourseCode(selected.code);
     const section = getSection(selected.code);
 
-    const matches = courses.filter(c =>
-    getBaseCourseCode(c.code) === base &&
-    getSection(c.code) === section &&
-    c.id !== selected.id &&
-    c.term < selected.term
-  );
+    const matches = courses.filter(
+      (c) =>
+        getBaseCourseCode(c.code) === base &&
+        getSection(c.code) === section &&
+        c.id !== selected.id &&
+        c.term < selected.term
+    );
 
-  matches.sort((a, b) => b.term - a.term);
+    matches.sort((a, b) => b.term - a.term);
 
-  return matches[0];
+    return matches[0];
   };
 
   const handleCourseSelect = (courseId: string) => {
-    const course = courses.find(c => c.id === courseId);
+    const course = courses.find((c) => c.id === courseId);
     setSelectedCourse(courseId);
     setSelectedCourseData(course || null);
-    
+
     if (course) {
       // Generate initial matrix name that doesn't conflict with existing ones
       const baseName = course.name;
       let initialMatrixName: string;
-      
+
       // We'll check against existing matrices once they're loaded
       // For now, start with the base name
       initialMatrixName = `${baseName} - Skills Matrix`;
@@ -265,38 +275,38 @@ const saveInlineEdit = async (matrixId: string) => {
       loadExistingMatrices(courseId);
     }
     const pastCourse = course ? findPastCourse(course) : undefined;
-    if(pastCourse){
+    if (pastCourse) {
       setSelectedPastCourse(pastCourse.id);
       setSelectedPastCourseData(pastCourse);
-    }  
+    }
   };
 
   const loadExistingMatrices = async (courseId: string) => {
     try {
       setLoadingExistingMatrices(true);
       console.log(`Loading existing skill matrices for course: ${courseId}`);
-      
+
       const response = await skillMatrixAPI.getAllByCourse(courseId);
       console.log(`Existing matrices API response for course ${courseId}:`, response.data);
 
       const statusResponse = await skillMatrixAPI.getImportStatus(courseId);
       const matricesImported = statusResponse.data.matrices_imported;
       setShowImportBox(!matricesImported);
-      
+
       setExistingMatrices(response.data);
-      
+
       // Show existing matrices section if any exist
       if (response.data.length > 0) {
         console.log(`Found ${response.data.length} existing matrices`);
         setShowExistingMatrices(true);
-        
+
         // Auto-adjust matrix name if it conflicts with existing ones
         if (selectedCourseData) {
           const baseName = selectedCourseData.name;
-          const existingNames = response.data.map(m => m.matrix_name);
+          const existingNames = response.data.map((m) => m.matrix_name);
           let newMatrixName: string;
           let counter = 1;
-          
+
           do {
             if (counter === 1) {
               newMatrixName = `${baseName} - Skills Matrix`;
@@ -305,7 +315,7 @@ const saveInlineEdit = async (matrixId: string) => {
             }
             counter++;
           } while (existingNames.includes(newMatrixName) && counter < 50);
-          
+
           console.log(`Auto-generated unique matrix name: ${newMatrixName}`);
           setValue('matrixName', newMatrixName);
         }
@@ -320,12 +330,14 @@ const saveInlineEdit = async (matrixId: string) => {
         statusText: error.response?.statusText,
         data: error.response?.data,
         url: error.response?.config?.url,
-        courseId: courseId
+        courseId: courseId,
       });
-      
+
       // Provide more specific error messages based on status
       if (error.response?.status === 404) {
-        console.log(`404 - No existing matrices found for course ${courseId} (this is normal for new courses)`);
+        console.log(
+          `404 - No existing matrices found for course ${courseId} (this is normal for new courses)`
+        );
         // Don't show error toast for 404 - this is expected for courses without matrices
       } else if (error.response?.status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
@@ -337,7 +349,7 @@ const saveInlineEdit = async (matrixId: string) => {
         console.warn('Failed to load existing matrices:', error.message);
         toast.error(`Failed to load existing matrices: ${error.message}`);
       }
-      
+
       setExistingMatrices([]);
       setShowExistingMatrices(false);
     } finally {
@@ -345,29 +357,22 @@ const saveInlineEdit = async (matrixId: string) => {
     }
   };
 
-
   const handleImportFromPastCourse = async (pastCourseId: string) => {
-  if (!selectedCourse) {
-    toast.error("No target course selected");
-    return;
-  }
+    if (!selectedCourse) {
+      toast.error('No target course selected');
+      return;
+    }
 
-  try {
-    const response = await skillMatrixAPI.importMatricesFromCourse(
-      pastCourseId,
-      selectedCourse
-    );
+    try {
+      const response = await skillMatrixAPI.importMatricesFromCourse(pastCourseId, selectedCourse);
 
-    toast.success(
-      `Imported ${response.data.imported_count} skill matrix(s) from past course`
-    );
-    setShowImportBox(false)
-    // refresh matrices list for the current course
-    loadExistingMatrices(selectedCourse);
-
+      toast.success(`Imported ${response.data.imported_count} skill matrix(s) from past course`);
+      setShowImportBox(false);
+      // refresh matrices list for the current course
+      loadExistingMatrices(selectedCourse);
     } catch (error) {
-      console.error("Import matrices failed:", error);
-      toast.error("Failed to import matrices from past course");
+      console.error('Import matrices failed:', error);
+      toast.error('Failed to import matrices from past course');
     }
   };
 
@@ -386,12 +391,13 @@ const saveInlineEdit = async (matrixId: string) => {
     try {
       // Handle potential missing or differently named courseCode field
       // Backend has now fixed this, but keep fallbacks for robustness
-      let courseCode = selectedCourseData.code || 
-                      (selectedCourseData as any).course_code || 
-                      (selectedCourseData as any).courseCode || 
-                      (selectedCourseData as any).sis_course_id ||
-                      'UNKNOWN';
-      
+      let courseCode =
+        selectedCourseData.code ||
+        (selectedCourseData as any).course_code ||
+        (selectedCourseData as any).courseCode ||
+        (selectedCourseData as any).sis_course_id ||
+        'UNKNOWN';
+
       // If still no course code, try to extract from course name or use a default
       if (courseCode === 'UNKNOWN' || !courseCode) {
         console.warn('No course code found, attempting to generate one from course name');
@@ -400,7 +406,7 @@ const saveInlineEdit = async (matrixId: string) => {
         courseCode = courseName.replace(/\s+/g, '').substring(0, 8).toUpperCase() || 'COURSE';
         console.log('Generated course code:', courseCode);
       }
-      
+
       let persistedCourseDescription = '';
       try {
         const descriptionResponse = await courseDescriptionAPI.get(selectedCourse);
@@ -414,124 +420,128 @@ const saveInlineEdit = async (matrixId: string) => {
         courseId: selectedCourse,
         courseName: selectedCourseData.name,
         courseCode: courseCode,
-        courseDescription: persistedCourseDescription || selectedCourseData.description || `Course: ${selectedCourseData.name}`
+        courseDescription:
+          persistedCourseDescription ||
+          selectedCourseData.description ||
+          `Course: ${selectedCourseData.name}`,
       };
 
       console.log('Sending skill suggestions request:', requestData);
 
       // Call backend for AI skill suggestions
       const response = await skillMatrixAPI.getSkillSuggestions(requestData);
-      
+
       console.log('AI skill suggestions response:', response.data);
-      
+
       // Handle different possible response formats with enhanced parsing
       let suggestions: SkillSuggestion[] = [];
-      
+
       if (Array.isArray(response.data)) {
         suggestions = response.data;
       }
-      
+
       // Ensure suggestions have the right format
-      suggestions = suggestions.map((item: any) => {
-        if (typeof item === 'string') {
-          return {
-            skill: item,
-            relevance: 0.8,
-            description: `Suggested skill for ${selectedCourseData.name}`
-          };
-        } else if (item && typeof item === 'object') {
-          return {
-            skill: item.skill || item.name || 'Unknown Skill',
-            relevance: item.relevance || item.confidence || 0.8,
-            description: item.description || `Suggested skill for ${selectedCourseData.name}`
-          };
-        }
-        return item;
-      }).filter(item => item && item.skill);
-      
+      suggestions = suggestions
+        .map((item: any) => {
+          if (typeof item === 'string') {
+            return {
+              skill: item,
+              relevance: 0.8,
+              description: `Suggested skill for ${selectedCourseData.name}`,
+            };
+          } else if (item && typeof item === 'object') {
+            return {
+              skill: item.skill || item.name || 'Unknown Skill',
+              relevance: item.relevance || item.confidence || 0.8,
+              description: item.description || `Suggested skill for ${selectedCourseData.name}`,
+            };
+          }
+          return item;
+        })
+        .filter((item) => item && item.skill);
+
       // If no suggestions returned, inform user of failure, return false
       if (suggestions.length === 0) {
         console.log('No AI suggestions returned');
-        toast.error(`AI failed to return suggestions. Please try manually assigning suggestions or try again shortly.`);
-        return; // Call failed, return early. 
+        toast.error(
+          `AI failed to return suggestions. Please try manually assigning suggestions or try again shortly.`
+        );
+        return; // Call failed, return early.
       } else {
         toast.success(`Got ${suggestions.length} skill suggestions for ${selectedCourseData.name}`);
       }
-      
+
       setSkillSuggestions(suggestions);
-      
+
       // Auto-select all suggestions as starting point
       const suggestedSkills = suggestions.map((s: SkillSuggestion) => s.skill);
       setFinalSkills(suggestedSkills);
-      
+
       setStep('review-skills');
-      
     } catch (error: any) {
       console.error('Error getting skill suggestions:', error);
-      
+
       // API failed, inform user to do manual entry or try again
       // Detailed error handling based on status code
       if (error.response?.status === 400) {
-        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Bad request format';
-        toast.error(`Skill suggestions failed (400): ${errorMsg}. Please try again or enter skills manually.`);
+        const errorMsg =
+          error.response?.data?.message || error.response?.data?.error || 'Bad request format';
+        toast.error(
+          `Skill suggestions failed (400): ${errorMsg}. Please try again or enter skills manually.`
+        );
       } else if (error.response?.status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
       } else if (error.response?.status === 403) {
         toast.error('Access denied. Instructor permissions required.');
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        toast.error(`Failed to get skill suggestions: ${errorMessage}. Please try again or enter skills manually.`);
+        toast.error(
+          `Failed to get skill suggestions: ${errorMessage}. Please try again or enter skills manually.`
+        );
       }
-    } finally { 
+    } finally {
       setSuggestionsLoading(false);
-    } 
+    }
   };
 
   const toggleSkill = (skill: string) => {
-    setFinalSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
+    setFinalSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
     );
   };
 
   const handleDeleteMatrix = async (matrixId: string) => {
-  try {
-    // optional confirm
-    const ok = window.confirm("Delete this skill matrix? This can't be undone.");
-    if (!ok) return;
+    try {
+      // optional confirm
+      const ok = window.confirm("Delete this skill matrix? This can't be undone.");
+      if (!ok) return;
 
-    await skillMatrixAPI.delete(matrixId);
+      await skillMatrixAPI.delete(matrixId);
 
-    // remove from UI immediately
-    setExistingMatrices((prev) => prev.filter((m) => m._id !== matrixId));
+      // remove from UI immediately
+      setExistingMatrices((prev) => prev.filter((m) => m._id !== matrixId));
 
-    toast.success("Skill matrix deleted");
-  } catch (error: any) {
-    console.error("Delete matrix error:", error);
-    toast.error(
-      error.response?.data?.message || "Failed to delete matrix. Please try again."
-    );
-  }
-};
-
+      toast.success('Skill matrix deleted');
+    } catch (error: any) {
+      console.error('Delete matrix error:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete matrix. Please try again.');
+    }
+  };
 
   const editSkill = (index: number, newValue: string) => {
     if (newValue.trim()) {
-      setFinalSkills(prev => 
-        prev.map((skill, i) => i === index ? newValue.trim() : skill)
-      );
+      setFinalSkills((prev) => prev.map((skill, i) => (i === index ? newValue.trim() : skill)));
     }
     setEditingSkill(null);
   };
 
   const removeSkill = (index: number) => {
-    setFinalSkills(prev => prev.filter((_, i) => i !== index));
+    setFinalSkills((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addCustomSkill = () => {
     if (newSkill.trim() && !finalSkills.includes(newSkill.trim())) {
-      setFinalSkills(prev => [...prev, newSkill.trim()]);
+      setFinalSkills((prev) => [...prev, newSkill.trim()]);
       setNewSkill('');
       toast.success(`Added "${newSkill.trim()}" to skills list`);
     } else if (finalSkills.includes(newSkill.trim())) {
@@ -556,7 +566,7 @@ const saveInlineEdit = async (matrixId: string) => {
         course_id: selectedCourse,
         matrix_name: data.matrixName,
         skills: finalSkills,
-        description: data.description
+        description: data.description,
       };
 
       // Log the exact request being sent
@@ -574,15 +584,15 @@ const saveInlineEdit = async (matrixId: string) => {
       }
 
       const response = await skillMatrixAPI.create(matrixData);
-      
+
       console.log('Skill matrix creation response:', response.data);
-      
+
       onMatrixCreated?.(response.data);
       toast.success('Skill matrix created successfully!');
-      
+
       // Refresh existing matrices list
       loadExistingMatrices(selectedCourse);
-      
+
       // Reset form for creating another matrix
       setStep('get-suggestions');
       setFinalSkills([]);
@@ -590,10 +600,10 @@ const saveInlineEdit = async (matrixId: string) => {
       if (selectedCourseData) {
         // Generate a better auto-incremented name
         const baseName = selectedCourseData.name;
-        const existingNames = existingMatrices.map(m => m.matrix_name);
+        const existingNames = existingMatrices.map((m) => m.matrix_name);
         let newMatrixName: string;
         let counter = 1;
-        
+
         do {
           if (counter === 1) {
             newMatrixName = `${baseName} - Skills Matrix`;
@@ -602,22 +612,22 @@ const saveInlineEdit = async (matrixId: string) => {
           }
           counter++;
         } while (existingNames.includes(newMatrixName) && counter < 50);
-        
+
         setValue('matrixName', newMatrixName);
       }
       setValue('description', '');
     } catch (error: any) {
       console.error('Error creating skill matrix:', error);
-      
+
       // Detailed error handling based on status code
       if (error.response?.status === 409) {
         // Generate a better unique name suggestion
         const baseName = data.matrixName.replace(/\s*\(\d+\/\d+\/\d+\).*$/, ''); // Remove any existing date suffix
-        const existingNames = existingMatrices.map(m => m.matrix_name);
-        
+        const existingNames = existingMatrices.map((m) => m.matrix_name);
+
         let suggestedName: string;
         let counter = 1;
-        
+
         // Try different naming strategies
         do {
           if (counter === 1) {
@@ -632,28 +642,35 @@ const saveInlineEdit = async (matrixId: string) => {
           }
           counter++;
         } while (existingNames.includes(suggestedName) && counter < 20);
-        
+
         // Fallback: add random suffix if all else fails
         if (existingNames.includes(suggestedName)) {
           const randomSuffix = Math.random().toString(36).substring(2, 8);
           suggestedName = `${baseName} (${randomSuffix})`;
         }
-        
+
         toast.error(
           <div>
-            <p><strong>Matrix name already exists!</strong></p>
-            <p className="text-sm mt-1">A skill matrix with the name "{data.matrixName}" already exists for this course.</p>
-            <p className="text-sm mt-1">Suggestion: Try "{suggestedName}" or choose a different name.</p>
+            <p>
+              <strong>Matrix name already exists!</strong>
+            </p>
+            <p className="text-sm mt-1">
+              A skill matrix with the name "{data.matrixName}" already exists for this course.
+            </p>
+            <p className="text-sm mt-1">
+              Suggestion: Try "{suggestedName}" or choose a different name.
+            </p>
             {existingMatrices.length === 0 && (
               <p className="text-xs text-gray-600 mt-2 bg-yellow-50 p-2 rounded">
-                ⚠️ <strong>Backend Issue:</strong> The frontend cannot see existing matrices because 
-                GET /achieveup/matrix/course/{selectedCourse} returns 404. The backend team needs to implement this endpoint.
+                ⚠️ <strong>Backend Issue:</strong> The frontend cannot see existing matrices because
+                GET /achieveup/matrix/course/{selectedCourse} returns 404. The backend team needs to
+                implement this endpoint.
               </p>
             )}
           </div>,
           { duration: 8000 }
         );
-        
+
         console.error('409 Conflict details:', {
           status: error.response.status,
           statusText: error.response.statusText,
@@ -663,28 +680,33 @@ const saveInlineEdit = async (matrixId: string) => {
           config: {
             url: error.response.config?.url,
             method: error.response.config?.method,
-            data: error.response.config?.data
+            data: error.response.config?.data,
           },
           possibleCauses: [
             'A skill matrix with this name already exists for this course',
             'Duplicate course_id + matrix_name combination',
-            'Backend validation rules preventing duplicate entries'
+            'Backend validation rules preventing duplicate entries',
           ],
           debugInfo: {
             frontendKnowsAbout: existingNames.length,
             frontendMatrices: existingNames,
             backendRejectsName: data.matrixName,
             courseId: selectedCourse,
-            missingEndpoint: existingNames.length === 0 ? 'GET /achieveup/matrix/course/{courseId} likely returns 404' : 'Endpoint working'
-          }
+            missingEndpoint:
+              existingNames.length === 0
+                ? 'GET /achieveup/matrix/course/{courseId} likely returns 404'
+                : 'Endpoint working',
+          },
         });
-        
+
         // Update the form with suggested name
         setValue('matrixName', suggestedName);
-        
       } else if (error.response?.status === 400) {
-        const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Bad request format';
-        toast.error(`Skill matrix creation failed (400): ${errorMsg}. Check console for request details.`);
+        const errorMsg =
+          error.response?.data?.message || error.response?.data?.error || 'Bad request format';
+        toast.error(
+          `Skill matrix creation failed (400): ${errorMsg}. Check console for request details.`
+        );
         console.error('400 Error details:', {
           status: error.response.status,
           statusText: error.response.statusText,
@@ -692,8 +714,8 @@ const saveInlineEdit = async (matrixId: string) => {
           config: {
             url: error.response.config?.url,
             method: error.response.config?.method,
-            data: error.response.config?.data
-          }
+            data: error.response.config?.data,
+          },
         });
       } else if (error.response?.status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
@@ -748,7 +770,7 @@ const saveInlineEdit = async (matrixId: string) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {courses.map(course => (
+                  {courses.map((course) => (
                     <div
                       key={course.id}
                       onClick={() => handleCourseSelect(course.id)}
@@ -766,23 +788,23 @@ const saveInlineEdit = async (matrixId: string) => {
             </div>
           )}
 
-          {showImportBox && selectedPastCourseData &&(
+          {showImportBox && selectedPastCourseData && (
             <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-blue-900">
-                    Similar Course Found
-                  </h4>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                <h4 className="text-lg font-medium text-blue-900">Similar Course Found</h4>
+                <button
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   onClick={() => handleImportFromPastCourse(selectedPastCourse)}
-                  >Import Matrices From {selectedPastCourseData?.name}
-                  </button>
+                >
+                  Import Matrices From {selectedPastCourseData?.name}
+                </button>
               </div>
             </div>
           )}
 
-          {selectedCourseData &&(
+          {selectedCourseData && (
             <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-medium text-blue-900">
                   Existing Skill Matrices for {selectedCourseData.name}
                 </h4>
@@ -793,193 +815,196 @@ const saveInlineEdit = async (matrixId: string) => {
                   {showExistingMatrices ? 'Hide' : 'Show'} ({existingMatrices.length})
                 </button>
               </div>
-              
-            {showExistingMatrices && (
-              <>
-                {loadingExistingMatrices ? (
-                  <div className="flex justify-center items-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : existingMatrices.length > 0 ? (
-                  <div className="space-y-3">
-                    {existingMatrices.map((matrix) => {
-                      const isEditingThis = editingMatrixId === matrix._id;
 
-                      return (
-                        <div
-                          key={matrix._id}
-                          className="bg-white rounded-lg p-4 border border-blue-200 relative"
-                        >
-                          {!isEditingThis ? (
-                            // ===================== VIEW MODE =====================
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h5 className="font-medium text-gray-900">{matrix.matrix_name}</h5>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {matrix.skills.length} skills • Created{' '}
-                                  {new Date(matrix.created_at).toLocaleDateString()}
-                                </p>
+              {showExistingMatrices && (
+                <>
+                  {loadingExistingMatrices ? (
+                    <div className="flex justify-center items-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : existingMatrices.length > 0 ? (
+                    <div className="space-y-3">
+                      {existingMatrices.map((matrix) => {
+                        const isEditingThis = editingMatrixId === matrix._id;
 
-                                <div className="mt-2">
-                                  <p className="text-xs text-gray-500 mb-1">Skills:</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {matrix.skills.slice(0, 5).map((skill, skillIndex) => (
-                                      <span
-                                        key={skillIndex}
-                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                                      >
-                                        {skill}
-                                      </span>
-                                    ))}
-                                    {matrix.skills.length > 5 && (
-                                      <span className="text-xs text-gray-500">
-                                        +{matrix.skills.length - 5} more
-                                      </span>
-                                    )}
+                        return (
+                          <div
+                            key={matrix._id}
+                            className="bg-white rounded-lg p-4 border border-blue-200 relative"
+                          >
+                            {!isEditingThis ? (
+                              // ===================== VIEW MODE =====================
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-gray-900">
+                                    {matrix.matrix_name}
+                                  </h5>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {matrix.skills.length} skills • Created{' '}
+                                    {new Date(matrix.created_at).toLocaleDateString()}
+                                  </p>
+
+                                  <div className="mt-2">
+                                    <p className="text-xs text-gray-500 mb-1">Skills:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {matrix.skills.slice(0, 5).map((skill, skillIndex) => (
+                                        <span
+                                          key={skillIndex}
+                                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                        >
+                                          {skill}
+                                        </span>
+                                      ))}
+                                      {matrix.skills.length > 5 && (
+                                        <span className="text-xs text-gray-500">
+                                          +{matrix.skills.length - 5} more
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="ml-4 flex items-center space-x-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFinalSkills([...matrix.skills]);
+                                      setValue('matrixName', `${matrix.matrix_name} (Copy)`);
+                                      setStep('review-skills');
+                                      toast.success(
+                                        'Matrix skills loaded for reference. You can modify and create a new matrix.'
+                                      );
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  >
+                                    Use as Template
+                                  </button>
+
+                                  {/* bottom-right actions */}
+                                  <div className="absolute bottom-3 right-4 flex space-x-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => startInlineEdit(matrix)}
+                                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                    >
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteMatrix(matrix._id)}
+                                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                    >
+                                      Delete
+                                    </button>
                                   </div>
                                 </div>
                               </div>
-
-                              <div className="ml-4 flex items-center space-x-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setFinalSkills([...matrix.skills]);
-                                    setValue('matrixName', `${matrix.matrix_name} (Copy)`);
-                                    setStep('review-skills');
-                                    toast.success(
-                                      'Matrix skills loaded for reference. You can modify and create a new matrix.'
-                                    );
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                >
-                                  Use as Template
-                                </button>
-
-                                {/* bottom-right actions */}
-                                <div className="absolute bottom-3 right-4 flex space-x-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => startInlineEdit(matrix)}
-                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                  >
-                                    Edit
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteMatrix(matrix._id)}
-                                    className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            // ===================== EDIT MODE (INLINE) =====================
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <h5 className="font-medium text-gray-900">Editing Matrix</h5>
-                                <div className="flex gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={cancelInlineEdit}
-                                    className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={savingEdit}
-                                    onClick={() => saveInlineEdit(matrix._id)}
-                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
-                                  >
-                                    {savingEdit ? 'Saving...' : 'Save'}
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* name */}
-                              <div>
-                                <label className="block text-sm text-gray-700 mb-1">Matrix Name</label>
-                                <input
-                                  value={editName}
-                                  onChange={(e) => setEditName(e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                />
-                              </div>
-
-                              {/* skills chips */}
-                              <div>
-                                <label className="block text-sm text-gray-700 mb-1">Skills</label>
-                                <div className="flex flex-wrap gap-2">
-                                  {editSkills.map((skill, i) => (
-                                    <span
-                                      key={`${skill}-${i}`}
-                                      className="inline-flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium"
+                            ) : (
+                              // ===================== EDIT MODE (INLINE) =====================
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium text-gray-900">Editing Matrix</h5>
+                                  <div className="flex gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={cancelInlineEdit}
+                                      className="text-gray-600 hover:text-gray-800 text-sm font-medium"
                                     >
-                                      {skill}
-                                      <button
-                                        type="button"
-                                        onClick={() => removeEditSkill(i)}
-                                        className="text-blue-900 hover:text-blue-950"
-                                        title="Remove"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  ))}
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={savingEdit}
+                                      onClick={() => saveInlineEdit(matrix._id)}
+                                      className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
+                                    >
+                                      {savingEdit ? 'Saving...' : 'Save'}
+                                    </button>
+                                  </div>
                                 </div>
 
-                                {/* add new skill */}
-                                <div className="flex gap-2 mt-3">
+                                {/* name */}
+                                <div>
+                                  <label className="block text-sm text-gray-700 mb-1">
+                                    Matrix Name
+                                  </label>
                                   <input
-                                    value={editNewSkill}
-                                    onChange={(e) => setEditNewSkill(e.target.value)}
-                                    placeholder="Add a skill..."
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        addEditSkill();
-                                      }
-                                    }}
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={addEditSkill}
-                                    disabled={!editNewSkill.trim()}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
-                                  >
-                                    Add
-                                  </button>
+                                </div>
+
+                                {/* skills chips */}
+                                <div>
+                                  <label className="block text-sm text-gray-700 mb-1">Skills</label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {editSkills.map((skill, i) => (
+                                      <span
+                                        key={`${skill}-${i}`}
+                                        className="inline-flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium"
+                                      >
+                                        {skill}
+                                        <button
+                                          type="button"
+                                          onClick={() => removeEditSkill(i)}
+                                          className="text-blue-900 hover:text-blue-950"
+                                          title="Remove"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* add new skill */}
+                                  <div className="flex gap-2 mt-3">
+                                    <input
+                                      value={editNewSkill}
+                                      onChange={(e) => setEditNewSkill(e.target.value)}
+                                      placeholder="Add a skill..."
+                                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          e.preventDefault();
+                                          addEditSkill();
+                                        }
+                                      }}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={addEditSkill}
+                                      disabled={!editNewSkill.trim()}
+                                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
+                                    >
+                                      Add
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-blue-700 text-sm">
+                      No existing matrices found for this course.
+                    </p>
+                  )}
+
+                  <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Multiple matrices per course:</strong> You can create multiple skill
+                      matrices for the same course with different focuses (e.g., "Midterm Skills",
+                      "Final Project Skills", "Lab Skills").
+                    </p>
                   </div>
-                ) : (
-                  <p className="text-blue-700 text-sm">No existing matrices found for this course.</p>
-                )}
-
-                
-                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Multiple matrices per course:</strong> You can create multiple skill matrices for the same course 
-                    with different focuses (e.g., "Midterm Skills", "Final Project Skills", "Lab Skills").
-                  </p>
-                </div>
-              </>
-            )}
+                </>
+              )}
             </div>
-            
-        )}
-
-         
+          )}
 
           {/* Step 2: Get Skill Suggestions */}
           {step === 'get-suggestions' && selectedCourseData && (
@@ -988,7 +1013,7 @@ const saveInlineEdit = async (matrixId: string) => {
                 <Brain className="w-5 h-5 mr-2 text-purple-600" />
                 Step 2: Get Skill Suggestions
               </h3>
-              
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h4 className="font-medium text-blue-900 mb-2">Selected Course</h4>
                 <p className="text-blue-800">{selectedCourseData.name}</p>
@@ -997,11 +1022,7 @@ const saveInlineEdit = async (matrixId: string) => {
                   <p className="text-xs text-blue-600 mt-2">{selectedCourseData.description}</p>
                 )}
                 <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={openCourseDescriptionModal}
-                  >
+                  <Button type="button" variant="outline" onClick={openCourseDescriptionModal}>
                     Edit Course Description
                   </Button>
                 </div>
@@ -1009,10 +1030,10 @@ const saveInlineEdit = async (matrixId: string) => {
 
               <div className="text-center">
                 <p className="text-gray-600 mb-4">
-                  Our AI will analyze "{selectedCourseData.name}" and suggest relevant skills 
-                  that students should develop in this course.
+                  Our AI will analyze "{selectedCourseData.name}" and suggest relevant skills that
+                  students should develop in this course.
                 </p>
-                
+
                 {isInstructor ? (
                   <Button
                     type="button"
@@ -1022,7 +1043,9 @@ const saveInlineEdit = async (matrixId: string) => {
                     className="flex items-center"
                   >
                     <Brain className="w-4 h-4 mr-2" />
-                    {suggestionsLoading ? 'Getting Skill Suggestions...' : 'Get AI Skill Suggestions'}
+                    {suggestionsLoading
+                      ? 'Getting Skill Suggestions...'
+                      : 'Get AI Skill Suggestions'}
                   </Button>
                 ) : (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -1034,7 +1057,7 @@ const saveInlineEdit = async (matrixId: string) => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="mt-4">
                   <Button
                     type="button"
@@ -1062,9 +1085,7 @@ const saveInlineEdit = async (matrixId: string) => {
 
               {/* Matrix Name */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Matrix Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Matrix Name</label>
                 <input
                   {...register('matrixName', { required: 'Matrix name is required' })}
                   type="text"
@@ -1109,16 +1130,18 @@ const saveInlineEdit = async (matrixId: string) => {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-gray-900">{suggestion.skill}</span>
-                          <CheckCircle className={`w-4 h-4 ${
-                            finalSkills.includes(suggestion.skill)
-                              ? 'text-green-600'
-                              : 'text-gray-300'
-                          }`} />
+                          <CheckCircle
+                            className={`w-4 h-4 ${
+                              finalSkills.includes(suggestion.skill)
+                                ? 'text-green-600'
+                                : 'text-gray-300'
+                            }`}
+                          />
                         </div>
                         <p className="text-xs text-gray-600 mt-1">{suggestion.description}</p>
                         <div className="mt-2">
                           <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div 
+                            <div
                               className="bg-blue-500 h-1 rounded-full"
                               style={{ width: `${suggestion.relevance * 100}%` }}
                             ></div>
@@ -1140,10 +1163,12 @@ const saveInlineEdit = async (matrixId: string) => {
                     <div className="flex items-center">
                       <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
                       <div>
-                        <h4 className="text-sm font-medium text-yellow-800">No AI Suggestions Available</h4>
+                        <h4 className="text-sm font-medium text-yellow-800">
+                          No AI Suggestions Available
+                        </h4>
                         <p className="text-sm text-yellow-700 mt-1">
-                          The AI service didn't return any skill suggestions. This appears to be a backend issue. 
-                          You can add skills manually using the input below.
+                          The AI service didn't return any skill suggestions. This appears to be a
+                          backend issue. You can add skills manually using the input below.
                         </p>
                       </div>
                     </div>
@@ -1156,7 +1181,7 @@ const saveInlineEdit = async (matrixId: string) => {
                 <h4 className="font-medium text-gray-900 mb-3">
                   Skills List ({finalSkills.length} skills)
                 </h4>
-                
+
                 {finalSkills.length === 0 ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <p className="text-gray-600">No skills added yet. Add skills below.</p>
@@ -1164,7 +1189,10 @@ const saveInlineEdit = async (matrixId: string) => {
                 ) : (
                   <div className="space-y-2">
                     {finalSkills.map((skill, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                      >
                         {editingSkill === index ? (
                           <input
                             type="text"
@@ -1179,7 +1207,7 @@ const saveInlineEdit = async (matrixId: string) => {
                             className="flex-1 px-2 py-1 border border-gray-300 rounded"
                           />
                         ) : (
-                          <span 
+                          <span
                             className="flex-1 cursor-pointer hover:text-blue-600"
                             onClick={() => setEditingSkill(index)}
                           >
@@ -1235,14 +1263,10 @@ const saveInlineEdit = async (matrixId: string) => {
 
               {/* Navigation Buttons */}
               <div className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep('get-suggestions')}
-                >
+                <Button type="button" variant="outline" onClick={() => setStep('get-suggestions')}>
                   Back
                 </Button>
-                
+
                 <Button
                   type="submit"
                   loading={loading}

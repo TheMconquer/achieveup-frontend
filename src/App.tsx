@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard';
+import InstructorDashboard from './pages/InstructorDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
@@ -39,54 +39,67 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route
-        path="/dashboard"
+        path="/instructor-dashboard"
         element={
           <ProtectedRoute>
             <Layout>
-              <Dashboard />
+              <InstructorDashboard />
             </Layout>
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/skill-matrix" element={
-        <ProtectedRoute>
-          <Layout>
-            <SkillMatrixCreator />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/skill-assignment" element={
-        <ProtectedRoute>
-          <Layout>
-            <SkillAssignmentInterface />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/progress" element={
-        <ProtectedRoute>
-          <Layout>
-            <StudentProgress />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Layout>
-            <Settings />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/badges-test" element={
-        <ProtectedRoute>
-          <Layout>
-            <StudentBadgesTest />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/badges/:studentId" element={
-        <StudentPublicBadges />
-      } />
+      <Route path="/" element={<Navigate to="/instructor-dashboard" replace />} />
+      <Route
+        path="/skill-matrix"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SkillMatrixCreator />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/skill-assignment"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SkillAssignmentInterface />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/progress"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentProgress />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/badges-test"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentBadgesTest />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
     </Routes>
   );
 };
@@ -113,4 +126,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { validatePassword } from '../utils/passwordPolicy';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authAPI, canvasAPI } from '../services/api';
+import { User as UserType } from '../types';
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -19,7 +21,7 @@ const Settings: React.FC = () => {
     name: user?.name || '',
     email: user?.email || '',
     canvasApiToken: '',
-    canvasTokenType: 'instructor' as const,
+    canvasTokenType: undefined as UserType['canvasTokenType'] | undefined,
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: ''
@@ -65,7 +67,7 @@ const Settings: React.FC = () => {
   };
 
   // Validate Canvas API token
-  const handleValidateToken = async (token: string, tokenType: 'instructor') => {
+  const handleValidateToken = async (token: string, tokenType: 'instructor' | 'student') => {
     setValidatingToken(true);
     try {
       const response = await authAPI.validateCanvasToken({ 
@@ -111,6 +113,10 @@ const Settings: React.FC = () => {
     if (e) e.preventDefault();
     if (!profile.canvasApiToken) {
       toast.error('Please enter a Canvas API token');
+      return;
+    }
+    if (!profile.canvasTokenType) {
+      toast.error('Please select a Canvas token type');
       return;
     }
     
@@ -174,8 +180,9 @@ const Settings: React.FC = () => {
       toast.error('New passwords do not match');
       return;
     }
-    if (profile.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long');
+    const passwordError = validatePassword(profile.newPassword);
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
     setLoading(true);

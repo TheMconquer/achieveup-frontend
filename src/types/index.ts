@@ -3,9 +3,9 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'instructor' | 'admin';
+  role: 'instructor' | 'student';
   hasCanvasToken?: boolean;
-  canvasTokenType: 'instructor';
+  canvasTokenType: 'instructor' | 'student';
   canvas_token_created_at?: string;
   canvas_token_last_validated?: string;
 }
@@ -15,19 +15,19 @@ export interface SignupRequest {
   email: string;
   password: string;
   canvasApiToken: string;
-  canvasTokenType: 'instructor';
+  canvasTokenType?: 'instructor' | 'student';
 }
 
 export interface ProfileUpdateRequest {
   name?: string;
   email?: string;
   canvasApiToken?: string;
-  canvasTokenType?: 'instructor';
+  canvasTokenType?: 'instructor' | 'student';
 }
 
 export interface CanvasTokenValidationRequest {
   canvasApiToken: string;
-  canvasTokenType: 'instructor';
+  canvasTokenType: 'instructor' | 'student';
 }
 
 // Skill Matrix Types
@@ -309,4 +309,4 @@ export interface InstructorSkillMatrixRequest {
   quiz_questions: {
     [questionId: string]: string[];
   };
-} 
+}

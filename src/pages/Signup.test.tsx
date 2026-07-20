@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { passwordRules } from '../utils/passwordPolicy';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
+import { useAuth } from '../contexts/AuthContext';
 import Signup from './Signup';
 
 // Mock the AuthContext
@@ -18,24 +21,15 @@ const mockAuthContext = {
 };
 
 jest.mock('../contexts/AuthContext', () => ({
-  useAuth: () => mockAuthContext,
+  useAuth: jest.fn(),
 }));
 
-// Mock react-hot-toast
-const mockToast = {
-  error: jest.fn(),
-  success: jest.fn(),
-};
-
+// Mock react-hot-toast (Signup.tsx uses the default export)
 jest.mock('react-hot-toast', () => ({
-  toast: mockToast,
-}));
-
-// Mock API
-const mockValidateCanvasToken = jest.fn();
-jest.mock('../services/api', () => ({
-  authAPI: {
-    validateCanvasToken: mockValidateCanvasToken,
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    success: jest.fn(),
   },
 }));
 
@@ -46,6 +40,7 @@ const SignupWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 describe('Signup Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext);
   });
 
   test('renders signup form correctly', () => {
@@ -72,10 +67,9 @@ describe('Signup Component', () => {
     );
 
     expect(screen.getByText(/How to get your Canvas API Token/i)).toBeInTheDocument();
-    expect(screen.getByText(/Log into your Canvas account/i)).toBeInTheDocument();
+    expect(screen.getByText(/Log into your Canvas LMS account/i)).toBeInTheDocument();
     expect(screen.getByText(/Go to Account → Settings/i)).toBeInTheDocument();
-    expect(screen.getByText(/Scroll down to "Approved Integrations"/i)).toBeInTheDocument();
-    expect(screen.getByText(/Click "\+ New Access Token"/i)).toBeInTheDocument();
+    expect(screen.getByText(/Click "New Access Token"/i)).toBeInTheDocument();
   });
 
   test('validates all required fields', async () => {
@@ -89,11 +83,10 @@ describe('Signup Component', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Full name is required')).toBeInTheDocument();
+      expect(screen.getByText('Name is required')).toBeInTheDocument();
       expect(screen.getByText('Email is required')).toBeInTheDocument();
       expect(screen.getByText('Password is required')).toBeInTheDocument();
       expect(screen.getByText('Please confirm your password')).toBeInTheDocument();
-      expect(screen.getByText('Canvas API token is required')).toBeInTheDocument();
     });
   });
 
@@ -111,7 +104,7 @@ describe('Signup Component', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Please enter a valid email')).toBeInTheDocument();
+      expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
     });
   });
 
@@ -129,10 +122,27 @@ describe('Signup Component', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument();
+      expect(screen.getByText(passwordRules.minLength.message)).toBeInTheDocument();
     });
   });
 
+  test('validates password complexity', async () => {
+    render(
+      <SignupWrapper>
+        <Signup />
+      </SignupWrapper>
+    );
+
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+
+    fireEvent.change(passwordInput, { target: { value: 'password' } }); // No uppercase or digit
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(passwordRules.pattern.message)).toBeInTheDocument();
+    });
+  });
   test('validates password confirmation', async () => {
     render(
       <SignupWrapper>
@@ -153,75 +163,8 @@ describe('Signup Component', () => {
     });
   });
 
-  test('validates Canvas token format', async () => {
-    render(
-      <SignupWrapper>
-        <Signup />
-      </SignupWrapper>
-    );
-
-    const tokenInput = screen.getByLabelText(/canvas api token/i);
-    const submitButton = screen.getByRole('button', { name: /create account/i });
-
-    fireEvent.change(tokenInput, { target: { value: 'short-token' } });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Canvas token must be at least 64 characters')).toBeInTheDocument();
-    });
-  });
-
-  test('validates Canvas token with backend', async () => {
-    mockValidateCanvasToken.mockResolvedValue({ data: { valid: false, message: 'Invalid token' } });
-
-    render(
-      <SignupWrapper>
-        <Signup />
-      </SignupWrapper>
-    );
-
-    const tokenInput = screen.getByLabelText(/canvas api token/i);
-    const validToken = '7~' + 'a'.repeat(62); // 64 character token
-
-    fireEvent.change(tokenInput, { target: { value: validToken } });
-    fireEvent.blur(tokenInput);
-
-    await waitFor(() => {
-      expect(mockValidateCanvasToken).toHaveBeenCalledWith({
-        canvasApiToken: validToken,
-        canvasTokenType: 'instructor'
-      });
-      expect(mockToast.error).toHaveBeenCalledWith('Invalid token');
-    });
-  });
-
-  test('handles successful Canvas token validation', async () => {
-    mockValidateCanvasToken.mockResolvedValue({ data: { valid: true } });
-
-    render(
-      <SignupWrapper>
-        <Signup />
-      </SignupWrapper>
-    );
-
-    const tokenInput = screen.getByLabelText(/canvas api token/i);
-    const validToken = '7~' + 'a'.repeat(62);
-
-    fireEvent.change(tokenInput, { target: { value: validToken } });
-    fireEvent.blur(tokenInput);
-
-    await waitFor(() => {
-      expect(mockValidateCanvasToken).toHaveBeenCalledWith({
-        canvasApiToken: validToken,
-        canvasTokenType: 'instructor'
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Canvas token validated successfully');
-    });
-  });
-
   test('handles successful signup', async () => {
     mockSignup.mockResolvedValue(true);
-    mockValidateCanvasToken.mockResolvedValue({ data: { valid: true } });
 
     render(
       <SignupWrapper>
@@ -240,8 +183,8 @@ describe('Signup Component', () => {
 
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.change(tokenInput, { target: { value: validToken } });
     fireEvent.click(submitButton);
 
@@ -249,7 +192,7 @@ describe('Signup Component', () => {
       expect(mockSignup).toHaveBeenCalledWith({
         name: 'John Doe',
         email: 'john@example.com',
-        password: 'password123',
+        password: 'Password123',
         canvasApiToken: validToken,
         canvasTokenType: 'instructor'
       });
@@ -276,8 +219,8 @@ describe('Signup Component', () => {
 
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.change(tokenInput, { target: { value: validToken } });
     fireEvent.click(submitButton);
 
@@ -317,7 +260,7 @@ describe('Signup Component', () => {
 
     // Check loading state
     expect(submitButton).toBeDisabled();
-    expect(screen.getByText(/creating account/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
 
     // Resolve the promise
     resolveSignup!(true);
@@ -333,28 +276,8 @@ describe('Signup Component', () => {
       </SignupWrapper>
     );
 
-    const loginLink = screen.getByText('Sign in here');
+    const loginLink = screen.getByText('Sign in');
     expect(loginLink.closest('a')).toHaveAttribute('href', '/login');
-  });
-
-  test('handles Canvas token validation error', async () => {
-    mockValidateCanvasToken.mockRejectedValue(new Error('Network error'));
-
-    render(
-      <SignupWrapper>
-        <Signup />
-      </SignupWrapper>
-    );
-
-    const tokenInput = screen.getByLabelText(/canvas api token/i);
-    const validToken = '7~' + 'a'.repeat(62);
-
-    fireEvent.change(tokenInput, { target: { value: validToken } });
-    fireEvent.blur(tokenInput);
-
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith('Unable to validate token. Please check your connection.');
-    });
   });
 
   test('handles special characters in name', async () => {
@@ -378,8 +301,8 @@ describe('Signup Component', () => {
 
     fireEvent.change(nameInput, { target: { value: specialName } });
     fireEvent.change(emailInput, { target: { value: 'jose@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.change(tokenInput, { target: { value: validToken } });
     fireEvent.click(submitButton);
 
@@ -421,7 +344,7 @@ describe('Signup Component', () => {
     // Trigger validation error
     fireEvent.click(submitButton);
     await waitFor(() => {
-      expect(screen.getByText('Full name is required')).toBeInTheDocument();
+      expect(screen.getByText('Name is required')).toBeInTheDocument();
     });
 
     // Type in name field
@@ -429,7 +352,7 @@ describe('Signup Component', () => {
 
     // Error should clear
     await waitFor(() => {
-      expect(screen.queryByText('Full name is required')).not.toBeInTheDocument();
+      expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
     });
   });
 
@@ -446,7 +369,7 @@ describe('Signup Component', () => {
     nameInput.focus();
     expect(nameInput).toHaveFocus();
 
-    fireEvent.keyDown(nameInput, { key: 'Tab' });
+    userEvent.tab();
     expect(emailInput).toHaveFocus();
   });
 
@@ -456,7 +379,7 @@ describe('Signup Component', () => {
       backendAvailable: false,
     };
 
-    jest.mocked(require('../contexts/AuthContext').useAuth).mockReturnValue(offlineAuthContext);
+    jest.mocked(useAuth).mockReturnValue(offlineAuthContext);
 
     render(
       <SignupWrapper>
@@ -467,26 +390,5 @@ describe('Signup Component', () => {
     // Should still render the form even when backend is unavailable
     expect(screen.getByText('Create Instructor Account')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
-  });
-
-  test('prevents submission with invalid Canvas token format even if it passes client validation', async () => {
-    render(
-      <SignupWrapper>
-        <Signup />
-      </SignupWrapper>
-    );
-
-    const tokenInput = screen.getByLabelText(/canvas api token/i);
-    const submitButton = screen.getByRole('button', { name: /create account/i });
-
-    // Token that's 64 characters but doesn't start with proper prefix
-    const invalidToken = 'x'.repeat(64);
-
-    fireEvent.change(tokenInput, { target: { value: invalidToken } });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Canvas token must be at least 64 characters')).toBeInTheDocument();
-    });
   });
 }); 

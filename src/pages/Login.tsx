@@ -20,16 +20,20 @@ const Login: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormInputs>();
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
       await login(data.email, data.password);
       navigate('/');
-      toast.success('Welcome back, instructor!');
+      toast.success('Welcome back!');
     } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please check your credentials.');
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          'Login failed. Please check your credentials.'
+      );
     }
   };
 
@@ -42,53 +46,41 @@ const Login: React.FC = () => {
             <div className="flex items-center justify-center mb-4">
               <BookOpen className="w-12 h-12 text-primary-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              AchieveUp Instructor Portal
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">AchieveUp Portal</h1>
             <p className="text-gray-600">
-              AI-powered skill tracking for educators
+              Skill tracking and insights for students and instructors
             </p>
           </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('email', { 
+                  {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Please enter a valid email address'
-                    }
+                      message: 'Please enter a valid email address',
+                    },
                   })}
                   type="email"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && (
-                <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  {...register('password', { 
+                  {...register('password', {
                     required: 'Password is required',
-                    minLength: {
-                      value: 8,
-                      message: 'Password must be at least 8 characters'
-                    }
                   })}
                   type={showPassword ? 'text' : 'password'}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -99,11 +91,7 @@ const Login: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -111,12 +99,7 @@ const Login: React.FC = () => {
               )}
             </div>
 
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              className="w-full"
-            >
+            <Button type="submit" loading={isSubmitting} disabled={isSubmitting} className="w-full">
               Sign In
             </Button>
           </form>
@@ -125,10 +108,7 @@ const Login: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link 
-                to="/signup" 
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
+              <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
                 Create account
               </Link>
             </p>
@@ -148,7 +128,7 @@ const Login: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
-                Track student progress and skill mastery
+                Track course progress and skill mastery
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>

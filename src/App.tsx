@@ -22,9 +22,22 @@ const AppRoutes: React.FC = () => {
       {/* Public routes - no login required */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/" element={<RoleHome />} />
+      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
 
-      {/* Instructor-only routes */}
+      {/* Either role - just needs to be logged in */}
+      <Route element={<RequireRole roles={['student', 'instructor']} />}>
+        <Route path="/" element={<RoleHome />} />
+        <Route
+          path="/settings"
+          element={
+            <Layout>
+              <Settings />
+            </Layout>
+          }
+        />
+      </Route>
+
+      {/* Instructor only */}
       <Route element={<RequireRole roles={['instructor']} />}>
         <Route
           path="/instructor-dashboard"
@@ -68,7 +81,7 @@ const AppRoutes: React.FC = () => {
         />
       </Route>
 
-      {/* Student-only routes */}
+      {/* Student only */}
       <Route element={<RequireRole roles={['student']} />}>
         <Route
           path="/student-dashboard"
@@ -79,20 +92,6 @@ const AppRoutes: React.FC = () => {
           }
         />
       </Route>
-
-      {/* Shared routes — any authenticated role */}
-      <Route element={<RequireRole />}>
-        <Route
-          path="/settings"
-          element={
-            <Layout>
-              <Settings />
-            </Layout>
-          }
-        />
-      </Route>
-
-      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
     </Routes>
   );
 };

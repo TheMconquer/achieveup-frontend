@@ -22,68 +22,67 @@ const AppRoutes: React.FC = () => {
       {/* Public routes - no login required */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route
-        path="/instructor-dashboard"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <InstructorDashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/" element={<Navigate to="/instructor-dashboard" replace />} />
-      <Route
-        path="/skill-matrix"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <SkillMatrixCreator />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/skill-assignment"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <SkillAssignmentInterface />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/progress"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <StudentProgress />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
+      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
+
+      {/* Either role - just needs to be logged in */}
+      <Route element={<RequireRole roles={['student', 'instructor']} />}>
+        <Route path="/" element={<RoleHome />} />
+        <Route
+          path="/settings"
+          element={
             <Layout>
               <Settings />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/badges-test"
-        element={
-          <ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* Instructor only */}
+      <Route element={<RequireRole roles={['instructor']} />}>
+        <Route
+          path="/instructor-dashboard"
+          element={
+            <Layout>
+              <InstructorDashboard />
+            </Layout>
+          }
+        />
+        <Route
+          path="/skill-matrix"
+          element={
+            <Layout>
+              <SkillMatrixCreator />
+            </Layout>
+          }
+        />
+        <Route
+          path="/skill-assignment"
+          element={
+            <Layout>
+              <SkillAssignmentInterface />
+            </Layout>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <Layout>
+              <StudentProgress />
+            </Layout>
+          }
+        />
+        <Route
+          path="/badges-test"
+          element={
             <Layout>
               <StudentBadgesTest />
             </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
+          }
+        />
+      </Route>
+
+      {/* Student only */}
+      <Route element={<RequireRole roles={['student']} />}></Route>
     </Routes>
   );
 };

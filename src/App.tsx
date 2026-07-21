@@ -4,11 +4,11 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import InstructorDashboard from './pages/InstructorDashboard';
+import StudentDashboard from './pages/StudentDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
 import StudentProgress from './pages/StudentProgress';
-import './index.css';
 import SkillMatrixCreator from './components/SkillMatrixCreator/SkillMatrixCreator';
 import SkillAssignmentInterface from './components/SkillAssignmentInterface/SkillAssignmentInterface';
 import StudentBadgesTest from './components/StudentBadgesTest/StudentBadgesTest';
@@ -82,7 +82,16 @@ const AppRoutes: React.FC = () => {
       </Route>
 
       {/* Student only */}
-      <Route element={<RequireRole roles={['student']} />}></Route>
+      <Route element={<RequireRole roles={['student']} />}>
+        <Route
+          path="/student-dashboard"
+          element={
+            <Layout>
+              <StudentDashboard />
+            </Layout>
+          }
+        />
+      </Route>
     </Routes>
   );
 };

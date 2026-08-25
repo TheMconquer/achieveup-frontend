@@ -548,30 +548,15 @@ const SkillAssignmentInterface: React.FC = () => {
         url: error.response?.config?.url,
         courseId: courseId,
       });
-
+      
+      
       // Provide more specific error messages and guidance based on status
       if (error.response?.status === 404) {
         console.log(`404 - No matrices endpoint found or no matrices exist for course ${courseId}`);
-
-        // For 404, provide mock matrices to test the interface
-        const mockMatrices = generateMockMatrices(courseId);
-        if (mockMatrices.length > 0) {
-          console.log(`Providing ${mockMatrices.length} mock matrices for testing`);
-          setAvailableMatrices(mockMatrices);
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-          toast.success(
-            `Demo matrices loaded for testing. Create real matrices using the Skill Matrix page.`,
-            {
-              duration: 6000,
-            }
-          );
-        } else {
-          setAvailableMatrices([]);
-          setSelectedMatrix('');
-          setSelectedMatrixData(null);
-          toast.error(`No skill matrices found. Please create a skill matrix first.`);
-        }
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
+        toast.error(`No skill matrices found. Please create a skill matrix first.`);
       } else if (error.response?.status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
         setAvailableMatrices([]);
@@ -610,19 +595,11 @@ const SkillAssignmentInterface: React.FC = () => {
         }
 
         // Provide mock matrices so user can still test the interface
-        console.log('Providing mock matrices due to 403 error');
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-          toast.success(
-            `Demo matrices loaded for testing. Fix authentication to access real data.`,
-            {
-              duration: 6000,
-            }
-          );
-        }
+        console.log('403 error - Generate new matrice');
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
+        toast.error(`No skill matrices found. Please create a skill matrix first.`);
       } else if (error.response?.status >= 500) {
         toast.error('Server error while loading matrices. Using demo data for testing.');
 

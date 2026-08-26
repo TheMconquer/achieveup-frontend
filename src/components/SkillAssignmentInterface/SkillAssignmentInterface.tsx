@@ -620,33 +620,6 @@ const SkillAssignmentInterface: React.FC = () => {
     }
   };
 
-  // Generate mock skill matrices for testing when backend data is unavailable
-  const generateMockMatrices = (courseId: string) => {
-    // Course-specific mock matrices based on common course patterns
-    const courseSpecificMatrices = [
-      {
-        _id: `mock_matrix_1_${courseId}`,
-        course_id: courseId,
-        matrix_name: 'Core Skills Matrix',
-        skills: generateCoreSkillsForCourse(courseId),
-        description: 'Essential skills for this course',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        _id: `mock_matrix_2_${courseId}`,
-        course_id: courseId,
-        matrix_name: 'Advanced Skills Matrix',
-        skills: generateAdvancedSkillsForCourse(courseId),
-        description: 'Advanced competencies and specialized skills',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-
-    return courseSpecificMatrices;
-  };
-
   // Generate course-appropriate core skills
   const generateCoreSkillsForCourse = (courseId: string): string[] => {
     // Default web development skills (most common case)

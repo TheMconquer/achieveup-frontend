@@ -601,15 +601,10 @@ const SkillAssignmentInterface: React.FC = () => {
         setSelectedMatrixData(null);
         toast.error(`No skill matrices found. Please create a skill matrix first.`);
       } else if (error.response?.status >= 500) {
-        toast.error('Server error while loading matrices. Using demo data for testing.');
-
-        // Provide mock matrices for testing during server issues
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-        }
+        toast.error('Server error while loading matrices.');
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
       } else {
         console.warn('Failed to load skill matrices:', error.message);
         toast.error(

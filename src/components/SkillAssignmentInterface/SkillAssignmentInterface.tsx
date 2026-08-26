@@ -620,63 +620,6 @@ const SkillAssignmentInterface: React.FC = () => {
     }
   };
 
-  // Generate course-appropriate advanced skills
-  const generateAdvancedSkillsForCourse = (courseId: string): string[] => {
-    // Default web development advanced skills
-    if (
-      courseId.toLowerCase().includes('web') ||
-      courseId.includes('html') ||
-      courseId.includes('demo')
-    ) {
-      return [
-        'Advanced JavaScript',
-        'API Integration',
-        'Frontend Frameworks',
-        'Performance Optimization',
-        'Web Security',
-      ];
-    }
-
-    // Programming/Computer Science advanced skills
-    if (
-      courseId.toLowerCase().includes('prog') ||
-      courseId.toLowerCase().includes('cs') ||
-      courseId.toLowerCase().includes('cop')
-    ) {
-      return [
-        'Algorithm Design',
-        'Data Structures',
-        'Object-Oriented Programming',
-        'Software Design Patterns',
-        'Code Optimization',
-      ];
-    }
-
-    // Database/Data advanced skills
-    if (
-      courseId.toLowerCase().includes('data') ||
-      courseId.toLowerCase().includes('db') ||
-      courseId.toLowerCase().includes('sql')
-    ) {
-      return [
-        'Advanced SQL',
-        'Database Optimization',
-        'Data Warehousing',
-        'Big Data Analytics',
-        'ETL Processes',
-      ];
-    }
-
-    // Generic advanced academic skills
-    return [
-      'Advanced Analysis',
-      'Strategic Thinking',
-      'Leadership',
-      'Project Management',
-      'Innovation',
-    ];
-  };
-
   const loadQuestions = useCallback(
     async (quizId: string, selectedCourse: string): Promise<void> => {
       try {

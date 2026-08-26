@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { canvasAPI } from '../services/api';
 import { CanvasCourse } from '../types';
 
+const STALE_AFTER_MS = 60_000;
+
 interface UseCourseListOptions {
   // When true (default), fetches on mount. When false, nothing is fetched
   // until ensureLoaded() is called — for callers like a search box that
@@ -13,9 +15,10 @@ interface UseCourseListResult<T> {
   courses: T[];
   loading: boolean;
   error: boolean;
+  // Always fetches fresh, regardless of when the last load happened.
   reload: () => void;
-  // No-op if a load already succeeded or is in flight — safe to call
-  // repeatedly (e.g. on every focus event) without refetching each time.
+  // Fetches if there's no data yet, the last load failed, or the last
+  // successful load is older than STALE_AFTER_MS
   ensureLoaded: () => void;
 }
 
@@ -34,7 +37,7 @@ export function useCourseList<T extends CanvasCourse = CanvasCourse>(
   const [courses, setCourses] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const hasLoadedRef = useRef(false);
+  const lastLoadedAtRef = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,18 +47,21 @@ export function useCourseList<T extends CanvasCourse = CanvasCourse>(
         ? await canvasAPI.getInstructorCourses()
         : await canvasAPI.getCourses();
       setCourses(response.data as T[]);
-      hasLoadedRef.current = true;
+      lastLoadedAtRef.current = Date.now();
     } catch (err) {
       console.error('Error loading courses:', err);
       setError(true);
-      hasLoadedRef.current = false;
+      lastLoadedAtRef.current = null;
     } finally {
       setLoading(false);
     }
   }, [isInstructor]);
 
   const ensureLoaded = useCallback(() => {
-    if (!hasLoadedRef.current && !loading) load();
+    if (loading) return;
+    const isStale =
+      lastLoadedAtRef.current === null || Date.now() - lastLoadedAtRef.current > STALE_AFTER_MS;
+    if (isStale) load();
   }, [load, loading]);
 
   useEffect(() => {

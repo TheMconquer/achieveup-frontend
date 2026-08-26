@@ -52,7 +52,11 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
   const [loadingExistingMatrices, setLoadingExistingMatrices] = useState(false);
   const [showImportBox, setShowImportBox] = useState(true);
   const { isInstructor } = useAuth();
-  const { courses, loading: coursesLoading, error: coursesError } = useCourseList<CanvasCourse>(isInstructor);
+  const {
+    courses,
+    loading: coursesLoading,
+    error: coursesError,
+  } = useCourseList<CanvasCourse>(isInstructor);
 
   useEffect(() => {
     if (coursesError) {

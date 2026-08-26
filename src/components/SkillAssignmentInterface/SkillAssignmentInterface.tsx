@@ -608,16 +608,12 @@ const SkillAssignmentInterface: React.FC = () => {
       } else {
         console.warn('Failed to load skill matrices:', error.message);
         toast.error(
-          `Failed to load skill matrices: ${error.message}. Using demo data for testing.`
+          `Failed to load skill matrices: ${error.message}.`
         );
-
-        // Provide mock matrices as fallback
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-        }
+        // Fallback Error
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
       }
     } finally {
       setLoadingMatrices(false);

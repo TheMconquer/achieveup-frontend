@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { canvasAPI, progressAPI, badgeAPI } from '../services/api';
 import { CanvasCourse } from '../types';
@@ -13,13 +14,8 @@ import CourseOverviewGrid, {
   CourseOverviewSummary,
 } from '../components/StudentPortal/CourseOverviewGrid';
 import { tierForScore, tierLabel } from '../utils/skillTiers';
+import { summarizeCourseProgress, AttemptedSkill } from '../utils/courseSummary';
 import { BookOpen, Award, Sparkles, Info, AlertTriangle } from 'lucide-react';
-
-interface AttemptedSkill {
-  name: string;
-  courseId: string;
-  score: number;
-}
 
 const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -63,37 +59,9 @@ const StudentDashboard: React.FC = () => {
     const summaries: CourseOverviewSummary[] = [];
 
     progressResults.forEach(({ course, progress }) => {
-      const attempted = Object.entries(progress?.skill_progress ?? {}).filter(
-        ([, data]) => data.total_questions > 0
-      );
-
-      attempted.forEach(([name, data]) => {
-        skills.push({ name, courseId: course.id, score: Math.round(data.score) });
-      });
-
-      const averageScore =
-        attempted.length > 0
-          ? Math.round(
-              attempted.reduce((sum, [, data]) => sum + data.score, 0) / attempted.length
-            )
-          : null;
-
-      const weakestSkill = attempted
-        .filter(([, data]) => tierForScore(data.score) === 'developing')
-        .sort((a, b) => a[1].score - b[1].score)[0];
-
-      let nextHint = 'Not started yet';
-      if (averageScore !== null) {
-        nextHint = weakestSkill ? `Review: ${weakestSkill[0]}` : 'On track';
-      }
-
-      summaries.push({
-        id: course.id,
-        name: course.name,
-        code: course.code,
-        averageScore,
-        nextHint,
-      });
+      const { summary, attemptedSkills } = summarizeCourseProgress(course, progress);
+      skills.push(...attemptedSkills);
+      summaries.push(summary);
     });
 
     setAttemptedSkills(skills);
@@ -224,9 +192,9 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Courses</div>
 
-            <div className="mt-auto text-[13px] font-semibold text-au-gold-dark">
+            <Link to="/courses" className="mt-auto text-[13px] font-semibold text-au-gold-dark">
               View my courses →
-            </div>
+            </Link>
           </div>
         </Card>
 
@@ -307,12 +275,12 @@ const StudentDashboard: React.FC = () => {
         className="min-h-[220px]"
         title="Course Overview"
         headerActions={
-          <span className="text-[13px] font-semibold text-gray-300" title="Coming soon">
+          <Link to="/courses" className="text-[13px] font-semibold text-au-gold-dark">
             View all courses →
-          </span>
+          </Link>
         }
       >
-        <CourseOverviewGrid courses={courseSummaries} />
+        <CourseOverviewGrid courses={courseSummaries.slice(0, 4)} />
       </Card>
     </div>
   );

@@ -5,6 +5,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import InstructorDashboard from './pages/InstructorDashboard';
 import StudentDashboard from './pages/StudentDashboard';
+import StudentCourses from './pages/StudentCourses';
+import StudentCourseDetail from './pages/StudentCourseDetail';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
@@ -94,6 +96,22 @@ const AppRoutes: React.FC = () => {
           element={
             <Layout>
               <StudentDashboard />
+            </Layout>
+          }
+        />
+        <Route
+          path="/courses"
+          element={
+            <Layout>
+              <StudentCourses />
+            </Layout>
+          }
+        />
+        <Route
+          path="/courses/:courseId"
+          element={
+            <Layout>
+              <StudentCourseDetail />
             </Layout>
           }
         />

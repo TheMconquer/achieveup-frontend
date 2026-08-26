@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import StudentDashboard from './StudentDashboard';
+import StudentCourseDetail from './StudentCourseDetail';
 
 const mockAuthContext = {
   user: {
@@ -18,10 +18,6 @@ jest.mock('../contexts/AuthContext', () => ({
   useAuth: () => mockAuthContext,
 }));
 
-jest.mock('react-hot-toast', () => ({
-  toast: { error: jest.fn(), success: jest.fn() },
-}));
-
 const mockGetCourses = jest.fn();
 const mockGetSkillProgress = jest.fn();
 const mockGetStudentEarnedBadges = jest.fn();
@@ -32,12 +28,24 @@ jest.mock('../services/api', () => ({
   badgeAPI: { getStudentEarnedBadges: (...args: unknown[]) => mockGetStudentEarnedBadges(...args) },
 }));
 
-describe('StudentDashboard', () => {
+const renderAtCourse = (courseId: string) =>
+  render(
+    <MemoryRouter initialEntries={[`/courses/${courseId}`]}>
+      <Routes>
+        <Route path="/courses/:courseId" element={<StudentCourseDetail />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+describe('StudentCourseDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
     mockGetCourses.mockResolvedValue({
-      data: [{ id: 'course-1', name: 'Data Structures', code: 'COP3530', term: 1 }],
+      data: [
+        { id: 'course-1', name: 'Data Structures', code: 'COP3530', term: 1 },
+        { id: 'course-2', name: 'Databases', code: 'COP3538', term: 1 },
+      ],
     });
     mockGetSkillProgress.mockResolvedValue({
       data: {
@@ -52,7 +60,7 @@ describe('StudentDashboard', () => {
     mockGetStudentEarnedBadges.mockResolvedValue({
       data: {
         student_id: 'student-1',
-        total_badges: 1,
+        total_badges: 2,
         badges: [
           {
             badge_id: 'badge-1',
@@ -64,61 +72,49 @@ describe('StudentDashboard', () => {
             course_id: 'course-1',
             course_name: 'Data Structures',
           },
+          {
+            badge_id: 'badge-2',
+            badge_name: 'SQL Badge',
+            skill_name: 'SQL Joins',
+            badge_level: 'intermediate',
+            progress_percentage: 60,
+            earned_at: '2026-07-20T00:00:00Z',
+            course_id: 'course-2',
+            course_name: 'Databases',
+          },
         ],
       },
     });
   });
 
-  test('greets the student and renders computed stats after loading', async () => {
-    render(
-      <MemoryRouter>
-        <StudentDashboard />
-      </MemoryRouter>
-    );
+  test('renders course name, skills, and only badges earned in this course', async () => {
+    renderAtCourse('course-1');
 
     await waitFor(() => {
-      expect(screen.getByText(/Jordan/)).toBeInTheDocument();
+      expect(screen.getByText('Data Structures')).toBeInTheDocument();
     });
 
-    expect(mockGetSkillProgress).toHaveBeenCalledWith('student-1', 'course-1');
-    expect(mockGetStudentEarnedBadges).toHaveBeenCalledWith('student-1');
-
-    // With only one attempted skill at 92%, the same number legitimately
-    // appears three times: the mastery ring, its Top Skills row, and its
-    // course's average in Course Overview.
-    expect(screen.getAllByText('92%')).toHaveLength(3);
-    // Top Skills list shows the skill name from progress data.
+    expect(screen.getByText('COP3530')).toBeInTheDocument();
     expect(screen.getByText('Big-O Analysis')).toBeInTheDocument();
-    // Recent Badges shows the earned badge's skill name.
     expect(screen.getByText('Recursion')).toBeInTheDocument();
-    // Course Overview shows the course.
-    expect(screen.getByText('Data Structures')).toBeInTheDocument();
+    expect(screen.queryByText('SQL Joins')).not.toBeInTheDocument();
   });
 
-  test('shows an empty-state message when no skills have been attempted', async () => {
-    mockGetSkillProgress.mockResolvedValue({
-      data: {
-        student_id: 'student-1',
-        course_id: 'course-1',
-        skill_progress: {},
-        last_updated: '2026-08-01T00:00:00Z',
-      },
-    });
-    mockGetStudentEarnedBadges.mockResolvedValue({
-      data: { student_id: 'student-1', total_badges: 0, badges: [] },
-    });
-
-    render(
-      <MemoryRouter>
-        <StudentDashboard />
-      </MemoryRouter>
-    );
+  test('shows a not-found state when the course id has no match', async () => {
+    renderAtCourse('course-nonexistent');
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/your top skills will show up here/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText('Course not found')).toBeInTheDocument();
     });
-    expect(screen.getByText(/no badges earned yet/i)).toBeInTheDocument();
+  });
+
+  test('shows an error state when courses fail to load', async () => {
+    mockGetCourses.mockRejectedValue(new Error('network error'));
+
+    renderAtCourse('course-1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not load this course')).toBeInTheDocument();
+    });
   });
 });

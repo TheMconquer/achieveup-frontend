@@ -35,7 +35,7 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
     setQuery('');
     setIsOpen(false);
     navigate(
-      displayAsInstructor ? `/skill-matrix?courseId=${course.id}` : '/student-dashboard'
+      displayAsInstructor ? `/skill-matrix?courseId=${course.id}` : `/courses/${course.id}`
     );
     onNavigate?.();
   };

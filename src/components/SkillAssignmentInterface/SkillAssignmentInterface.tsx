@@ -620,57 +620,6 @@ const SkillAssignmentInterface: React.FC = () => {
     }
   };
 
-  // Generate course-appropriate core skills
-  const generateCoreSkillsForCourse = (courseId: string): string[] => {
-    // Default web development skills (most common case)
-    if (
-      courseId.toLowerCase().includes('web') ||
-      courseId.includes('html') ||
-      courseId.includes('demo')
-    ) {
-      return [
-        'HTML Fundamentals',
-        'CSS Styling',
-        'JavaScript Basics',
-        'DOM Manipulation',
-        'Responsive Design',
-      ];
-    }
-
-    // Programming/Computer Science skills
-    if (
-      courseId.toLowerCase().includes('prog') ||
-      courseId.toLowerCase().includes('cs') ||
-      courseId.toLowerCase().includes('cop')
-    ) {
-      return [
-        'Programming Logic',
-        'Data Types',
-        'Control Structures',
-        'Functions',
-        'Problem Solving',
-      ];
-    }
-
-    // Database/Data skills
-    if (
-      courseId.toLowerCase().includes('data') ||
-      courseId.toLowerCase().includes('db') ||
-      courseId.toLowerCase().includes('sql')
-    ) {
-      return ['Database Design', 'SQL Queries', 'Data Modeling', 'Normalization', 'Data Analysis'];
-    }
-
-    // Generic academic skills
-    return [
-      'Critical Thinking',
-      'Problem Solving',
-      'Written Communication',
-      'Research Skills',
-      'Analysis',
-    ];
-  };
-
   // Generate course-appropriate advanced skills
   const generateAdvancedSkillsForCourse = (courseId: string): string[] => {
     // Default web development advanced skills

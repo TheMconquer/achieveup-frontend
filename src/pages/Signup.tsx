@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, Mail, User, BookOpen, Key, ChevronDown, ChevronUp } 
 import { useAuth } from '../contexts/AuthContext';
 import { passwordRules } from '../utils/passwordPolicy';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -44,10 +45,10 @@ const Signup: React.FC = () => {
       await signup(signupData);
       navigate('/');
       toast.success('Account created successfully!');
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || error.message || 'Signup failed. Please try again.'
-      );
+    } catch (error: unknown) {
+      const axiosMessage = getApiErrorMessage(error);
+      const genericMessage = error instanceof Error ? error.message : undefined;
+      toast.error(axiosMessage || genericMessage || 'Signup failed. Please try again.');
     }
   };
 

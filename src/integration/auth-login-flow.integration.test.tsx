@@ -96,6 +96,7 @@ describe('auth login flow (real AuthContext, real form)', () => {
 
   test('invalid credentials show a real error toast and keep the user on the login page', async () => {
     jest.mocked(authAPI.login).mockRejectedValue({
+      isAxiosError: true,
       response: { data: { message: 'Invalid email or password' } },
     });
 

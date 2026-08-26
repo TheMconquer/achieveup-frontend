@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, BookOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '../utils/apiError';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -28,12 +29,10 @@ const Login: React.FC = () => {
       await login(data.email, data.password);
       navigate('/');
       toast.success('Welcome back!');
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          'Login failed. Please check your credentials.'
-      );
+    } catch (error: unknown) {
+      const axiosMessage = getApiErrorMessage(error);
+      const genericMessage = error instanceof Error ? error.message : undefined;
+      toast.error(axiosMessage || genericMessage || 'Login failed. Please check your credentials.');
     }
   };
 

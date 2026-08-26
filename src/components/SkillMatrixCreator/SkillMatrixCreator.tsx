@@ -12,10 +12,12 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import { skillMatrixAPI, courseDescriptionAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { SkillMatrix, CanvasCourse } from '../../types';
+import { SkillMatrix, CanvasCourse, UpdateSkillMatrixRequest } from '../../types';
 import { useCourseList } from '../../hooks/useCourseList';
+import { getApiErrorMessage } from '../../utils/apiError';
 import Button from '../common/Button';
 import Card from '../common/Card';
 
@@ -30,8 +32,16 @@ interface SkillSuggestion {
   description: string;
 }
 
+// Canvas has been observed to return the course code under different field
+// names depending on API version; these are fallbacks alongside the
+// documented `code` field.
+type CanvasCourseWithLegacyCode = CanvasCourse & {
+  course_code?: string;
+  courseCode?: string;
+  sis_course_id?: string;
+};
+
 const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMatrixCreated }) => {
-  const { user } = useAuth();
   const [selectedCourse, setSelectedCourse] = useState<string>(courseId || '');
   const [selectedCourseData, setSelectedCourseData] = useState<CanvasCourse | null>(null);
   const [selectedPastCourse, setSelectedPastCourse] = useState<string>('');
@@ -117,7 +127,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
       // backend expects PUT /achieveup/matrix/<matrix_id> with { skills: [...] }
       // If your backend also supports updating name, include it — otherwise remove matrix_name.
-      const payload: any = { skills: editSkills };
+      const payload: UpdateSkillMatrixRequest = { skills: editSkills };
 
       // OPTIONAL: only include this if your backend update route supports it
       payload.matrix_name = editName.trim();
@@ -131,9 +141,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
       toast.success('Matrix updated');
       cancelInlineEdit();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Save edit error:', error);
-      toast.error(error.response?.data?.message || 'Failed to update matrix');
+      toast.error(getApiErrorMessage(error) || 'Failed to update matrix');
     } finally {
       setSavingEdit(false);
     }
@@ -281,10 +291,8 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
   const loadExistingMatrices = async (courseId: string) => {
     try {
       setLoadingExistingMatrices(true);
-      console.log(`Loading existing skill matrices for course: ${courseId}`);
 
       const response = await skillMatrixAPI.getAllByCourse(courseId);
-      console.log(`Existing matrices API response for course ${courseId}:`, response.data);
 
       const statusResponse = await skillMatrixAPI.getImportStatus(courseId);
       const matricesImported = statusResponse.data.matrices_imported;
@@ -294,7 +302,6 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
       // Show existing matrices section if any exist
       if (response.data.length > 0) {
-        console.log(`Found ${response.data.length} existing matrices`);
         setShowExistingMatrices(true);
 
         // Auto-adjust matrix name if it conflicts with existing ones
@@ -313,38 +320,36 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
             counter++;
           } while (existingNames.includes(newMatrixName) && counter < 50);
 
-          console.log(`Auto-generated unique matrix name: ${newMatrixName}`);
           setValue('matrixName', newMatrixName);
         }
       } else {
-        console.log(`No existing matrices found for course ${courseId}`);
         setShowExistingMatrices(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading existing matrices:', error);
+      const axiosError = axios.isAxiosError(error) ? error : undefined;
+      const status = axiosError?.response?.status;
       console.error('Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.response?.config?.url,
+        status,
+        statusText: axiosError?.response?.statusText,
+        data: axiosError?.response?.data,
+        url: axiosError?.response?.config?.url,
         courseId: courseId,
       });
 
       // Provide more specific error messages based on status
-      if (error.response?.status === 404) {
-        console.log(
-          `404 - No existing matrices found for course ${courseId} (this is normal for new courses)`
-        );
+      if (status === 404) {
         // Don't show error toast for 404 - this is expected for courses without matrices
-      } else if (error.response?.status === 401) {
+      } else if (status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
-      } else if (error.response?.status === 403) {
+      } else if (status === 403) {
         toast.error('Access denied. You may not have permission to view matrices for this course.');
-      } else if (error.response?.status >= 500) {
+      } else if (status !== undefined && status >= 500) {
         toast.error('Server error while loading existing matrices. Please try again later.');
       } else {
-        console.warn('Failed to load existing matrices:', error.message);
-        toast.error(`Failed to load existing matrices: ${error.message}`);
+        const message = axiosError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
+        console.warn('Failed to load existing matrices:', message);
+        toast.error(`Failed to load existing matrices: ${message}`);
       }
 
       setExistingMatrices([]);
@@ -388,11 +393,12 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
     try {
       // Handle potential missing or differently named courseCode field
       // Backend has now fixed this, but keep fallbacks for robustness
+      const courseWithLegacyFields = selectedCourseData as CanvasCourseWithLegacyCode;
       let courseCode =
-        selectedCourseData.code ||
-        (selectedCourseData as any).course_code ||
-        (selectedCourseData as any).courseCode ||
-        (selectedCourseData as any).sis_course_id ||
+        courseWithLegacyFields.code ||
+        courseWithLegacyFields.course_code ||
+        courseWithLegacyFields.courseCode ||
+        courseWithLegacyFields.sis_course_id ||
         'UNKNOWN';
 
       // If still no course code, try to extract from course name or use a default
@@ -401,7 +407,6 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         // Try to create a reasonable course code from the course name
         const courseName = selectedCourseData.name || '';
         courseCode = courseName.replace(/\s+/g, '').substring(0, 8).toUpperCase() || 'COURSE';
-        console.log('Generated course code:', courseCode);
       }
 
       let persistedCourseDescription = '';
@@ -423,23 +428,15 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           `Course: ${selectedCourseData.name}`,
       };
 
-      console.log('Sending skill suggestions request:', requestData);
-
       // Call backend for AI skill suggestions
       const response = await skillMatrixAPI.getSkillSuggestions(requestData);
 
-      console.log('AI skill suggestions response:', response.data);
-
       // Handle different possible response formats with enhanced parsing
-      let suggestions: SkillSuggestion[] = [];
-
-      if (Array.isArray(response.data)) {
-        suggestions = response.data;
-      }
+      const rawSuggestions: unknown[] = Array.isArray(response.data) ? response.data : [];
 
       // Ensure suggestions have the right format
-      suggestions = suggestions
-        .map((item: any) => {
+      const suggestions: SkillSuggestion[] = rawSuggestions
+        .map((item): SkillSuggestion | null => {
           if (typeof item === 'string') {
             return {
               skill: item,
@@ -447,19 +444,20 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
               description: `Suggested skill for ${selectedCourseData.name}`,
             };
           } else if (item && typeof item === 'object') {
+            const suggestion = item as Record<string, unknown>;
             return {
-              skill: item.skill || item.name || 'Unknown Skill',
-              relevance: item.relevance || item.confidence || 0.8,
-              description: item.description || `Suggested skill for ${selectedCourseData.name}`,
+              skill: (suggestion.skill as string) || (suggestion.name as string) || 'Unknown Skill',
+              relevance: (suggestion.relevance as number) || (suggestion.confidence as number) || 0.8,
+              description:
+                (suggestion.description as string) || `Suggested skill for ${selectedCourseData.name}`,
             };
           }
-          return item;
+          return null;
         })
-        .filter((item) => item && item.skill);
+        .filter((item): item is SkillSuggestion => !!item && !!item.skill);
 
       // If no suggestions returned, inform user of failure, return false
       if (suggestions.length === 0) {
-        console.log('No AI suggestions returned');
         toast.error(
           `AI failed to return suggestions. Please try manually assigning suggestions or try again shortly.`
         );
@@ -475,20 +473,22 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
       setFinalSkills(suggestedSkills);
 
       setStep('review-skills');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting skill suggestions:', error);
 
       // API failed, inform user to do manual entry or try again
       // Detailed error handling based on status code
-      if (error.response?.status === 400) {
+      const axiosError = axios.isAxiosError(error) ? error : undefined;
+      const status = axiosError?.response?.status;
+      if (status === 400) {
         const errorMsg =
-          error.response?.data?.message || error.response?.data?.error || 'Bad request format';
+          axiosError?.response?.data?.message || axiosError?.response?.data?.error || 'Bad request format';
         toast.error(
           `Skill suggestions failed (400): ${errorMsg}. Please try again or enter skills manually.`
         );
-      } else if (error.response?.status === 401) {
+      } else if (status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
-      } else if (error.response?.status === 403) {
+      } else if (status === 403) {
         toast.error('Access denied. Instructor permissions required.');
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -523,9 +523,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
       setExistingMatrices((prev) => prev.filter((m) => m._id !== matrixId));
 
       toast.success('Skill matrix deleted');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Delete matrix error:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete matrix. Please try again.');
+      toast.error(getApiErrorMessage(error) || 'Failed to delete matrix. Please try again.');
     }
   };
 
@@ -570,9 +570,6 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         description: data.description,
       };
 
-      // Log the exact request being sent
-      console.log('Creating skill matrix with data:', matrixData);
-
       // Validate request data structure
       if (!matrixData.course_id) {
         throw new Error('Missing course_id in request');
@@ -585,8 +582,6 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
       }
 
       const response = await skillMatrixAPI.create(matrixData);
-
-      console.log('Skill matrix creation response:', response.data);
 
       onMatrixCreated?.(response.data);
       toast.success('Skill matrix created successfully!');
@@ -617,11 +612,13 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         setValue('matrixName', newMatrixName);
       }
       setValue('description', '');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating skill matrix:', error);
+      const axiosError = axios.isAxiosError(error) ? error : undefined;
+      const status = axiosError?.response?.status;
 
       // Detailed error handling based on status code
-      if (error.response?.status === 409) {
+      if (status === 409) {
         // Generate a better unique name suggestion
         const baseName = data.matrixName.replace(/\s*\(\d+\/\d+\/\d+\).*$/, ''); // Remove any existing date suffix
         const existingNames = existingMatrices.map((m) => m.matrix_name);
@@ -673,15 +670,15 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         );
 
         console.error('409 Conflict details:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
+          status: axiosError?.response?.status,
+          statusText: axiosError?.response?.statusText,
+          data: axiosError?.response?.data,
           existingMatrices: existingNames,
           suggestedName,
           config: {
-            url: error.response.config?.url,
-            method: error.response.config?.method,
-            data: error.response.config?.data,
+            url: axiosError?.response?.config?.url,
+            method: axiosError?.response?.config?.method,
+            data: axiosError?.response?.config?.data,
           },
           possibleCauses: [
             'A skill matrix with this name already exists for this course',
@@ -702,25 +699,25 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
         // Update the form with suggested name
         setValue('matrixName', suggestedName);
-      } else if (error.response?.status === 400) {
+      } else if (status === 400) {
         const errorMsg =
-          error.response?.data?.message || error.response?.data?.error || 'Bad request format';
+          axiosError?.response?.data?.message || axiosError?.response?.data?.error || 'Bad request format';
         toast.error(
           `Skill matrix creation failed (400): ${errorMsg}. Check console for request details.`
         );
         console.error('400 Error details:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
+          status: axiosError?.response?.status,
+          statusText: axiosError?.response?.statusText,
+          data: axiosError?.response?.data,
           config: {
-            url: error.response.config?.url,
-            method: error.response.config?.method,
-            data: error.response.config?.data,
+            url: axiosError?.response?.config?.url,
+            method: axiosError?.response?.config?.method,
+            data: axiosError?.response?.config?.data,
           },
         });
-      } else if (error.response?.status === 401) {
+      } else if (status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
-      } else if (error.response?.status === 403) {
+      } else if (status === 403) {
         toast.error('Access denied. Instructor permissions required.');
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';

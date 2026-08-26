@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 import { authAPI } from '../services/api';
 import { User, SignupRequest } from '../types';
 
@@ -55,11 +56,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(userData);
       setBackendAvailable(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth check failed:', error);
 
-      // Handle different error types
-      if (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch')) {
+      // Handle different error types. The network-code check only applies to
+      // real axios errors (that's where .code comes from); the message
+      // check is a broader fallback that should catch any error - axios or
+      // not - whose message mentions a fetch failure.
+      const isNetworkFailure =
+        (axios.isAxiosError(error) && error.code === 'NETWORK_ERROR') ||
+        (error instanceof Error && error.message?.includes('fetch'));
+      if (isNetworkFailure) {
         setBackendAvailable(false);
       } else {
         setBackendAvailable(true);
@@ -94,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userData);
           setBackendAvailable(true);
           return;
-        } catch (meError: any) {
+        } catch (meError: unknown) {
           console.error('Failed to get user data after login:', meError);
           setUser(response.data.user);
           setBackendAvailable(true);
@@ -103,10 +110,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       throw new Error('Login failed. Please try again.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login failed:', error);
 
-      if (error.code === 'NETWORK_ERROR') {
+      if (axios.isAxiosError(error) && error.code === 'NETWORK_ERROR') {
         setBackendAvailable(false);
       }
       throw error;
@@ -136,7 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(userData);
           setBackendAvailable(true);
           return;
-        } catch (meError: any) {
+        } catch (meError: unknown) {
           console.error('Failed to get user data after signup:', meError);
           setUser(response.data.user);
           setBackendAvailable(true);
@@ -145,10 +152,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       throw new Error('Signup failed. Please try again.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup failed:', error);
 
-      if (error.code === 'NETWORK_ERROR') {
+      if (axios.isAxiosError(error) && error.code === 'NETWORK_ERROR') {
         setBackendAvailable(false);
       }
       throw error;

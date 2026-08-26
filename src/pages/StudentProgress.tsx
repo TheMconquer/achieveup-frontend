@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';                                                              
-import { Link } from 'react-router-dom';                                                                         
-import { CheckCircle, AlertTriangle, RefreshCw, ArrowUpRight } from 'lucide-react';                              
-import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';  
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { CheckCircle, AlertTriangle, RefreshCw, ArrowUpRight } from 'lucide-react';
+import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';
+import { CanvasCourse } from '../types';
 
 
 interface StudentProgressData {
@@ -20,14 +22,33 @@ interface StudentProgressData {
   averageScores: Record<string, number>;
 }
 
+type StudentProgressEntry = StudentProgressData['students'][number];
+
+// Shape of a single student record as it comes back from the analytics
+// endpoint, before it's transformed into a StudentProgressEntry.
+interface RawStudentAnalytics {
+  students: Array<{
+    id: string;
+    name: string;
+    skillsMastered?: number;
+    badgesEarned?: number;
+    progress?: number;
+    riskLevel?: 'low' | 'medium' | 'high';
+    skillBreakdown?: Record<string, { score: number; level: string; questionsAttempted: number; questionsCorrect: number }>;
+    totalQuestionsAttempted?: number;
+  }>;
+  skillDistribution: Record<string, number>;
+  averageScores: Record<string, number>;
+}
+
 // Student Progress Component
 const StudentProgress: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CanvasCourse[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [studentData, setStudentData] = useState<StudentProgressData | null>(null);
   const [error, setError] = useState<string>('');
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentProgressEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -54,7 +75,7 @@ const StudentProgress: React.FC = () => {
       if (response.data.length > 0) {
         setSelectedCourse(response.data[0].id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading courses:', err);
       setError('Failed to load courses. Please check your Canvas integration.');
     } finally {
@@ -71,21 +92,20 @@ const StudentProgress: React.FC = () => {
       const response = await instructorAPI.getCourseStudentAnalytics(courseId);
 
       // The backend /student-analytics route returns the analytics object directly
-      const analyticsData = response.data.analytics || response.data;
-      console.log('API RESPONSE analyticsData:', analyticsData);
+      const analyticsData = (response.data.analytics || response.data) as unknown as RawStudentAnalytics;
 
       // Check if we have actual student data
       if (analyticsData && analyticsData.students && analyticsData.students.length > 0) {
         // Transform the API response to match our new interface
         const transformedData: StudentProgressData = {
           ...analyticsData,
-          students: analyticsData.students.map((student: any) => {
+          students: analyticsData.students.map((student) => {
             // Extract top 3 skills from skillBreakdown if it exists
             let topSkills: Array<{ skill: string; score: number; level: string }> = [];
 
             if (student.skillBreakdown) {
               topSkills = Object.entries(student.skillBreakdown)
-                .map(([skill, data]: [string, any]) => ({
+                .map(([skill, data]) => ({
                   skill,
                   score: Math.round(data.score || 0),
                   level: data.level || 'beginner'
@@ -118,9 +138,10 @@ const StudentProgress: React.FC = () => {
         });
         setError('');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading student data:', err);
-      setError(`Failed to load student data. ${err.response?.status === 404 ? 'No data found for this course.' : 'Please try again.'}`);
+      const isNotFound = axios.isAxiosError(err) && err.response?.status === 404;
+      setError(`Failed to load student data. ${isNotFound ? 'No data found for this course.' : 'Please try again.'}`);
       setStudentData(null);
     } finally {
       setLoading(false);
@@ -216,11 +237,11 @@ const StudentProgress: React.FC = () => {
                       );
                       await loadStudentData(selectedCourse);
                     }
-                  } catch (error: any) {
+                  } catch (error: unknown) {
                     const { toast } = await import('react-hot-toast');
                     console.error('Force sync error:', error);
 
-                    if (error.code === 'ERR_NETWORK') {
+                    if (axios.isAxiosError(error) && error.code === 'ERR_NETWORK') {
                       toast.error('Connection timeout. The sync is likely still running in the background—please check back in a minute.');
                     } else {
                       toast.error('Failed to sync data. Please try again.');
@@ -589,7 +610,7 @@ const StudentProgress: React.FC = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Complete Skills Breakdown</h3>
                 {selectedStudent.skillBreakdown && Object.keys(selectedStudent.skillBreakdown).length > 0 ? (
                   <div className="space-y-4">
-                    {Object.entries(selectedStudent.skillBreakdown).map(([skillName, skillData]: [string, any]) => (
+                    {Object.entries(selectedStudent.skillBreakdown).map(([skillName, skillData]) => (
                       <div key={skillName} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-md font-medium text-gray-900">{skillName}</h4>

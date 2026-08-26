@@ -52,6 +52,7 @@ export interface CreateSkillMatrixRequest {
 
 export interface UpdateSkillMatrixRequest {
   skills: string[];
+  matrix_name?: string;
 }
 
 // Skill Assignment Types

@@ -8,6 +8,7 @@ import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authAPI, canvasAPI } from '../services/api';
 import { User as UserType } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -59,8 +60,8 @@ const Settings: React.FC = () => {
       await refreshUser();
       toast.success('Profile updated successfully!');
       setIsEditingProfile(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -81,8 +82,8 @@ const Settings: React.FC = () => {
         toast.error(response.data.message || `Invalid Canvas API ${tokenType} token`);
         return false;
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to validate token');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to validate token');
       return false;
     } finally {
       setValidatingToken(false);
@@ -100,9 +101,9 @@ const Settings: React.FC = () => {
       } else {
         toast.error(response.data.message || 'Canvas connection failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setConnectionStatus({ connected: false, message: 'Connection test failed' });
-      toast.error(error.response?.data?.message || 'Failed to test connection');
+      toast.error(getApiErrorMessage(error) || 'Failed to test connection');
     } finally {
       setTestingConnection(false);
     }
@@ -140,8 +141,8 @@ const Settings: React.FC = () => {
       toast.success(`Canvas API ${profile.canvasTokenType} token updated successfully!`);
       setIsEditingToken(false);
       setProfile(prev => ({ ...prev, canvasApiToken: '' }));
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update Canvas API Token');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to update Canvas API Token');
     } finally {
       setLoading(false);
     }
@@ -162,8 +163,8 @@ const Settings: React.FC = () => {
       setIsEditingToken(false);
       setConnectionStatus(null);
       toast.success('Canvas API Token cleared!');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to clear Canvas API Token');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to clear Canvas API Token');
     } finally {
       setLoading(false);
     }
@@ -193,8 +194,8 @@ const Settings: React.FC = () => {
       });
       toast.success('Password changed successfully!');
       setProfile(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmNewPassword: '' }));
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to change password');
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { badgeAPI } from '../services/api';
 import Card from '../components/common/Card';
 import { Award, Share2, AlertCircle, Check } from 'lucide-react';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface BadgeData {
     badge_id: string;
@@ -54,9 +55,10 @@ const StudentPublicBadges: React.FC = () => {
                     setStudentName(response.data.student_name);
                 }
                 setError(null);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error loading public badges:', err);
-                setError(err.response?.data?.message || 'Failed to load badges. The student ID might be invalid.');
+                const message = getApiErrorMessage(err);
+                setError(message || 'Failed to load badges. The student ID might be invalid.');
             } finally {
                 setLoading(false);
             }

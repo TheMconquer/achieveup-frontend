@@ -78,6 +78,7 @@ test('a valid response with zero badges shows "No Badges Yet", not the error sta
 
 test('a failed request shows the distinct error state with a way back to login', async () => {
   jest.mocked(badgeAPI.getPublicStudentBadges).mockRejectedValue({
+    isAxiosError: true,
     response: { data: { message: 'Student not found' } },
   });
 

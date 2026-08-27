@@ -29,6 +29,16 @@ interface BadgeData {
     studentsNotEarned: StudentBadgeStatus[];
 }
 
+interface RawAnalyticsStudent {
+    id: string;
+    name: string;
+    skillBreakdown?: Record<string, { score?: number; badgeLevel?: StudentBadgeStatus['badgeLevel']; badgeEarnedAt?: string }>;
+}
+
+interface RawStudentAnalytics {
+    students: RawAnalyticsStudent[];
+}
+
 const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
     const [badges, setBadges] = useState<BadgeData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -43,13 +53,12 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                 setLoading(true);
 
                 // Fetch student analytics first
-                let studentAnalytics: any = null;
+                let studentAnalytics: RawStudentAnalytics | null = null;
                 const analyticsResponse = await instructorAPI.getCourseStudentAnalytics(courseId);
                 // The backend /student-analytics route returns the analytics object directly
-                studentAnalytics = analyticsResponse.data.analytics || analyticsResponse.data;
+                studentAnalytics = (analyticsResponse.data.analytics || analyticsResponse.data) as unknown as RawStudentAnalytics;
 
                 if (!studentAnalytics || !studentAnalytics.students || studentAnalytics.students.length === 0) {
-                    console.log('No student analytics found for course');
                     setBadges([]);
                     setLoading(false);
                     return;
@@ -57,7 +66,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
 
                 // Get all unique skills by inspecting all students' skill breakdowns
                 const allSkills: string[] = [];
-                studentAnalytics.students.forEach((student: any) => {
+                studentAnalytics.students.forEach((student) => {
                     if (student.skillBreakdown) {
                         allSkills.push(...Object.keys(student.skillBreakdown));
                     }
@@ -89,7 +98,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                     const studentsNotEarned: StudentBadgeStatus[] = [];
 
                     if (studentAnalytics && studentAnalytics.students) {
-                        studentAnalytics.students.forEach((student: any) => {
+                        studentAnalytics.students.forEach((student) => {
                             // Check if student has skill breakdown data
                             if (student.skillBreakdown && student.skillBreakdown[skillName]) {
                                 const skillData = student.skillBreakdown[skillName];

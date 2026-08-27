@@ -130,7 +130,7 @@ describe('checkAuthStatus (on mount)', () => {
 
   test('with a stored token that fails due to a network error, marks the backend unavailable', async () => {
     localStorage.setItem('token', 'stale-token');
-    jest.mocked(authAPI.me).mockRejectedValue({ code: 'NETWORK_ERROR', message: 'Network Error' });
+    jest.mocked(authAPI.me).mockRejectedValue({ isAxiosError: true, code: 'NETWORK_ERROR', message: 'Network Error' });
 
     renderAuth();
 
@@ -184,7 +184,7 @@ describe('login', () => {
   });
 
   test('a rejected login call marks the backend unavailable only when it is a network error', async () => {
-    jest.mocked(authAPI.login).mockRejectedValue({ code: 'NETWORK_ERROR', message: 'Network Error' });
+    jest.mocked(authAPI.login).mockRejectedValue({ isAxiosError: true, code: 'NETWORK_ERROR', message: 'Network Error' });
 
     renderAuth();
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));

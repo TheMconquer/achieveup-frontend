@@ -191,11 +191,8 @@ const SkillAssignmentInterface: React.FC = () => {
           0
         );
         if (totalSuggestions === 0) {
-          console.log(
-            'AI analysis completed but returned no suggestions, create custom skill'
-          );
-          toast.success(
-            'AI analysis completed but returned no suggestions, create custom skill'
+          toast.error(
+            'AI analysis returned no suggestions, create custom skill'
           );
         } else {
           toast.success(
@@ -215,7 +212,7 @@ const SkillAssignmentInterface: React.FC = () => {
         if (status === 400) {
           const errorMsg =
             axiosError?.response?.data?.message || axiosError?.response?.data?.error || 'Bad request format';
-          toast.success(
+          toast.error(
             `Error Loading suggestion. Create Custom skill. AI service: ${errorMsg}`
           );
         } else if (status === 401) {
@@ -223,7 +220,7 @@ const SkillAssignmentInterface: React.FC = () => {
         } else if (status === 403) {
           toast.error('Access denied. Instructor permissions required.');
         } else {
-          toast.success(
+          toast.error(
             `Error Loading suggestion. Create Custom skill. AI service temporarily unavailable.`
           );
         }

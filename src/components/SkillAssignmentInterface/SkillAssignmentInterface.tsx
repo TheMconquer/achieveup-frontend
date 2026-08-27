@@ -11,7 +11,7 @@ import {
   Clock,
   BookOpen,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { skillAssignmentAPI, canvasAPI, skillMatrixAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
@@ -200,6 +200,9 @@ const SkillAssignmentInterface: React.FC = () => {
           console.log(
             'AI analysis completed but returned no suggestions, create custom skill'
           );
+          toast.success(
+            'AI analysis completed but returned no suggestions, create custom skill'
+          );
         } else {
           toast.success(
             `AI analyzed ${questions.length} questions and provided ${totalSuggestions} skill suggestions`
@@ -207,10 +210,6 @@ const SkillAssignmentInterface: React.FC = () => {
         }
       } catch (error: any) {
         console.error('Error analyzing questions with AI:', error);
-
-        // Generate mock suggestions as fallback
-        const mockSuggestions = generateMockQuestionSuggestions(questions);
-        setSuggestions(mockSuggestions);
 
         // Set error status for all questions, then update to completed since we have mock suggestions
         const completedStatus: AIAnalysisStatus = {};
@@ -222,7 +221,7 @@ const SkillAssignmentInterface: React.FC = () => {
           const errorMsg =
             error.response?.data?.message || error.response?.data?.error || 'Bad request format';
           toast.success(
-            `Using smart question analysis (${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} suggestions generated). AI service: ${errorMsg}`
+            `Error Loading suggestion. Create Custom skill. AI service: ${errorMsg}`
           );
         } else if (error.response?.status === 401) {
           toast.error('Authentication failed. Please check your instructor token in Settings.');
@@ -230,7 +229,7 @@ const SkillAssignmentInterface: React.FC = () => {
           toast.error('Access denied. Instructor permissions required.');
         } else {
           toast.success(
-            `Generated ${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} smart skill suggestions based on question analysis. AI service temporarily unavailable.`
+            `Error Loading suggestion. Create Custom skill. AI service temporarily unavailable.`
           );
         }
       } finally {

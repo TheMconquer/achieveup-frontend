@@ -5,6 +5,9 @@ export interface NavigationItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  // Renders as a non-clickable "Coming soon" item instead of a real link,
+  // for nav entries whose page doesn't exist yet.
+  disabled?: boolean;
 }
 
 // Shared course-list state, fetched once in Navigation/index.tsx and passed

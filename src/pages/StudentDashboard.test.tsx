@@ -128,7 +128,11 @@ describe('StudentDashboard', () => {
 
   test('shows a loading spinner before data resolves', () => {
     mockGetCourses.mockReturnValue(new Promise(() => {}));
-    const { container } = render(<StudentDashboard />);
+    const { container } = render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
   });
@@ -136,7 +140,11 @@ describe('StudentDashboard', () => {
   test('a courses-load failure shows the error banner but does not prevent badges from loading independently (not one shared try/catch)', async () => {
     mockGetCourses.mockRejectedValue(new Error('Canvas unavailable'));
 
-    render(<StudentDashboard />);
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(

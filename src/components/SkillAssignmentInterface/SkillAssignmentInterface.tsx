@@ -198,12 +198,7 @@ const SkillAssignmentInterface: React.FC = () => {
         );
         if (totalSuggestions === 0) {
           console.log(
-            'AI analysis completed but returned no suggestions, providing mock suggestions'
-          );
-          const mockSuggestions = generateMockQuestionSuggestions(questions);
-          setSuggestions(mockSuggestions);
-          toast.success(
-            `AI analysis completed. Generated ${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} smart suggestions based on question content.`
+            'AI analysis completed but returned no suggestions, create custom skill'
           );
         } else {
           toast.success(

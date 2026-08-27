@@ -921,7 +921,7 @@ const SkillAssignmentInterface: React.FC = () => {
               <select
                 {...register('quizId', { required: 'Please select a quiz' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
-                disabled={!selectedCourse || loading}
+                disabled={!selectedCourse || loading || !selectedMatrix}
               >
                 <option value="">
                   {!selectedCourse

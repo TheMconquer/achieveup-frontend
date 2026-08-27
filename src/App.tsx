@@ -11,7 +11,6 @@ import Settings from './pages/Settings';
 import StudentProgress from './pages/StudentProgress';
 import SkillMatrixCreator from './components/SkillMatrixCreator/SkillMatrixCreator';
 import SkillAssignmentInterface from './components/SkillAssignmentInterface/SkillAssignmentInterface';
-import StudentBadgesTest from './components/StudentBadgesTest/StudentBadgesTest';
 import StudentPublicBadges from './pages/StudentPublicBadges';
 import RequireRole from './components/common/RequireRole';
 import RoleHome from './components/common/RoleHome';
@@ -74,14 +73,6 @@ const AppRoutes: React.FC = () => {
           element={
             <Layout>
               <StudentProgress />
-            </Layout>
-          }
-        />
-        <Route
-          path="/badges-test"
-          element={
-            <Layout>
-              <StudentBadgesTest />
             </Layout>
           }
         />

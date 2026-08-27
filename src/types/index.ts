@@ -216,10 +216,6 @@ export interface ProgressDashboardProps {
   courseId: string;
 }
 
-export interface AnalyticsDashboardProps {
-  courseId: string;
-}
-
 // Form Types
 export interface SkillMatrixFormData {
   courseId: string;

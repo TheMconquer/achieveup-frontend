@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import StudentDashboard from './StudentDashboard';
 
@@ -73,7 +74,11 @@ describe('StudentDashboard', () => {
   });
 
   test('greets the student and renders computed stats after loading', async () => {
-    render(<StudentDashboard />);
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/Jordan/)).toBeInTheDocument();
@@ -107,7 +112,11 @@ describe('StudentDashboard', () => {
       data: { student_id: 'student-1', total_badges: 0, badges: [] },
     });
 
-    render(<StudentDashboard />);
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(
@@ -119,7 +128,11 @@ describe('StudentDashboard', () => {
 
   test('shows a loading spinner before data resolves', () => {
     mockGetCourses.mockReturnValue(new Promise(() => {}));
-    const { container } = render(<StudentDashboard />);
+    const { container } = render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
   });
@@ -127,7 +140,11 @@ describe('StudentDashboard', () => {
   test('a courses-load failure shows the error banner but does not prevent badges from loading independently (not one shared try/catch)', async () => {
     mockGetCourses.mockRejectedValue(new Error('Canvas unavailable'));
 
-    render(<StudentDashboard />);
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(

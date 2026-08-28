@@ -4,7 +4,7 @@ describe('getNavigationItems', () => {
   test('returns the instructor item set, in order', () => {
     const items = getNavigationItems(true);
     expect(items.map((item) => ({ name: item.name, href: item.href }))).toEqual([
-      { name: 'Dashboard', href: '/' },
+      { name: 'Dashboard', href: '/instructor-dashboard' },
       { name: 'Skill Matrix', href: '/skill-matrix' },
       { name: 'Skill Assignment', href: '/skill-assignment' },
       { name: 'Student Progress', href: '/progress' },

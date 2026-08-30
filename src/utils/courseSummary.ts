@@ -5,6 +5,7 @@ import { tierForScore } from './skillTiers';
 export interface AttemptedSkill {
   name: string;
   courseId: string;
+  courseName: string;
   score: number;
 }
 
@@ -24,6 +25,7 @@ export function summarizeCourseProgress(
   const attemptedSkills: AttemptedSkill[] = attempted.map(([name, data]) => ({
     name,
     courseId: course.id,
+    courseName: course.name,
     score: Math.round(data.score),
   }));
 

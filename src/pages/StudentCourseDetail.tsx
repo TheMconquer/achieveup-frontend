@@ -95,7 +95,7 @@ const StudentCourseDetail: React.FC = () => {
             ? "This course wasn't found in your Canvas enrollments."
             : 'Please try refreshing the page.'}
         </p>
-        <Link to="/courses" className="text-sm font-semibold text-au-gold-dark">
+        <Link to="/courses" className="text-sm font-semibold text-au-gold">
           ← Back to My Courses
         </Link>
       </Card>

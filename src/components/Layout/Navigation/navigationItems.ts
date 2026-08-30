@@ -44,7 +44,6 @@ const studentNavigationItems: NavigationItem[] = [
     name: 'Badges',
     href: '/badges',
     icon: Award,
-    disabled: true,
   },
 ];
 

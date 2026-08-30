@@ -99,6 +99,26 @@ describe('StudentDashboard', () => {
     expect(screen.getByText('Data Structures')).toBeInTheDocument();
   });
 
+  test('"View all" links point to the Skills and Badges pages', async () => {
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Jordan/)).toBeInTheDocument();
+    });
+
+    const skillsLinks = screen.getAllByRole('link', { name: /view all skills/i });
+    expect(skillsLinks).toHaveLength(2);
+    skillsLinks.forEach((link) => expect(link).toHaveAttribute('href', '/skills'));
+
+    const badgesLinks = screen.getAllByRole('link', { name: /view all badges/i });
+    expect(badgesLinks).toHaveLength(2);
+    badgesLinks.forEach((link) => expect(link).toHaveAttribute('href', '/badges'));
+  });
+
   test('shows an empty-state message when no skills have been attempted', async () => {
     mockGetSkillProgress.mockResolvedValue({
       data: {

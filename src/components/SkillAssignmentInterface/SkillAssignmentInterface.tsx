@@ -452,7 +452,7 @@ const SkillAssignmentInterface: React.FC = () => {
         const message = axiosError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
         console.warn('Failed to load skill matrices:', message);
         toast.error(
-          `Failed to load skill matrices: ${message}. Using demo data for testing.`
+          `Failed to load skill matrices: ${message}. Please try again.`
         );
 
         // Fallback Error

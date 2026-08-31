@@ -202,9 +202,9 @@ const SkillAssignmentInterface: React.FC = () => {
       } catch (error: unknown) {
         console.error('Error analyzing questions with AI:', error);
 
-        const completedStatus: AIAnalysisStatus = {};
-        questions.forEach((q) => (completedStatus[getQuestionKey(q)] = 'completed'));
-        setAiAnalysisStatus(completedStatus);
+        const errorStatus: AIAnalysisStatus = {};
+        questions.forEach((q) => (errorStatus[getQuestionKey(q)] = 'error'));
+        setAiAnalysisStatus(errorStatus);
 
         // Provide detailed error handling with fallback message
         const axiosError = axios.isAxiosError(error) ? error : undefined;

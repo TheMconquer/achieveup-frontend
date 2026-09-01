@@ -1,4 +1,4 @@
-import { tierForScore, tierFromLabel, tierLabel } from './skillTiers';
+import { tierForScore, tierFromLabel, tierLabel, isMastered } from './skillTiers';
 
 // Thresholds mirror knowgap-backend/services/skill_tiers.py tier_for_score
 // exactly (25/50/75/90) — this is the single shared scheme used by badge
@@ -17,6 +17,31 @@ describe('tierForScore', () => {
     [100, 'expert'],
   ])('%i%% -> %s', (score, expected) => {
     expect(tierForScore(score)).toBe(expected);
+  });
+});
+
+describe('isMastered', () => {
+  // Regression coverage for a bug that shipped silently: before the
+  // beginner tier existed, 'developing' covered 0-49%, so callers wrote
+  // `tierForScore(score) !== 'developing'` to mean "score >= 50%". Splitting
+  // out beginner (25-49%) broke that at every inlined call site without
+  // touching them, since beginner also satisfies `!== 'developing'`.
+  test('a 30% (beginner-tier) score is not counted as mastered', () => {
+    expect(isMastered(30)).toBe(false);
+  });
+
+  test.each([
+    [0, false],
+    [24, false],
+    [25, false],
+    [49, false],
+    [50, true],
+    [74, true],
+    [75, true],
+    [90, true],
+    [100, true],
+  ])('%i%% -> mastered: %s', (score, expected) => {
+    expect(isMastered(score)).toBe(expected);
   });
 });
 

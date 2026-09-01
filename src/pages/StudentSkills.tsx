@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import SkillMasteryList from '../components/StudentPortal/SkillMasteryList';
 import { summarizeCourseProgress, AttemptedSkill } from '../utils/courseSummary';
-import { tierForScore } from '../utils/skillTiers';
+import { isMastered } from '../utils/skillTiers';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const SKILLS_PER_PAGE = 10;
@@ -79,9 +79,7 @@ const StudentSkills: React.FC = () => {
         attemptedSkills.reduce((sum, skill) => sum + skill.score, 0) / attemptedSkills.length
       )
     : 0;
-  const masteredCount = attemptedSkills.filter(
-    (skill) => tierForScore(skill.score) !== 'developing'
-  ).length;
+  const masteredCount = attemptedSkills.filter((skill) => isMastered(skill.score)).length;
 
   if (loading) {
     return (

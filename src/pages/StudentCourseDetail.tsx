@@ -8,7 +8,7 @@ import MasteryRing from '../components/StudentPortal/MasteryRing';
 import SkillMasteryList from '../components/StudentPortal/SkillMasteryList';
 import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
 import { summarizeCourseProgress, AttemptedSkill } from '../utils/courseSummary';
-import { tierForScore, tierLabel } from '../utils/skillTiers';
+import { tierForScore, tierLabel, isMastered } from '../utils/skillTiers';
 import { ArrowLeft, AlertCircle, Info } from 'lucide-react';
 
 const StudentCourseDetail: React.FC = () => {
@@ -105,9 +105,7 @@ const StudentCourseDetail: React.FC = () => {
   const averageScore = attemptedSkills.length
     ? Math.round(attemptedSkills.reduce((sum, skill) => sum + skill.score, 0) / attemptedSkills.length)
     : 0;
-  const masteredCount = attemptedSkills.filter(
-    (skill) => tierForScore(skill.score) !== 'developing'
-  ).length;
+  const masteredCount = attemptedSkills.filter((skill) => isMastered(skill.score)).length;
 
   return (
     <div className="flex w-full flex-col gap-6">

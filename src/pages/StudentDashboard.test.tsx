@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import StudentDashboard from './StudentDashboard';
@@ -97,6 +97,33 @@ describe('StudentDashboard', () => {
     expect(screen.getByText('Recursion')).toBeInTheDocument();
     // Course Overview shows the course.
     expect(screen.getByText('Data Structures')).toBeInTheDocument();
+  });
+
+  test('a beginner-tier (25-49%) skill does not count toward "Skills Earned"', async () => {
+    mockGetSkillProgress.mockResolvedValue({
+      data: {
+        student_id: 'student-1',
+        course_id: 'course-1',
+        skill_progress: {
+          Loops: { score: 30, level: 'beginner', total_questions: 3, correct_answers: 1 },
+        },
+        last_updated: '2026-08-01T00:00:00Z',
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <StudentDashboard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Jordan/)).toBeInTheDocument();
+    });
+
+    const skillsEarnedCard = screen.getByText('Skills Earned').closest('div.flex.h-full.flex-col');
+    expect(skillsEarnedCard).not.toBeNull();
+    expect(within(skillsEarnedCard as HTMLElement).getByText('0')).toBeInTheDocument();
   });
 
   test('"View all" links point to the Skills and Badges pages', async () => {

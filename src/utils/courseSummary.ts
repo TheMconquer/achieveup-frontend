@@ -5,6 +5,7 @@ import { tierForScore } from './skillTiers';
 export interface AttemptedSkill {
   name: string;
   courseId: string;
+  courseName: string;
   score: number;
 }
 
@@ -24,6 +25,7 @@ export function summarizeCourseProgress(
   const attemptedSkills: AttemptedSkill[] = attempted.map(([name, data]) => ({
     name,
     courseId: course.id,
+    courseName: course.name,
     score: Math.round(data.score),
   }));
 
@@ -33,7 +35,10 @@ export function summarizeCourseProgress(
       : null;
 
   const weakestSkill = attempted
-    .filter(([, data]) => tierForScore(data.score) === 'developing')
+    .filter(([, data]) => {
+      const tier = tierForScore(data.score);
+      return tier === 'developing' || tier === 'beginner';
+    })
     .sort((a, b) => a[1].score - b[1].score)[0];
 
   let nextHint = 'Not started yet';

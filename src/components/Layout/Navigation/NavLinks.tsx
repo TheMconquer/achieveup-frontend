@@ -43,12 +43,12 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
           isDesktop
             ? `flex h-[42px] items-center gap-4 rounded-lg px-4 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-au-gold-light text-au-gold-dark'
+                  ? 'bg-au-gold-selected text-au-gold'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`
             : `flex items-center rounded-lg px-4 py-3 text-base font-medium transition-colors ${
                 isActive
-                  ? 'bg-au-gold-light text-au-gold-dark'
+                  ? 'bg-au-gold-selected text-au-gold'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`
         }

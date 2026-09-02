@@ -47,7 +47,6 @@ interface QuestionAnalysis {
   // Backend echoes back whatever opaque id we send per question; we now send
   // the question text as that id, so this field carries text, not a Canvas id.
   questionId: string;
-  complexity: 'low' | 'medium' | 'high';
   suggestedSkills: string[];
   confidence: number;
 }

@@ -268,7 +268,6 @@ export interface RadarData {
 // Question Analysis Types
 export interface QuestionAnalysis {
   questionId: string;
-  complexity: 'low' | 'medium' | 'high';
   suggestedSkills: string[];
   confidence: number;
 }

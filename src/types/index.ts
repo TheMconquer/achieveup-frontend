@@ -76,7 +76,7 @@ export interface Badge {
   name: string;
   description?: string;
   skill_name: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   earned?: boolean;
   earned_at?: string;
   progress?: number; // 0-1 progress towards earning the badge
@@ -96,7 +96,7 @@ export interface GenerateBadgeRequest {
 // Progress Types
 export interface SkillProgress {
   score: number;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: 'none' | 'beginner' | 'intermediate' | 'advanced' | 'expert';
   total_questions: number;
   correct_answers: number;
 }
@@ -181,6 +181,10 @@ export interface ButtonProps {
   className?: string;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
+  // Associates a button that lives outside its <form> (e.g. a sticky save
+  // bar rendered after the form closes) with that form by id, so it can be
+  // a real type="submit" button instead of faking submission via onClick.
+  form?: string;
 }
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {

@@ -702,7 +702,7 @@ const SkillAssignmentInterface: React.FC = () => {
         title="Skill Assignment Interface"
         subtitle="Assign skills to quiz questions using AI-powered analysis and zero-shot classification"
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form id="skill-assignment-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Course and Quiz Selection */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
@@ -1236,14 +1236,6 @@ const SkillAssignmentInterface: React.FC = () => {
                     );
                   })}
               </div>
-
-              {/* Save Button */}
-              <div className="flex justify-end pt-6 border-t border-gray-200">
-                <Button type="submit" loading={loading} className="flex items-center">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Skill Assignments
-                </Button>
-              </div>
             </>
           )}
 
@@ -1268,8 +1260,8 @@ const SkillAssignmentInterface: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg border border-gray-200">
               <div className="flex justify-end p-4">
                 <Button
-                  type="button"
-                  onClick={handleSubmit(onSubmit)}
+                  type="submit"
+                  form="skill-assignment-form"
                   loading={loading}
                   disabled={stats.assignedQuestions === 0}
                   className="flex items-center"

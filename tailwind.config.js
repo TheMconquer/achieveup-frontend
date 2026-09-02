@@ -1,8 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-  ],
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -11,7 +9,7 @@ module.exports = {
         'ucf-gold': '#FFCA06', // RGB 255, 202, 6
         'ucf-grey': '#6B7280',
         'ucf-white': '#FFFFFF',
-        
+
         // Primary color scheme using UCF colors
         primary: {
           50: '#fff7e6',
@@ -25,7 +23,7 @@ module.exports = {
           800: '#b38803',
           900: '#997102',
         },
-        
+
         // Secondary colors
         secondary: {
           50: '#f9fafb',
@@ -47,9 +45,9 @@ module.exports = {
         // secondary-700). Only the gold accent and app background are new.
         au: {
           bg: '#f7f6f3',
-          gold: '#ffb000',
-          'gold-light': '#fff4dd',
-          'gold-dark': '#995f00',
+          gold: '#F5A800',
+          'gold-light': '#FFF4D9',
+          'gold-selected': '#FFF5DF',
         },
       },
       fontFamily: {
@@ -79,4 +77,4 @@ module.exports = {
     },
   },
   plugins: [],
-} 
+};

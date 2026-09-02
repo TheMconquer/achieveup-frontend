@@ -32,8 +32,8 @@ describe('NavLinks', () => {
         <NavLinks items={items} currentPath="/skill-matrix" variant="desktop" />
       </Wrapper>
     );
-    expect(screen.getByRole('link', { name: /skill matrix/i })).toHaveClass('bg-au-gold-light');
-    expect(screen.getByRole('link', { name: /dashboard/i })).not.toHaveClass('bg-au-gold-light');
+    expect(screen.getByRole('link', { name: /skill matrix/i })).toHaveClass('bg-au-gold-selected');
+    expect(screen.getByRole('link', { name: /dashboard/i })).not.toHaveClass('bg-au-gold-selected');
   });
 
   test('calls onNavigate when a link is clicked (used to close the mobile drawer)', () => {

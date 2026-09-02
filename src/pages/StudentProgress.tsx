@@ -292,53 +292,28 @@ const StudentProgress: React.FC = () => {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 font-bold">{studentData.students.length}</span>
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-500">Total Students</p>
-                  <p className="text-lg font-semibold text-gray-900">{studentData.students.length}</p>
-                </div>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
+              <p className="text-sm font-medium text-gray-500">Total Students</p>
+              <div className="mt-2 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 font-bold">{studentData.students.length}</span>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 font-bold">
-                      {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
-                    </span>
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-500">Avg Skills Mastered</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
-                  </p>
-                </div>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
+              <p className="text-sm font-medium text-gray-500">Avg Skills Mastered</p>
+              <div className="mt-2 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-green-600 font-bold">
+                  {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
+                </span>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-600 font-bold">
-                      {Object.keys(studentData.skillDistribution).length}
-                    </span>
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-500">Skills Tracked</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {Object.keys(studentData.skillDistribution).length}
-                  </p>
-                </div>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
+              <p className="text-sm font-medium text-gray-500">Skills Tracked</p>
+              <div className="mt-2 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span className="text-purple-600 font-bold">
+                  {Object.keys(studentData.skillDistribution).length}
+                </span>
               </div>
             </div>
           </div>

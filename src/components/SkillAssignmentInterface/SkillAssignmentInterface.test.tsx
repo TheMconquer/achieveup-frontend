@@ -259,7 +259,7 @@ describe('selecting a quiz', () => {
       data: { question_skills: { 'What is HTML?': ['HTML Fundamentals'] } },
     } as any);
     jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({
-      data: [{ questionId: 'What is HTML?', suggestedSkills: ['HTML Fundamentals'], confidence: 0.9 }],
+      data: [{ questionId: 'What is HTML?', suggestedSkills: ['HTML Fundamentals'] }],
     } as any);
 
     render(<SkillAssignmentInterface />);
@@ -317,7 +317,7 @@ describe('AI analysis - real outcomes only', () => {
 
   test('a real successful analysis with real suggestions shows the real success toast', async () => {
     jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({
-      data: [{ questionId: 'What is HTML?', suggestedSkills: ['HTML Fundamentals', 'CSS Styling'], confidence: 0.9 }],
+      data: [{ questionId: 'What is HTML?', suggestedSkills: ['HTML Fundamentals', 'CSS Styling'] }],
     } as any);
 
     await setupWithOneQuestion();
@@ -450,7 +450,7 @@ describe('bulk assignment', () => {
       data: [question('cq1', 'Q1', 'q1'), question('cq2', 'Q2', 'q1')],
     } as any);
     jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({
-      data: [{ questionId: 'Q1', suggestedSkills: ['Suggested Skill'], confidence: 0.9 }],
+      data: [{ questionId: 'Q1', suggestedSkills: ['Suggested Skill'] }],
     } as any);
 
     render(<SkillAssignmentInterface />);

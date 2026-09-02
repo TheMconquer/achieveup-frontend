@@ -48,7 +48,6 @@ interface QuestionAnalysis {
   // the question text as that id, so this field carries text, not a Canvas id.
   questionId: string;
   suggestedSkills: string[];
-  confidence: number;
 }
 
 interface FormData {

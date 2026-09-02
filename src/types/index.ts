@@ -269,7 +269,6 @@ export interface RadarData {
 export interface QuestionAnalysis {
   questionId: string;
   suggestedSkills: string[];
-  confidence: number;
 }
 
 // Instructor-specific Types

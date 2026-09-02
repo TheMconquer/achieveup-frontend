@@ -64,11 +64,6 @@ export interface SkillAssignmentRequest {
   question_skills: QuestionSkillAssignment;
 }
 
-export interface SkillSuggestionRequest {
-  question_text: string;
-  course_context?: string;
-}
-
 // Badge Types
 export interface Badge {
   id: string;
@@ -269,21 +264,7 @@ export interface RadarData {
 }
 
 // Question Analysis Types
-export interface QuestionAnalysisRequest {
-  questions: Array<{
-    id: string;
-    text: string;
-  }>;
-}
-
 export interface QuestionAnalysis {
-  questionId: string;
-  complexity: 'low' | 'medium' | 'high';
-  suggestedSkills: string[];
-  confidence: number;
-}
-
-export interface QuestionSuggestion {
   questionId: string;
   complexity: 'low' | 'medium' | 'high';
   suggestedSkills: string[];

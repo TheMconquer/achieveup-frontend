@@ -27,7 +27,6 @@ import {
   analyticsAPI,
   canvasAPI,
   authAPI,
-  questionAnalysisAPI,
   instructorAPI,
   canvasInstructorAPI,
 } from './api';
@@ -198,10 +197,6 @@ describe('skillAssignmentAPI', () => {
     skillAssignmentAPI.assign(assignData);
     expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/skills/assign', assignData);
 
-    const suggestData = { question_text: 'What is a variable?' } as any;
-    skillAssignmentAPI.suggest(suggestData);
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/skills/suggest', suggestData);
-
     skillAssignmentAPI.analyzeQuestions({
       courseId: 'c1',
       quizId: 'q1',
@@ -351,17 +346,6 @@ describe('authAPI', () => {
     const tokenData = { canvasApiToken: 'tok', canvasTokenType: 'instructor' } as any;
     authAPI.validateCanvasToken(tokenData);
     expect(mockAxiosInstance.post).toHaveBeenCalledWith('/auth/validate-canvas-token', tokenData);
-  });
-});
-
-describe('questionAnalysisAPI', () => {
-  test('each method hits the right endpoint with the right payload', () => {
-    const analyzeData = { questions: [] } as any;
-    questionAnalysisAPI.analyzeQuestions(analyzeData);
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/questions/analyze', analyzeData);
-
-    questionAnalysisAPI.getQuestionSuggestions('q1');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/questions/q1/suggestions');
   });
 });
 

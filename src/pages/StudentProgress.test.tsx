@@ -98,7 +98,7 @@ test('with a course selected but zero students, shows the "No Student Progress D
 
 test('a 404 on student data shows the "no data found" message; other failures show the generic retry message', async () => {
   oneCourse();
-  jest.mocked(instructorAPI.getCourseStudentAnalytics).mockRejectedValue({ response: { status: 404 } });
+  jest.mocked(instructorAPI.getCourseStudentAnalytics).mockRejectedValue({ isAxiosError: true, response: { status: 404 } });
   renderPage();
 
   await waitFor(() =>
@@ -110,7 +110,7 @@ test('a 404 on student data shows the "no data found" message; other failures sh
 
 test('a non-404 failure on student data shows the generic retry message', async () => {
   oneCourse();
-  jest.mocked(instructorAPI.getCourseStudentAnalytics).mockRejectedValue({ response: { status: 500 } });
+  jest.mocked(instructorAPI.getCourseStudentAnalytics).mockRejectedValue({ isAxiosError: true, response: { status: 500 } });
   renderPage();
 
   await waitFor(() =>
@@ -261,7 +261,7 @@ describe('Sync Now', () => {
   test('a network error during sync shows a specific "check back later" message', async () => {
     oneCourse();
     jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
-    jest.mocked(instructorAPI.forceSyncCourse).mockRejectedValue({ code: 'ERR_NETWORK' });
+    jest.mocked(instructorAPI.forceSyncCourse).mockRejectedValue({ isAxiosError: true, code: 'ERR_NETWORK' });
     renderPage();
 
     await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());

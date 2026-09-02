@@ -75,7 +75,7 @@ export const skillMatrixAPI = {
     api.put(`/achieveup/matrix/${matrixId}`, data),
   delete: (matrixId: string): Promise<AxiosResponse<void>> =>
     api.delete(`/achieveup/matrix/delete/${matrixId}`),
-  getSkillSuggestions: (data: { courseId: string; courseName: string; courseCode: string; courseDescription?: string }): Promise<AxiosResponse<any[]>> =>
+  getSkillSuggestions: (data: { courseId: string; courseName: string; courseCode: string; courseDescription?: string }): Promise<AxiosResponse<unknown[]>> =>
     api.post('/achieveup/ai/suggest-skills', data),
   getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
     api.get(`/achieveup/import-status/${courseId}`),
@@ -94,9 +94,14 @@ export const skillAssignmentAPI = {
     api.post('/achieveup/skills/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   assign: (data: SkillAssignmentRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/skills/assign', data),
-  analyzeQuestions: (data: { courseId: string; quizId: string; matrixId?: string; questions: any[] }): Promise<AxiosResponse<any[]>> =>
+  analyzeQuestions: (data: {
+    courseId: string;
+    quizId: string;
+    matrixId?: string;
+    questions: Array<{ id: string; text: string; type: string; points: number }>;
+  }): Promise<AxiosResponse<QuestionAnalysis[]>> =>
     api.post('/achieveup/ai/analyze-questions', { courseId: data.courseId, quizId: data.quizId, matrixId: data.matrixId, questions: data.questions }),
-  bulkAssignWithAI: (data: { courseId: string; quizId: string }): Promise<AxiosResponse<any>> =>
+  bulkAssignWithAI: (data: { courseId: string; quizId: string }): Promise<AxiosResponse<unknown>> =>
     api.post('/achieveup/ai/bulk-assign', data),
   // Backend still expects the query param name "question_id"; we now pass question text as its value.
   getAssignments: (courseId: string, questionTexts: string[]): Promise<AxiosResponse<{ question_skills: Record<string, string[]> }>> => {
@@ -114,7 +119,7 @@ export const badgeAPI = {
     api.post('/achieveup/badges/generate', data),
   getStudentBadges: (studentId: string): Promise<AxiosResponse<Badge[]>> =>
     api.get(`/achieveup/badges/${studentId}`),
-  getCourseBadges: (courseId: string): Promise<AxiosResponse<any>> =>
+  getCourseBadges: (courseId: string): Promise<AxiosResponse<unknown>> =>
     api.get(`/achieveup/badges/course/${courseId}`),
   getStudentEarnedBadges: (studentId: string): Promise<AxiosResponse<{
     student_id: string;
@@ -226,7 +231,7 @@ export const instructorAPI = {
     api.post('/achieveup/instructor/skills/bulk-assign-ai', { courseId, quizId }),
 
   // Student skill assessment (copying original algorithm)
-  assessStudentSkills: (studentId: string, courseId: string, quizResponses: any[]): Promise<AxiosResponse<StudentProgress>> =>
+  assessStudentSkills: (studentId: string, courseId: string, quizResponses: Array<{ questionId: string; correct: boolean }>): Promise<AxiosResponse<StudentProgress>> =>
     api.post('/achieveup/instructor/assessment/evaluate', { studentId, courseId, quizResponses }),
 
   // Generate web-linked badges
@@ -238,7 +243,7 @@ export const instructorAPI = {
     totalCourses: number;
     students: number;
     averageProgress: number;
-    recentActivity: any[];
+    recentActivity: unknown[];
   }>> =>
     api.get('/achieveup/instructor/dashboard'),
 
@@ -252,6 +257,8 @@ export const instructorAPI = {
         skillsMastered: number;
         badgesEarned: number;
         riskLevel: 'low' | 'medium' | 'high';
+        skillBreakdown?: Record<string, { score: number; level: string; questionsAttempted: number; questionsCorrect: number }>;
+        totalQuestionsAttempted?: number;
       }>;
       skillDistribution: Record<string, number>;
       averageScores: Record<string, number>;
@@ -287,15 +294,15 @@ export const canvasInstructorAPI = {
     api.get(`/canvas/instructor/quizzes/${quizId}/questions`),
 
   // Get student submissions for a quiz
-  getQuizSubmissions: (quizId: string): Promise<AxiosResponse<any[]>> =>
+  getQuizSubmissions: (quizId: string): Promise<AxiosResponse<unknown[]>> =>
     api.get(`/canvas/instructor/quizzes/${quizId}/submissions`),
 
   // Get course enrollment (students)
-  getCourseEnrollment: (courseId: string): Promise<AxiosResponse<any[]>> =>
+  getCourseEnrollment: (courseId: string): Promise<AxiosResponse<unknown[]>> =>
     api.get(`/canvas/instructor/courses/${courseId}/enrollment`),
 
   // Validate instructor token specifically
-  validateInstructorToken: (): Promise<AxiosResponse<{ valid: boolean; user_info?: any }>> =>
+  validateInstructorToken: (): Promise<AxiosResponse<{ valid: boolean; user_info?: unknown }>> =>
     api.get('/canvas/instructor/validate-token'),
 };
 

@@ -12,18 +12,14 @@ import {
   BookOpen,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import { skillAssignmentAPI, canvasAPI, skillMatrixAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCourseList } from '../../hooks/useCourseList';
+import { CanvasCourse, SkillMatrix } from '../../types';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Card from '../common/Card';
-
-interface CanvasCourse {
-  id: string;
-  name: string;
-  code: string;
-  term: number;
-}
 
 interface CanvasQuiz {
   id: string;
@@ -83,8 +79,6 @@ function getQuestionKey(question: CanvasQuestion): string {
 }
 
 const SkillAssignmentInterface: React.FC = () => {
-  const { user } = useAuth();
-  const [courses, setCourses] = useState<CanvasCourse[]>([]);
   const [quizzes, setQuizzes] = useState<CanvasQuiz[]>([]);
   const [questions, setQuestions] = useState<CanvasQuestion[]>([]);
   const [questionSkills, setQuestionSkills] = useState<QuestionSkills>({});
@@ -100,9 +94,9 @@ const SkillAssignmentInterface: React.FC = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<string>('');
 
   // New state for skill matrix selection
-  const [availableMatrices, setAvailableMatrices] = useState<any[]>([]);
+  const [availableMatrices, setAvailableMatrices] = useState<SkillMatrix[]>([]);
   const [selectedMatrix, setSelectedMatrix] = useState<string>('');
-  const [selectedMatrixData, setSelectedMatrixData] = useState<any>(null);
+  const [selectedMatrixData, setSelectedMatrixData] = useState<SkillMatrix | null>(null);
   const [loadingMatrices, setLoadingMatrices] = useState<boolean>(false);
 
   const [selectedPastCourse, setSelectedPastCourse] = useState<string>('');
@@ -122,6 +116,13 @@ const SkillAssignmentInterface: React.FC = () => {
   const watchedQuiz = watch('quizId');
 
   const { isInstructor } = useAuth();
+  const { courses, loading: coursesLoading, error: coursesError } = useCourseList<CanvasCourse>(isInstructor);
+
+  useEffect(() => {
+    if (coursesError) {
+      toast.error('Failed to load courses. Please check your Canvas integration.');
+    }
+  }, [coursesError]);
 
   // Backend AI analysis for all questions
   const analyzeQuestionsWithAI = useCallback(
@@ -138,11 +139,6 @@ const SkillAssignmentInterface: React.FC = () => {
       setAiAnalysisStatus(analyzingStatus);
 
       try {
-        console.log(
-          'Starting AI analysis for questions:',
-          questions.map((q) => ({ text: getQuestionKey(q).substring(0, 100) }))
-        );
-
         const requestData = {
           courseId: selectedCourse,
           quizId: selectedQuiz,
@@ -160,9 +156,7 @@ const SkillAssignmentInterface: React.FC = () => {
           }),
         };
 
-        console.log('Sending question analysis request:', requestData);
         const response = await skillAssignmentAPI.analyzeQuestions(requestData);
-        console.log('AI analysis response:', response.data);
 
         // Process the response and update suggestions
         const newSuggestions: Suggestions = {};
@@ -197,170 +191,49 @@ const SkillAssignmentInterface: React.FC = () => {
           0
         );
         if (totalSuggestions === 0) {
-          console.log(
-            'AI analysis completed but returned no suggestions, providing mock suggestions'
-          );
-          const mockSuggestions = generateMockQuestionSuggestions(questions);
-          setSuggestions(mockSuggestions);
-          toast.success(
-            `AI analysis completed. Generated ${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} smart suggestions based on question content.`
+          toast.error(
+            'AI analysis returned no suggestions, create custom skill'
           );
         } else {
           toast.success(
             `AI analyzed ${questions.length} questions and provided ${totalSuggestions} skill suggestions`
           );
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error analyzing questions with AI:', error);
 
-        // Generate mock suggestions as fallback
-        const mockSuggestions = generateMockQuestionSuggestions(questions);
-        setSuggestions(mockSuggestions);
-
-        // Set error status for all questions, then update to completed since we have mock suggestions
-        const completedStatus: AIAnalysisStatus = {};
-        questions.forEach((q) => (completedStatus[getQuestionKey(q)] = 'completed'));
-        setAiAnalysisStatus(completedStatus);
+        const errorStatus: AIAnalysisStatus = {};
+        questions.forEach((q) => (errorStatus[getQuestionKey(q)] = 'error'));
+        setAiAnalysisStatus(errorStatus);
 
         // Provide detailed error handling with fallback message
-        if (error.response?.status === 400) {
+        const axiosError = axios.isAxiosError(error) ? error : undefined;
+        const status = axiosError?.response?.status;
+        if (status === 400) {
           const errorMsg =
-            error.response?.data?.message || error.response?.data?.error || 'Bad request format';
-          toast.success(
-            `Using smart question analysis (${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} suggestions generated). AI service: ${errorMsg}`
+            axiosError?.response?.data?.message || axiosError?.response?.data?.error || 'Bad request format';
+          toast.error(
+            `Error Loading suggestion. Create Custom skill. AI service: ${errorMsg}`
           );
-        } else if (error.response?.status === 401) {
+        } else if (status === 401) {
           toast.error('Authentication failed. Please check your instructor token in Settings.');
-        } else if (error.response?.status === 403) {
+        } else if (status === 403) {
           toast.error('Access denied. Instructor permissions required.');
         } else {
-          toast.success(
-            `Generated ${Object.values(mockSuggestions).reduce((acc, skills) => acc + skills.length, 0)} smart skill suggestions based on question analysis. AI service temporarily unavailable.`
+          toast.error(
+            `Error Loading suggestion. Create Custom skill. AI service temporarily unavailable.`
           );
         }
       } finally {
         setAutoAnalysisInProgress(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // generateMockQuestionSuggestions is intentionally omitted: it's redefined
+    // every render, and including it would make this callback (and everything
+    // that depends on it) unstable, re-triggering the load effects below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isInstructor, selectedCourse, selectedQuiz, selectedMatrix]
   );
-
-  // Generate intelligent mock suggestions based on question content and available skills
-  const generateMockQuestionSuggestions = (questions: CanvasQuestion[]): Suggestions => {
-    const suggestions: Suggestions = {};
-    const availableSkills = getMatrixSkills();
-
-    questions.forEach((question) => {
-      const questionText = (question.question_text || '').toLowerCase();
-      const questionSkills: string[] = [];
-
-      // If we have matrix skills, try to match them to question content
-      if (availableSkills.length > 0) {
-        availableSkills.forEach((skill) => {
-          const skillWords = skill.toLowerCase().split(/[\s\-_]+/);
-          const hasMatch = skillWords.some(
-            (word) => word.length > 3 && questionText.includes(word)
-          );
-
-          if (hasMatch && questionSkills.length < 3) {
-            questionSkills.push(skill);
-          }
-        });
-
-        // If no direct matches, assign 1-2 random skills from the matrix
-        if (questionSkills.length === 0) {
-          const randomSkills = availableSkills
-            .sort(() => Math.random() - 0.5)
-            .slice(0, Math.floor(Math.random() * 2) + 1);
-          questionSkills.push(...randomSkills);
-        }
-      } else {
-        // If no matrix skills available, generate generic suggestions based on question content
-        const genericSuggestions = generateGenericSkillSuggestions(questionText);
-        questionSkills.push(...genericSuggestions.slice(0, 2));
-      }
-
-      suggestions[getQuestionKey(question)] = questionSkills;
-    });
-
-    return suggestions;
-  };
-
-  // Generate generic skill suggestions based on question content patterns
-  const generateGenericSkillSuggestions = (questionText: string): string[] => {
-    const text = questionText.toLowerCase();
-    const suggestions: string[] = [];
-
-    // Web development patterns
-    if (text.includes('html') || text.includes('tag') || text.includes('element')) {
-      suggestions.push('HTML Fundamentals');
-    }
-    if (text.includes('css') || text.includes('style') || text.includes('selector')) {
-      suggestions.push('CSS Styling');
-    }
-    if (
-      text.includes('javascript') ||
-      text.includes('js') ||
-      text.includes('function') ||
-      text.includes('variable')
-    ) {
-      suggestions.push('JavaScript Programming');
-    }
-    if (text.includes('responsive') || text.includes('mobile') || text.includes('media query')) {
-      suggestions.push('Responsive Design');
-    }
-
-    // Programming patterns
-    if (text.includes('algorithm') || text.includes('sort') || text.includes('search')) {
-      suggestions.push('Algorithm Design');
-    }
-    if (
-      text.includes('loop') ||
-      text.includes('iteration') ||
-      text.includes('for') ||
-      text.includes('while')
-    ) {
-      suggestions.push('Control Structures');
-    }
-    if (text.includes('array') || text.includes('list') || text.includes('data structure')) {
-      suggestions.push('Data Structures');
-    }
-    if (text.includes('class') || text.includes('object') || text.includes('inheritance')) {
-      suggestions.push('Object-Oriented Programming');
-    }
-
-    // Database patterns
-    if (
-      text.includes('sql') ||
-      text.includes('select') ||
-      text.includes('database') ||
-      text.includes('query')
-    ) {
-      suggestions.push('SQL Fundamentals');
-    }
-    if (text.includes('table') || text.includes('relation') || text.includes('primary key')) {
-      suggestions.push('Database Design');
-    }
-
-    // General academic patterns
-    if (text.includes('analyze') || text.includes('evaluation') || text.includes('compare')) {
-      suggestions.push('Critical Thinking');
-    }
-    if (text.includes('problem') || text.includes('solve') || text.includes('solution')) {
-      suggestions.push('Problem Solving');
-    }
-    if (text.includes('research') || text.includes('source') || text.includes('evidence')) {
-      suggestions.push('Research Skills');
-    }
-
-    // If no specific patterns found, provide general suggestions
-    if (suggestions.length === 0) {
-      suggestions.push('Analysis', 'Problem Solving');
-    }
-
-    return suggestions;
-  };
 
   const getSection = useCallback((courseCode: string) => {
     const parts = courseCode.split(' ');
@@ -390,21 +263,6 @@ const SkillAssignmentInterface: React.FC = () => {
     },
     [courses, getBaseCourseCode, getSection]
   );
-
-  const loadCourses = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = isInstructor
-        ? await canvasAPI.getInstructorCourses()
-        : await canvasAPI.getCourses();
-      setCourses(response.data);
-    } catch (error) {
-      console.error('Error loading courses:', error);
-      toast.error('Failed to load courses. Please check your Canvas integration.');
-    } finally {
-      setLoading(false);
-    }
-  }, [isInstructor]);
 
   const loadQuizzes = useCallback(
     async (courseId: string): Promise<void> => {
@@ -443,8 +301,11 @@ const SkillAssignmentInterface: React.FC = () => {
       } finally {
         setLoading(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // loadSkillMatrices is intentionally omitted: it's redefined every render,
+    // and including it would make this callback unstable and re-trigger the
+    // course-change effect below on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isInstructor, setValue, courses]
   );
 
@@ -502,32 +363,16 @@ const SkillAssignmentInterface: React.FC = () => {
   const loadSkillMatrices = async (courseId: string) => {
     try {
       setLoadingMatrices(true);
-      console.log(`Loading skill matrices for course: ${courseId}`);
-
-      // Debug: Check authentication status
-      const token = localStorage.getItem('token');
-      console.log('Authentication debug:', {
-        hasToken: !!token,
-        tokenLength: token?.length || 0,
-        tokenPreview: token ? `${token.substring(0, 10)}...` : 'No token',
-        courseId: courseId,
-      });
 
       const response = await skillMatrixAPI.getAllByCourse(courseId);
-      console.log(`Skill matrices API response for course ${courseId}:`, response.data);
 
       setAvailableMatrices(response.data);
 
       // Auto-select first matrix if available
       if (response.data.length > 0) {
-        console.log(
-          `Found ${response.data.length} matrices, auto-selecting first one:`,
-          response.data[0]
-        );
         setSelectedMatrix(response.data[0]._id);
         setSelectedMatrixData(response.data[0]);
       } else {
-        console.log(`No matrices found for course ${courseId}, providing guidance`);
         setSelectedMatrix('');
         setSelectedMatrixData(null);
 
@@ -539,51 +384,36 @@ const SkillAssignmentInterface: React.FC = () => {
           }
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading skill matrices:', error);
+      const axiosError = axios.isAxiosError(error) ? error : undefined;
+      const status = axiosError?.response?.status;
       console.error('Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.response?.config?.url,
+        status,
+        statusText: axiosError?.response?.statusText,
+        data: axiosError?.response?.data,
+        url: axiosError?.response?.config?.url,
         courseId: courseId,
       });
 
       // Provide more specific error messages and guidance based on status
-      if (error.response?.status === 404) {
-        console.log(`404 - No matrices endpoint found or no matrices exist for course ${courseId}`);
-
-        // For 404, provide mock matrices to test the interface
-        const mockMatrices = generateMockMatrices(courseId);
-        if (mockMatrices.length > 0) {
-          console.log(`Providing ${mockMatrices.length} mock matrices for testing`);
-          setAvailableMatrices(mockMatrices);
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-          toast.success(
-            `Demo matrices loaded for testing. Create real matrices using the Skill Matrix page.`,
-            {
-              duration: 6000,
-            }
-          );
-        } else {
-          setAvailableMatrices([]);
-          setSelectedMatrix('');
-          setSelectedMatrixData(null);
-          toast.error(`No skill matrices found. Please create a skill matrix first.`);
-        }
-      } else if (error.response?.status === 401) {
+      if (status === 404) {
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
+        toast.error(`No skill matrices found. Please create a skill matrix first.`);
+      } else if (status === 401) {
         toast.error('Authentication failed. Please check your instructor token in Settings.');
         setAvailableMatrices([]);
         setSelectedMatrix('');
         setSelectedMatrixData(null);
-      } else if (error.response?.status === 403) {
+      } else if (status === 403) {
         console.error('403 Forbidden Error Details:', {
-          message: error.response?.data?.message || 'No error message provided',
-          error: error.response?.data?.error || 'No error details',
-          url: error.response?.config?.url,
-          method: error.response?.config?.method,
-          headers: error.response?.config?.headers,
+          message: axiosError?.response?.data?.message || 'No error message provided',
+          error: axiosError?.response?.data?.error || 'No error details',
+          url: axiosError?.response?.config?.url,
+          method: axiosError?.response?.config?.method,
+          headers: axiosError?.response?.config?.headers,
           courseId: courseId,
         });
 
@@ -609,182 +439,30 @@ const SkillAssignmentInterface: React.FC = () => {
           );
         }
 
-        // Provide mock matrices so user can still test the interface
-        console.log('Providing mock matrices due to 403 error');
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-          toast.success(
-            `Demo matrices loaded for testing. Fix authentication to access real data.`,
-            {
-              duration: 6000,
-            }
-          );
-        }
-      } else if (error.response?.status >= 500) {
-        toast.error('Server error while loading matrices. Using demo data for testing.');
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
 
-        // Provide mock matrices for testing during server issues
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-        }
+      } else if (status !== undefined && status >= 500) {
+        toast.error('Server error while loading matrices.');
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
       } else {
-        console.warn('Failed to load skill matrices:', error.message);
+        const message = axiosError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
+        console.warn('Failed to load skill matrices:', message);
         toast.error(
-          `Failed to load skill matrices: ${error.message}. Using demo data for testing.`
+          `Failed to load skill matrices: ${message}. Please try again.`
         );
 
-        // Provide mock matrices as fallback
-        const mockMatrices = generateMockMatrices(courseId);
-        setAvailableMatrices(mockMatrices);
-        if (mockMatrices.length > 0) {
-          setSelectedMatrix(mockMatrices[0]._id);
-          setSelectedMatrixData(mockMatrices[0]);
-        }
+        // Fallback Error
+        setAvailableMatrices([]);
+        setSelectedMatrix('');
+        setSelectedMatrixData(null);
       }
     } finally {
       setLoadingMatrices(false);
     }
-  };
-
-  // Generate mock skill matrices for testing when backend data is unavailable
-  const generateMockMatrices = (courseId: string) => {
-    // Course-specific mock matrices based on common course patterns
-    const courseSpecificMatrices = [
-      {
-        _id: `mock_matrix_1_${courseId}`,
-        course_id: courseId,
-        matrix_name: 'Core Skills Matrix',
-        skills: generateCoreSkillsForCourse(courseId),
-        description: 'Essential skills for this course',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        _id: `mock_matrix_2_${courseId}`,
-        course_id: courseId,
-        matrix_name: 'Advanced Skills Matrix',
-        skills: generateAdvancedSkillsForCourse(courseId),
-        description: 'Advanced competencies and specialized skills',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-
-    return courseSpecificMatrices;
-  };
-
-  // Generate course-appropriate core skills
-  const generateCoreSkillsForCourse = (courseId: string): string[] => {
-    // Default web development skills (most common case)
-    if (
-      courseId.toLowerCase().includes('web') ||
-      courseId.includes('html') ||
-      courseId.includes('demo')
-    ) {
-      return [
-        'HTML Fundamentals',
-        'CSS Styling',
-        'JavaScript Basics',
-        'DOM Manipulation',
-        'Responsive Design',
-      ];
-    }
-
-    // Programming/Computer Science skills
-    if (
-      courseId.toLowerCase().includes('prog') ||
-      courseId.toLowerCase().includes('cs') ||
-      courseId.toLowerCase().includes('cop')
-    ) {
-      return [
-        'Programming Logic',
-        'Data Types',
-        'Control Structures',
-        'Functions',
-        'Problem Solving',
-      ];
-    }
-
-    // Database/Data skills
-    if (
-      courseId.toLowerCase().includes('data') ||
-      courseId.toLowerCase().includes('db') ||
-      courseId.toLowerCase().includes('sql')
-    ) {
-      return ['Database Design', 'SQL Queries', 'Data Modeling', 'Normalization', 'Data Analysis'];
-    }
-
-    // Generic academic skills
-    return [
-      'Critical Thinking',
-      'Problem Solving',
-      'Written Communication',
-      'Research Skills',
-      'Analysis',
-    ];
-  };
-
-  // Generate course-appropriate advanced skills
-  const generateAdvancedSkillsForCourse = (courseId: string): string[] => {
-    // Default web development advanced skills
-    if (
-      courseId.toLowerCase().includes('web') ||
-      courseId.includes('html') ||
-      courseId.includes('demo')
-    ) {
-      return [
-        'Advanced JavaScript',
-        'API Integration',
-        'Frontend Frameworks',
-        'Performance Optimization',
-        'Web Security',
-      ];
-    }
-
-    // Programming/Computer Science advanced skills
-    if (
-      courseId.toLowerCase().includes('prog') ||
-      courseId.toLowerCase().includes('cs') ||
-      courseId.toLowerCase().includes('cop')
-    ) {
-      return [
-        'Algorithm Design',
-        'Data Structures',
-        'Object-Oriented Programming',
-        'Software Design Patterns',
-        'Code Optimization',
-      ];
-    }
-
-    // Database/Data advanced skills
-    if (
-      courseId.toLowerCase().includes('data') ||
-      courseId.toLowerCase().includes('db') ||
-      courseId.toLowerCase().includes('sql')
-    ) {
-      return [
-        'Advanced SQL',
-        'Database Optimization',
-        'Data Warehousing',
-        'Big Data Analytics',
-        'ETL Processes',
-      ];
-    }
-
-    // Generic advanced academic skills
-    return [
-      'Advanced Analysis',
-      'Strategic Thinking',
-      'Leadership',
-      'Project Management',
-      'Innovation',
-    ];
   };
 
   const loadQuestions = useCallback(
@@ -818,7 +496,6 @@ const SkillAssignmentInterface: React.FC = () => {
         const initialSkills: QuestionSkills = {};
         const initialStatus: AIAnalysisStatus = {};
         const initialReviewStatus: HumanReviewStatus = {};
-        console.log(response.data);
 
         sanitizedQuestions.forEach((question: CanvasQuestion) => {
           const questionKey = getQuestionKey(question);
@@ -844,10 +521,6 @@ const SkillAssignmentInterface: React.FC = () => {
     },
     [isInstructor, analyzeQuestionsWithAI]
   );
-
-  useEffect(() => {
-    loadCourses();
-  }, [loadCourses]);
 
   useEffect(() => {
     if (watchedCourse) {
@@ -884,7 +557,7 @@ const SkillAssignmentInterface: React.FC = () => {
   const handleMatrixSelection = (matrixId: string) => {
     const matrix = availableMatrices.find((m) => m._id === matrixId);
     setSelectedMatrix(matrixId);
-    setSelectedMatrixData(matrix);
+    setSelectedMatrixData(matrix || null);
   };
 
   const getMatrixSkills = (): string[] => {
@@ -1013,7 +686,7 @@ const SkillAssignmentInterface: React.FC = () => {
   const stats = getAssignmentStats();
   const filteredQuestions = getFilteredQuestions();
 
-  if (loading && courses.length === 0) {
+  if (coursesLoading && courses.length === 0) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex justify-center items-center h-64">
@@ -1088,7 +761,7 @@ const SkillAssignmentInterface: React.FC = () => {
               <select
                 {...register('quizId', { required: 'Please select a quiz' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
-                disabled={!selectedCourse || loading}
+                disabled={!selectedCourse || loading || !selectedMatrix || availableMatrices.length === 0}
               >
                 <option value="">
                   {!selectedCourse

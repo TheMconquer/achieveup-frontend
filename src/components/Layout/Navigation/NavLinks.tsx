@@ -16,6 +16,24 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
     const Icon = item.icon;
     const isActive = currentPath === item.href;
 
+    if (item.disabled) {
+      return (
+        <span
+          key={item.name}
+          title="Coming soon"
+          aria-disabled="true"
+          className={
+            isDesktop
+              ? 'flex h-[42px] cursor-not-allowed items-center gap-4 rounded-lg px-4 text-sm font-medium text-gray-300'
+              : 'flex cursor-not-allowed items-center rounded-lg px-4 py-3 text-base font-medium text-gray-300'
+          }
+        >
+          <Icon className={isDesktop ? 'h-[18px] w-[18px] flex-shrink-0' : 'mr-3 h-5 w-5'} />
+          <span>{item.name}</span>
+        </span>
+      );
+    }
+
     return (
       <Link
         key={item.name}

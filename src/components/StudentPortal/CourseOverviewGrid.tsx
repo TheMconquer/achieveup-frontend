@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { BookOpen, CheckCircle2, AlertTriangle, Circle } from 'lucide-react';
 
 export interface CourseOverviewSummary {
@@ -29,8 +30,9 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
       {courses.map((course) => {
         const Icon = hintIcon(course);
         return (
-          <div
+          <Link
             key={course.id}
+            to={`/courses/${course.id}`}
             className="flex flex-col gap-3 rounded-2xl border border-gray-200 p-4 transition-colors hover:border-au-gold-dark"
           >
             <div className="flex items-center gap-2.5">
@@ -55,7 +57,7 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
               <Icon className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{course.nextHint}</span>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>

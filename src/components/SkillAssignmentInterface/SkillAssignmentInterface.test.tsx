@@ -226,7 +226,7 @@ describe('selecting a course', () => {
 
   test('a 401 loading matrices shows a real auth-error toast and does not substitute fake matrices', async () => {
     jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({ data: [] } as any);
-    jest.mocked(skillMatrixAPI.getAllByCourse).mockRejectedValue({ response: { status: 401 } });
+    jest.mocked(skillMatrixAPI.getAllByCourse).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
     render(<SkillAssignmentInterface />);
     await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
 
@@ -331,7 +331,7 @@ describe('AI analysis - real outcomes only', () => {
   });
 
   test('a real 401 from AI analysis shows the real auth-error toast', async () => {
-    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue({ response: { status: 401 } });
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
 
     await setupWithOneQuestion();
 
@@ -343,7 +343,7 @@ describe('AI analysis - real outcomes only', () => {
   });
 
   test('a real 403 from AI analysis shows the real permissions-error toast', async () => {
-    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue({ response: { status: 403 } });
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue({ isAxiosError: true, response: { status: 403 } });
 
     await setupWithOneQuestion();
 

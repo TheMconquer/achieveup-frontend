@@ -52,6 +52,7 @@ export interface CreateSkillMatrixRequest {
 
 export interface UpdateSkillMatrixRequest {
   skills: string[];
+  matrix_name?: string;
 }
 
 // Skill Assignment Types
@@ -150,6 +151,7 @@ export interface CanvasCourse {
   name: string;
   code: string;
   term: number;
+  description?: string;
 }
 
 export interface CanvasQuiz {

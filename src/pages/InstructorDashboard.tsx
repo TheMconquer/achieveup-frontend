@@ -124,7 +124,7 @@ const InstructorDashboard: React.FC = () => {
           averageProgress: 0,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading dashboard data:', error);
       toast.error('Something went wrong loading the dashboard. Please try refreshing.');
 

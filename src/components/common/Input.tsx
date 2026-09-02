@@ -22,18 +22,6 @@ const Input: React.FC<InputProps> = ({
     ? `${inputId}-helper`
     : undefined;
 
-  // Debug logging for react-hook-form registration
-  if ((props as any).name === 'email' || (props as any).name === 'password' || (props as any).name === 'matrixName') {
-    console.log('Input component received props:', {
-      name: (props as any).name,
-      ref: !!(props as any).ref,
-      onChange: !!(props as any).onChange,
-      onBlur: !!(props as any).onBlur,
-      value: (props as any).value,
-      hasRegisterProps: !!((props as any).ref && (props as any).onChange && (props as any).onBlur)
-    });
-  }
-
   return (
     <div className="w-full">
       {label && (

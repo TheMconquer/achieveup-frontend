@@ -197,18 +197,17 @@ describe('skillAssignmentAPI', () => {
     skillAssignmentAPI.assign(assignData);
     expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/skills/assign', assignData);
 
-    skillAssignmentAPI.analyzeQuestions({
+    const analyzeQuestionsData = {
       courseId: 'c1',
       quizId: 'q1',
       matrixId: 'm1',
-      questions: [{ id: 'q1' }],
-    });
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/ai/analyze-questions', {
-      courseId: 'c1',
-      quizId: 'q1',
-      matrixId: 'm1',
-      questions: [{ id: 'q1' }],
-    });
+      questions: [{ id: 'q1', text: 'What is a variable?', type: 'multiple_choice', points: 1 }],
+    };
+    skillAssignmentAPI.analyzeQuestions(analyzeQuestionsData);
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      '/achieveup/ai/analyze-questions',
+      analyzeQuestionsData
+    );
 
     skillAssignmentAPI.bulkAssignWithAI({ courseId: 'c1', quizId: 'q1' });
     expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/ai/bulk-assign', {

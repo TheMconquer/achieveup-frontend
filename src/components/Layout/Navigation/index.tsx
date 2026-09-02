@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useCourseList } from '../../../hooks/useCourseList';
 import { getNavigationItems } from './navigationItems';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopHeader from './DesktopHeader';
@@ -19,12 +20,26 @@ const Navigation: React.FC = () => {
   // Instructor accounts with student access can switch between views
   const canSwitchToStudentView = isInstructor && !!user?.has_student_access;
 
-  // Determine which dashboard is currently being viewed
-  const viewingAsStudent = canSwitchToStudentView && location.pathname.startsWith('/student-dashboard');
+  // Determine which dashboard is currently being viewed — checked against
+  // every student-only route, not just the dashboard itself, so a dual-role
+  // account doesn't get bounced back to the instructor nav just by visiting
+  // /courses.
+  const studentOnlyPathPrefixes = ['/student-dashboard', '/courses'];
+  const viewingAsStudent =
+    canSwitchToStudentView &&
+    studentOnlyPathPrefixes.some((prefix) => location.pathname.startsWith(prefix));
 
   const displayAsInstructor = isInstructor && !viewingAsStudent;
 
   const navigationItems = getNavigationItems(displayAsInstructor);
+
+  // Fetched once here (not lazily inside CourseSearch) so the desktop and
+  // mobile header — both always mounted, just CSS-hidden by breakpoint —
+  // share one course list instead of each fetching it independently.
+  const { courses, loading, error, ensureLoaded } = useCourseList(displayAsInstructor, {
+    eager: false,
+  });
+  const courseSearch = { courses, loading, error, ensureLoaded };
 
   const handleLogout = (): void => {
     logout();
@@ -48,6 +63,7 @@ const Navigation: React.FC = () => {
           displayAsInstructor={displayAsInstructor}
           canSwitchToStudentView={canSwitchToStudentView}
           viewingAsStudent={viewingAsStudent}
+          courseSearch={courseSearch}
           onHelpClick={() => setShowHelpModal(true)}
           onLogout={handleLogout}
         />
@@ -58,9 +74,11 @@ const Navigation: React.FC = () => {
       <MobileHeader
         isNavOpen={isOpen}
         onToggleNav={() => setIsOpen(!isOpen)}
+        onCloseNav={() => setIsOpen(false)}
         displayAsInstructor={displayAsInstructor}
         canSwitchToStudentView={canSwitchToStudentView}
         viewingAsStudent={viewingAsStudent}
+        courseSearch={courseSearch}
         user={user}
         onHelpClick={() => setShowHelpModal(true)}
         onLogout={handleLogout}

@@ -4,7 +4,7 @@ import { NavigationItem } from './types';
 const instructorNavigationItems: NavigationItem[] = [
   {
     name: 'Dashboard',
-    href: '/',
+    href: '/instructor-dashboard',
     icon: Home,
   },
   {
@@ -39,11 +39,13 @@ const studentNavigationItems: NavigationItem[] = [
     name: 'Skills',
     href: '/skills',
     icon: Sparkles,
+    disabled: true,
   },
   {
     name: 'Badges',
     href: '/badges',
     icon: Award,
+    disabled: true,
   },
 ];
 

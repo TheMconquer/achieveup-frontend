@@ -101,8 +101,6 @@ export const skillAssignmentAPI = {
     questions: Array<{ id: string; text: string; type: string; points: number }>;
   }): Promise<AxiosResponse<QuestionAnalysis[]>> =>
     api.post('/achieveup/ai/analyze-questions', { courseId: data.courseId, quizId: data.quizId, matrixId: data.matrixId, questions: data.questions }),
-  bulkAssignWithAI: (data: { courseId: string; quizId: string }): Promise<AxiosResponse<unknown>> =>
-    api.post('/achieveup/ai/bulk-assign', data),
   // Backend still expects the query param name "question_id"; we now pass question text as its value.
   getAssignments: (courseId: string, questionTexts: string[]): Promise<AxiosResponse<{ question_skills: Record<string, string[]> }>> => {
     const params = new URLSearchParams({ course_id: courseId });

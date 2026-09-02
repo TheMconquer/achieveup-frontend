@@ -209,12 +209,6 @@ describe('skillAssignmentAPI', () => {
       analyzeQuestionsData
     );
 
-    skillAssignmentAPI.bulkAssignWithAI({ courseId: 'c1', quizId: 'q1' });
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/ai/bulk-assign', {
-      courseId: 'c1',
-      quizId: 'q1',
-    });
-
     skillAssignmentAPI.getImportStatus('c1');
     expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/import-status/c1');
   });

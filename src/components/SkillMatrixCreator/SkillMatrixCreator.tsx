@@ -28,7 +28,6 @@ interface SkillMatrixCreatorProps {
 
 interface SkillSuggestion {
   skill: string;
-  relevance: number;
   description: string;
 }
 
@@ -444,14 +443,12 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           if (typeof item === 'string') {
             return {
               skill: item,
-              relevance: 0.8,
               description: `Suggested skill for ${selectedCourseData.name}`,
             };
           } else if (item && typeof item === 'object') {
             const suggestion = item as Record<string, unknown>;
             return {
               skill: (suggestion.skill as string) || (suggestion.name as string) || 'Unknown Skill',
-              relevance: (suggestion.relevance as number) || (suggestion.confidence as number) || 0.8,
               description:
                 (suggestion.description as string) || `Suggested skill for ${selectedCourseData.name}`,
             };
@@ -1140,17 +1137,6 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                           />
                         </div>
                         <p className="text-xs text-gray-600 mt-1">{suggestion.description}</p>
-                        <div className="mt-2">
-                          <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div
-                              className="bg-blue-500 h-1 rounded-full"
-                              style={{ width: `${suggestion.relevance * 100}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Relevance: {Math.round(suggestion.relevance * 100)}%
-                          </p>
-                        </div>
                       </div>
                     ))}
                   </div>

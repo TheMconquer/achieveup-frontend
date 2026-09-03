@@ -4,7 +4,6 @@ import {
   CreateSkillMatrixRequest,
   UpdateSkillMatrixRequest,
   SkillAssignmentRequest,
-  SkillSuggestionRequest,
   Badge,
   GenerateBadgeRequest,
   StudentProgress,
@@ -19,9 +18,7 @@ import {
   SignupRequest,
   ProfileUpdateRequest,
   CanvasTokenValidationRequest,
-  QuestionAnalysisRequest,
   QuestionAnalysis,
-  QuestionSuggestion,
   InstructorCourseAnalytics,
   InstructorSkillMatrixRequest,
   QuestionSkillAssignment
@@ -97,8 +94,6 @@ export const skillAssignmentAPI = {
     api.post('/achieveup/skills/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   assign: (data: SkillAssignmentRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/skills/assign', data),
-  suggest: (data: SkillSuggestionRequest): Promise<AxiosResponse<string[]>> =>
-    api.post('/achieveup/skills/suggest', data),
   analyzeQuestions: (data: {
     courseId: string;
     quizId: string;
@@ -106,8 +101,6 @@ export const skillAssignmentAPI = {
     questions: Array<{ id: string; text: string; type: string; points: number }>;
   }): Promise<AxiosResponse<QuestionAnalysis[]>> =>
     api.post('/achieveup/ai/analyze-questions', { courseId: data.courseId, quizId: data.quizId, matrixId: data.matrixId, questions: data.questions }),
-  bulkAssignWithAI: (data: { courseId: string; quizId: string }): Promise<AxiosResponse<unknown>> =>
-    api.post('/achieveup/ai/bulk-assign', data),
   // Backend still expects the query param name "question_id"; we now pass question text as its value.
   getAssignments: (courseId: string, questionTexts: string[]): Promise<AxiosResponse<{ question_skills: Record<string, string[]> }>> => {
     const params = new URLSearchParams({ course_id: courseId });
@@ -213,14 +206,6 @@ export const authAPI = {
     api.put('/auth/password', data),
   validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string; user_info?: object }>> =>
     api.post('/auth/validate-canvas-token', data),
-};
-
-// Question Analysis API
-export const questionAnalysisAPI = {
-  analyzeQuestions: (data: QuestionAnalysisRequest): Promise<AxiosResponse<QuestionAnalysis[]>> =>
-    api.post('/achieveup/questions/analyze', data),
-  getQuestionSuggestions: (questionId: string): Promise<AxiosResponse<QuestionSuggestion>> =>
-    api.get(`/achieveup/questions/${questionId}/suggestions`),
 };
 
 // Instructor-specific AchieveUp API

@@ -124,17 +124,14 @@ describe('SkillMatrixCreator Component', () => {
   const mockSkillSuggestions = [
     {
       skill: 'HTML/CSS Fundamentals',
-      relevance: 0.95,
       description: 'Core web markup and styling skills',
     },
     {
       skill: 'JavaScript Programming',
-      relevance: 0.9,
       description: 'Client-side scripting and DOM manipulation',
     },
     {
       skill: 'Responsive Design',
-      relevance: 0.85,
       description: 'Mobile-first design principles',
     },
   ];
@@ -219,7 +216,7 @@ describe('SkillMatrixCreator Component', () => {
     });
   });
 
-  test('displays AI-suggested skills with relevance scores', async () => {
+  test('displays AI-suggested skills', async () => {
     render(<SkillMatrixCreator />);
 
     await selectCourse('Introduction to Web Development');
@@ -237,7 +234,6 @@ describe('SkillMatrixCreator Component', () => {
     expect(within(aiSection).getByText('HTML/CSS Fundamentals')).toBeInTheDocument();
     expect(within(aiSection).getByText('JavaScript Programming')).toBeInTheDocument();
     expect(within(aiSection).getByText('Responsive Design')).toBeInTheDocument();
-    expect(within(aiSection).getByText('Relevance: 95%')).toBeInTheDocument();
   });
 
   test('allows toggling of suggested skills', async () => {

@@ -1132,7 +1132,7 @@ const SkillAssignmentInterface: React.FC = () => {
                             </div>
                           )}
 
-                          {/* No AI Suggestions Available */}
+                          {/* AI ran successfully but found no matching skill for this question */}
                           {analysisStatus === 'completed' && questionSuggestions.length === 0 && (
                             <div className="mb-4">
                               <h4 className="text-sm font-medium text-gray-700 mb-2">
@@ -1142,12 +1142,32 @@ const SkillAssignmentInterface: React.FC = () => {
                                 <div className="flex items-center">
                                   <AlertCircle className="w-4 h-4 text-yellow-600 mr-2" />
                                   <p className="text-sm text-yellow-800">
-                                    <strong>No AI suggestions available.</strong> The AI analysis
-                                    completed but didn't return any skill recommendations for this
-                                    question. This appears to be a backend issue.
+                                    <strong>No matching skill found.</strong> The AI analyzed this
+                                    question but didn't find any skill in your matrix that fits it.
                                   </p>
                                 </div>
                                 <p className="text-xs text-yellow-700 mt-2">
+                                  You can still assign skills manually using the input field below.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* The AI call itself failed for this question (network/server error) */}
+                          {analysisStatus === 'error' && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                AI Suggestions
+                              </h4>
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <div className="flex items-center">
+                                  <AlertCircle className="w-4 h-4 text-red-600 mr-2" />
+                                  <p className="text-sm text-red-800">
+                                    <strong>AI analysis failed.</strong> The request to analyze this
+                                    question didn't complete, so no suggestions were generated.
+                                  </p>
+                                </div>
+                                <p className="text-xs text-red-700 mt-2">
                                   You can still assign skills manually using the input field below.
                                 </p>
                               </div>

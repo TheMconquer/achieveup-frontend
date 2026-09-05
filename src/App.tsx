@@ -7,6 +7,7 @@ import InstructorDashboard from './pages/InstructorDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentCourses from './pages/StudentCourses';
 import StudentCourseDetail from './pages/StudentCourseDetail';
+import StudentSkills from './pages/StudentSkills';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Settings from './pages/Settings';
@@ -103,6 +104,14 @@ const AppRoutes: React.FC = () => {
           element={
             <Layout>
               <StudentCourseDetail />
+            </Layout>
+          }
+        />
+        <Route
+          path="/skills"
+          element={
+            <Layout>
+              <StudentSkills />
             </Layout>
           }
         />

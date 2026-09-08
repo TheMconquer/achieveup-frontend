@@ -33,6 +33,8 @@ interface CanvasQuestion {
   quiz_id: string;
   question_type?: string;
   points?: number;
+  attachment_ids?: string[];
+  attachment_urls?: string[];
 }
 
 interface QuestionSkills {
@@ -75,7 +77,14 @@ function extractTextFromHTML(htmlString: string) {
 // Question text is now the identifier used for skill assignment (state keys,
 // API payloads); Canvas question ids are only kept for React list keys / search.
 function getQuestionKey(question: CanvasQuestion): string {
-  return extractTextFromHTML(question.question_text);
+  const text = extractTextFromHTML(question.question_text);
+  if (text) return text;
+  // Fall back to attachment IDs if question is image-only
+  if (question.attachment_ids && question.attachment_ids.length > 0) {
+      return `attachment_${question.attachment_ids.join('_')}`;
+  }
+  // Last resort use Canvas ID
+  return `question_${question.id}`;
 }
 
 const SkillAssignmentInterface: React.FC = () => {
@@ -1097,7 +1106,15 @@ const SkillAssignmentInterface: React.FC = () => {
                               </div>
                               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                                 <p className="text-gray-800 leading-relaxed">
-                                  {question.question_text}
+                                  {question.question_text ? (
+                                    <p className="text-gray-800 leading-relaxed">{question.question_text}</p>
+                                  ) : question.attachment_urls && question.attachment_urls.length > 0 ? (
+                                    question.attachment_urls.map((url, i) => (
+                                      <img key={i} src={url} alt="Question attachment" className="max-w-full rounded" />
+                                    ))
+                                  ) : (
+                                    <span className="text-gray-400 italic">Image-only question — no text content</span>
+                                  )}
                                 </p>
                               </div>
                             </div>

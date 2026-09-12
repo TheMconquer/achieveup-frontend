@@ -44,8 +44,8 @@ describe('summarizeCourseProgress', () => {
     const { summary, attemptedSkills } = summarizeCourseProgress(course, progress);
 
     expect(attemptedSkills).toEqual([
-      { name: 'Big-O Analysis', courseId: 'course-1', score: 92 },
-      { name: 'Recursion', courseId: 'course-1', score: 80 },
+      { name: 'Big-O Analysis', courseId: 'course-1', courseName: 'Data Structures', score: 92 },
+      { name: 'Recursion', courseId: 'course-1', courseName: 'Data Structures', score: 80 },
     ]);
     expect(summary.averageScore).toBe(86);
     expect(summary.nextHint).toBe('On track');

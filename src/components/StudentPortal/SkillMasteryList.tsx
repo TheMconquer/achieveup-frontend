@@ -1,10 +1,18 @@
 import React from 'react';
 import { Pencil } from 'lucide-react';
-import { tierForScore, tierLabel, tierTextClass, tierBarClass, tierBgClass } from '../../utils/skillTiers';
+import {
+  tierForScore,
+  tierLabel,
+  tierTextClass,
+  tierBarClass,
+  tierBgClass,
+} from '../../utils/skillTiers';
 
 export interface SkillMasterySummary {
   name: string;
   score: number;
+  // shown under the skill name when the list spans multiple courses
+  courseName?: string;
 }
 
 interface SkillMasteryListProps {
@@ -22,10 +30,13 @@ const SkillMasteryList: React.FC<SkillMasteryListProps> = ({ skills }) => {
 
   return (
     <div className="divide-y divide-gray-100">
-      {skills.map((skill) => {
+      {skills.map((skill, index) => {
         const tier = tierForScore(skill.score);
         return (
-          <div key={skill.name} className="flex items-center gap-4 py-3.5">
+          <div
+            key={`${skill.courseName ?? ''}-${skill.name}-${index}`}
+            className="flex items-center gap-4 py-3.5"
+          >
             <div
               className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${tierBgClass[tier]} ${tierTextClass[tier]}`}
             >
@@ -33,6 +44,7 @@ const SkillMasteryList: React.FC<SkillMasteryListProps> = ({ skills }) => {
             </div>
             <div className="flex min-w-32 flex-1 flex-col gap-1.5">
               <div className="text-sm font-semibold text-gray-900">{skill.name}</div>
+              {skill.courseName && <div className="text-xs text-gray-500">{skill.courseName}</div>}
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                 <div
                   className={`h-full rounded-full ${tierBarClass[tier]}`}

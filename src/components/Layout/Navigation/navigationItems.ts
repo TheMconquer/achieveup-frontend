@@ -39,7 +39,6 @@ const studentNavigationItems: NavigationItem[] = [
     name: 'Skills',
     href: '/skills',
     icon: Sparkles,
-    disabled: true,
   },
   {
     name: 'Badges',

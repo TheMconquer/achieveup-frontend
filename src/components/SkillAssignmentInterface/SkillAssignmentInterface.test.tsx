@@ -538,7 +538,7 @@ describe('saving assignments', () => {
   test('the sticky Save button is disabled until at least one question has an assigned skill', async () => {
     await setup();
 
-    const stickySave = screen.getAllByRole('button', { name: /save skill assignments/i })[1];
+    const stickySave = screen.getByRole('button', { name: /save skill assignments/i });
     expect(stickySave).toBeDisabled();
 
     const q1Card = closestCard('Q1');

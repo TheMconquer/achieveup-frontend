@@ -25,6 +25,6 @@ describe('SkillMasteryList', () => {
 
     expect(screen.getByText('Loops')).toBeInTheDocument();
     expect(screen.getByText('40%')).toBeInTheDocument();
-    expect(screen.getByText('Developing')).toBeInTheDocument();
+    expect(screen.getByText('Beginner')).toBeInTheDocument();
   });
 });

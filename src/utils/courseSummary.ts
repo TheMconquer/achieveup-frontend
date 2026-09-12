@@ -33,7 +33,10 @@ export function summarizeCourseProgress(
       : null;
 
   const weakestSkill = attempted
-    .filter(([, data]) => tierForScore(data.score) === 'developing')
+    .filter(([, data]) => {
+      const tier = tierForScore(data.score);
+      return tier === 'developing' || tier === 'beginner';
+    })
     .sort((a, b) => a[1].score - b[1].score)[0];
 
   let nextHint = 'Not started yet';

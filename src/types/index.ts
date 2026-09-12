@@ -76,7 +76,7 @@ export interface Badge {
   name: string;
   description?: string;
   skill_name: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   earned?: boolean;
   earned_at?: string;
   progress?: number; // 0-1 progress towards earning the badge
@@ -96,7 +96,7 @@ export interface GenerateBadgeRequest {
 // Progress Types
 export interface SkillProgress {
   score: number;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: 'none' | 'beginner' | 'intermediate' | 'advanced' | 'expert';
   total_questions: number;
   correct_answers: number;
 }

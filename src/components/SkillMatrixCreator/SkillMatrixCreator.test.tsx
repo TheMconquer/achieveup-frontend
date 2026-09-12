@@ -1,8 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import toast from 'react-hot-toast';
 import SkillMatrixCreator from './SkillMatrixCreator';
+
+// The component now renders a react-router <Link> ("Manage Videos"), so every
+// render(...) call below needs a Router ancestor — wrapped here once rather
+// than touching each of the many call sites in this file.
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 // Mock AuthContext - every test here renders as an instructor, since the
 // component gates course-loading, AI suggestions, and skill-suggestion

@@ -24,7 +24,13 @@ const Navigation: React.FC = () => {
   // every student-only route, not just the dashboard itself, so a dual-role
   // account doesn't get bounced back to the instructor nav just by visiting
   // /courses.
-  const studentOnlyPathPrefixes = ['/student-dashboard', '/courses', '/skills', '/badges'];
+  const studentOnlyPathPrefixes = [
+    '/student-dashboard',
+    '/courses',
+    '/skills',
+    '/badges',
+    '/my-skill-videos',
+  ];
   const viewingAsStudent =
     canSwitchToStudentView &&
     studentOnlyPathPrefixes.some((prefix) => location.pathname.startsWith(prefix));

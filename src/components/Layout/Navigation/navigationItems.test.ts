@@ -7,6 +7,7 @@ describe('getNavigationItems', () => {
       { name: 'Dashboard', href: '/instructor-dashboard' },
       { name: 'Skill Matrix', href: '/skill-matrix' },
       { name: 'Skill Assignment', href: '/skill-assignment' },
+      { name: 'Skill Video Assignment', href: '/skill-videos' },
       { name: 'Student Progress', href: '/progress' },
     ]);
   });
@@ -17,6 +18,7 @@ describe('getNavigationItems', () => {
       { name: 'Dashboard', href: '/student-dashboard' },
       { name: 'Courses', href: '/courses' },
       { name: 'Skills', href: '/skills' },
+      { name: 'Skill Videos', href: '/my-skill-videos' },
       { name: 'Badges', href: '/badges' },
     ]);
   });

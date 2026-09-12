@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   BookOpen,
@@ -884,6 +885,13 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                                   >
                                     Use as Template
                                   </button>
+
+                                  <Link
+                                    to={`/skill-videos?courseId=${matrix.course_id}&matrixId=${matrix._id}`}
+                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  >
+                                    Manage Videos
+                                  </Link>
 
                                   {/* bottom-right actions */}
                                   <div className="absolute bottom-3 right-4 flex space-x-3">

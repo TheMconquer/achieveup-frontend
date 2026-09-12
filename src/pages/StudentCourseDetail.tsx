@@ -170,7 +170,13 @@ const StudentCourseDetail: React.FC = () => {
       </div>
 
       <Card title="Skills">
-        <SkillMasteryList skills={attemptedSkills.map((skill) => ({ name: skill.name, score: skill.score }))} />
+        <SkillMasteryList
+          skills={attemptedSkills.map((skill) => ({
+            name: skill.name,
+            score: skill.score,
+            courseId: skill.courseId,
+          }))}
+        />
       </Card>
 
       <Card title="Badges Earned">

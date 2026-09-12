@@ -24,7 +24,10 @@ import {
   QuestionSuggestion,
   InstructorCourseAnalytics,
   InstructorSkillMatrixRequest,
-  QuestionSkillAssignment
+  QuestionSkillAssignment,
+  SkillVideo,
+  AddSkillVideoRequest,
+  SkillVideoVoteRequest
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -111,6 +114,31 @@ export const skillAssignmentAPI = {
   },
   getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
     api.get(`/achieveup/import-status/${courseId}`),
+};
+
+// Skill Video Recommendations
+export const skillVideoAPI = {
+  getForSkill: (courseId: string, matrixId: string | undefined, skillName: string): Promise<AxiosResponse<{ videos: SkillVideo[]; matrix_id: string }>> =>
+    api.post('/achieveup/skill-videos/get', { course_id: courseId, matrix_id: matrixId, skill_name: skillName }),
+  add: (data: AddSkillVideoRequest): Promise<AxiosResponse<SkillVideo>> =>
+    api.post('/achieveup/skill-videos', data),
+  update: (videoId: string, updates: Partial<Pick<SkillVideo, 'title' | 'link' | 'channel' | 'thumbnail' | 'status'>>): Promise<AxiosResponse<SkillVideo>> =>
+    api.put(`/achieveup/skill-videos/${videoId}`, updates),
+  remove: (videoId: string): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
+    api.delete(`/achieveup/skill-videos/${videoId}`),
+  // Generates AI-recommended videos for a skill — they publish immediately (visible to
+  // students right away), tagged source: 'ai_suggested' to distinguish from instructor adds.
+  generateAiRecommendations: (courseId: string, matrixId: string | undefined, skillName: string, count?: number): Promise<AxiosResponse<{ videos: SkillVideo[] }>> =>
+    api.post('/achieveup/skill-videos/suggest', { course_id: courseId, matrix_id: matrixId, skill_name: skillName, count }),
+  vote: (data: SkillVideoVoteRequest): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
+    api.post('/achieveup/skill-videos/vote', data),
+  // Instructor-only, opt-in: searches a manually-added video's captions for the moment
+  // most relevant to its skill and stores it as a deep-link timestamp.
+  findRelevantMoment: (videoId: string): Promise<AxiosResponse<SkillVideo>> =>
+    api.post(`/achieveup/skill-videos/${videoId}/find-moment`),
+  // Instructor-only: marks an AI-suggested video as reviewed/approved.
+  verify: (videoId: string): Promise<AxiosResponse<SkillVideo>> =>
+    api.post(`/achieveup/skill-videos/${videoId}/verify`),
 };
 
 // Badge Management

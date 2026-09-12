@@ -8,6 +8,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import StudentCourses from './pages/StudentCourses';
 import StudentCourseDetail from './pages/StudentCourseDetail';
 import StudentSkills from './pages/StudentSkills';
+import StudentSkillVideos from './pages/StudentSkillVideos';
 import StudentBadges from './pages/StudentBadges';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -15,6 +16,7 @@ import Settings from './pages/Settings';
 import StudentProgress from './pages/StudentProgress';
 import SkillMatrixCreator from './components/SkillMatrixCreator/SkillMatrixCreator';
 import SkillAssignmentInterface from './components/SkillAssignmentInterface/SkillAssignmentInterface';
+import SkillVideoCurator from './pages/SkillVideoCurator';
 import StudentPublicBadges from './pages/StudentPublicBadges';
 import RequireRole from './components/common/RequireRole';
 import RoleHome from './components/common/RoleHome';
@@ -80,6 +82,14 @@ const AppRoutes: React.FC = () => {
             </Layout>
           }
         />
+        <Route
+          path="/skill-videos"
+          element={
+            <Layout>
+              <SkillVideoCurator />
+            </Layout>
+          }
+        />
       </Route>
 
       {/* Student only */}
@@ -121,6 +131,14 @@ const AppRoutes: React.FC = () => {
           element={
             <Layout>
               <StudentBadges />
+            </Layout>
+          }
+        />
+        <Route
+          path="/my-skill-videos"
+          element={
+            <Layout>
+              <StudentSkillVideos />
             </Layout>
           }
         />

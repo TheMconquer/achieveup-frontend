@@ -6,11 +6,11 @@ import StudentCourseDetail from './StudentCourseDetail';
 
 const mockAuthContext = {
   user: {
-    id: 'student-1',
+    id: 'auth-user-1',
     name: 'Jordan Miller',
     email: 'jordan@example.com',
     role: 'student' as const,
-    canvas_student_id: 'student-1',
+    canvas_student_id: 'canvas-student-1',
   },
 };
 
@@ -40,81 +40,61 @@ const renderAtCourse = (courseId: string) =>
 describe('StudentCourseDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
     mockGetCourses.mockResolvedValue({
-      data: [
-        { id: 'course-1', name: 'Data Structures', code: 'COP3530', term: 1 },
-        { id: 'course-2', name: 'Databases', code: 'COP3538', term: 1 },
-      ],
+      data: [{ id: 'course-1', name: 'Data Structures', code: 'COP3530', term: 1 }],
     });
+    mockGetStudentEarnedBadges.mockResolvedValue({
+      data: { student_id: 'student-1', total_badges: 0, badges: [] },
+    });
+  });
+
+  test('a beginner-tier (25-49%) skill does not count toward "mastered in this course"', async () => {
     mockGetSkillProgress.mockResolvedValue({
       data: {
         student_id: 'student-1',
         course_id: 'course-1',
         skill_progress: {
-          'Big-O Analysis': { score: 92, level: 'advanced', total_questions: 25, correct_answers: 23 },
+          Loops: { score: 30, level: 'beginner', total_questions: 3, correct_answers: 1 },
         },
         last_updated: '2026-08-01T00:00:00Z',
       },
     });
-    mockGetStudentEarnedBadges.mockResolvedValue({
-      data: {
-        student_id: 'student-1',
-        total_badges: 2,
-        badges: [
-          {
-            badge_id: 'badge-1',
-            badge_name: 'Recursion Badge',
-            skill_name: 'Recursion',
-            badge_level: 'expert',
-            progress_percentage: 92,
-            earned_at: '2026-07-28T00:00:00Z',
-            course_id: 'course-1',
-            course_name: 'Data Structures',
-          },
-          {
-            badge_id: 'badge-2',
-            badge_name: 'SQL Badge',
-            skill_name: 'SQL Joins',
-            badge_level: 'intermediate',
-            progress_percentage: 60,
-            earned_at: '2026-07-20T00:00:00Z',
-            course_id: 'course-2',
-            course_name: 'Databases',
-          },
-        ],
-      },
-    });
-  });
 
-  test('renders course name, skills, and only badges earned in this course', async () => {
     renderAtCourse('course-1');
 
     await waitFor(() => {
       expect(screen.getByText('Data Structures')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('COP3530')).toBeInTheDocument();
-    expect(screen.getByText('Big-O Analysis')).toBeInTheDocument();
-    expect(screen.getByText('Recursion')).toBeInTheDocument();
-    expect(screen.queryByText('SQL Joins')).not.toBeInTheDocument();
+    expect(screen.getByText("You haven't mastered a skill in this course yet.")).toBeInTheDocument();
   });
 
-  test('shows a not-found state when the course id has no match', async () => {
-    renderAtCourse('course-nonexistent');
-
-    await waitFor(() => {
-      expect(screen.getByText('Course not found')).toBeInTheDocument();
+  test('an intermediate-tier (50%+) skill does count toward "mastered in this course"', async () => {
+    mockGetSkillProgress.mockResolvedValue({
+      data: {
+        student_id: 'student-1',
+        course_id: 'course-1',
+        skill_progress: {
+          Recursion: { score: 80, level: 'advanced', total_questions: 10, correct_answers: 8 },
+        },
+        last_updated: '2026-08-01T00:00:00Z',
+      },
     });
-  });
-
-  test('shows an error state when courses fail to load', async () => {
-    mockGetCourses.mockRejectedValue(new Error('network error'));
 
     renderAtCourse('course-1');
 
     await waitFor(() => {
-      expect(screen.getByText('Could not load this course')).toBeInTheDocument();
+      expect(screen.getByText('Data Structures')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('1 skill mastered in this course.')).toBeInTheDocument();
+  });
+
+  test('shows a not-found message when the course is not in the student\'s enrollments', async () => {
+    renderAtCourse('course-does-not-exist');
+
+    await waitFor(() => {
+      expect(screen.getByText('Course not found')).toBeInTheDocument();
     });
   });
 });

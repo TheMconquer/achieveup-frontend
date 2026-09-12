@@ -33,10 +33,10 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
           <Link
             key={course.id}
             to={`/courses/${course.id}`}
-            className="flex flex-col gap-3 rounded-2xl border border-gray-200 p-4 transition-colors hover:border-au-gold-dark"
+            className="flex flex-col gap-3 rounded-2xl border border-gray-200 p-4 transition-colors hover:border-au-gold"
           >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light text-au-gold-dark">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light text-au-gold">
                 <BookOpen className="h-3.5 w-3.5" />
               </div>
               <div className="min-w-0 flex-1">

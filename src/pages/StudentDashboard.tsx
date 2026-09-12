@@ -13,7 +13,7 @@ import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPorta
 import CourseOverviewGrid, {
   CourseOverviewSummary,
 } from '../components/StudentPortal/CourseOverviewGrid';
-import { tierForScore, tierLabel } from '../utils/skillTiers';
+import { tierForScore, tierLabel, isMastered } from '../utils/skillTiers';
 import { summarizeCourseProgress, AttemptedSkill } from '../utils/courseSummary';
 import { BookOpen, Award, Sparkles, Info, AlertTriangle } from 'lucide-react';
 
@@ -96,9 +96,7 @@ const StudentDashboard: React.FC = () => {
         )
       : 0;
 
-  const masteredCount = attemptedSkills.filter(
-    (skill) => tierForScore(skill.score) !== 'developing'
-  ).length;
+  const masteredCount = attemptedSkills.filter((skill) => isMastered(skill.score)).length;
 
   const topSkills: SkillMasterySummary[] = [...attemptedSkills]
     .sort((a, b) => b.score - a.score)
@@ -179,7 +177,7 @@ const StudentDashboard: React.FC = () => {
         <Card className="h-[220px] p-6">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold-dark">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
                 <BookOpen className="h-6 w-6" />
               </div>
 
@@ -192,7 +190,7 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Courses</div>
 
-            <Link to="/courses" className="mt-auto text-[13px] font-semibold text-au-gold-dark">
+            <Link to="/courses" className="mt-auto text-[13px] font-semibold text-au-gold">
               View my courses →
             </Link>
           </div>
@@ -202,7 +200,7 @@ const StudentDashboard: React.FC = () => {
         <Card className="h-[220px] p-6">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold-dark">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
                 <Award className="h-6 w-6" />
               </div>
 
@@ -215,9 +213,9 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Badges</div>
 
-            <div className="mt-auto text-[13px] font-semibold text-au-gold-dark">
+            <Link to="/badges" className="mt-auto text-[13px] font-semibold text-au-gold">
               View all badges →
-            </div>
+            </Link>
           </div>
         </Card>
 
@@ -225,7 +223,7 @@ const StudentDashboard: React.FC = () => {
         <Card className="h-[220px] p-6">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold-dark">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
                 <Sparkles className="h-6 w-6" />
               </div>
 
@@ -238,9 +236,9 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Skills</div>
 
-            <div className="mt-auto text-[13px] font-semibold text-au-gold-dark">
+            <Link to="/skills" className="mt-auto text-[13px] font-semibold text-au-gold">
               View all skills →
-            </div>
+            </Link>
           </div>
         </Card>
       </div>
@@ -250,9 +248,9 @@ const StudentDashboard: React.FC = () => {
           className="min-h-[300px]"
           title="Top Skills"
           headerActions={
-            <span className="text-[13px] font-semibold text-gray-300" title="Coming soon">
+            <Link to="/skills" className="text-[13px] font-semibold text-au-gold">
               View all skills →
-            </span>
+            </Link>
           }
         >
           <SkillMasteryList skills={topSkills} />
@@ -262,9 +260,9 @@ const StudentDashboard: React.FC = () => {
           className="min-h-[300px]"
           title="Recent Badges"
           headerActions={
-            <span className="text-[13px] font-semibold text-gray-300" title="Coming soon">
+            <Link to="/badges" className="text-[13px] font-semibold text-au-gold">
               View all badges →
-            </span>
+            </Link>
           }
         >
           <RecentBadgesGrid badges={badges.slice(0, 5)} />
@@ -275,7 +273,7 @@ const StudentDashboard: React.FC = () => {
         className="min-h-[220px]"
         title="Course Overview"
         headerActions={
-          <Link to="/courses" className="text-[13px] font-semibold text-au-gold-dark">
+          <Link to="/courses" className="text-[13px] font-semibold text-au-gold">
             View all courses →
           </Link>
         }

@@ -89,6 +89,33 @@ describe('StudentSkills', () => {
     expect(names.indexOf('Loops')).toBeLessThan(names.indexOf('Big-O Analysis'));
   });
 
+  test('a beginner-tier (25-49%) skill does not count toward "Skills Mastered"', async () => {
+    mockGetCourses.mockResolvedValue({
+      data: [{ id: 'course-1', name: 'Data Structures', code: 'COP3530', term: 1 }],
+    });
+    mockGetSkillProgress.mockResolvedValue({
+      data: {
+        student_id: 'student-1',
+        course_id: 'course-1',
+        skill_progress: {
+          Loops: { score: 30, level: 'beginner', total_questions: 3, correct_answers: 1 },
+        },
+        last_updated: '2026-08-01T00:00:00Z',
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <StudentSkills />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Loops')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Skills Mastered').nextSibling).toHaveTextContent('0');
+  });
+
   test('paginates at 10 skills per page', async () => {
     const skillProgress: Record<
       string,

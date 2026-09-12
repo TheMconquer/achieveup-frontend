@@ -13,6 +13,11 @@ export const tierForScore = (score: number): SkillTier => {
   return 'developing';
 };
 
+export const isMastered = (score: number): boolean => {
+  const tier = tierForScore(score);
+  return tier !== 'developing' && tier !== 'beginner';
+};
+
 // badge_level / skill_progress.level come back from the API as loose
 // strings, not the narrower SkillTier union, so normalize defensively.
 export const tierFromLabel = (level: string): SkillTier => {

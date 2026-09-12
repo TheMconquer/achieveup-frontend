@@ -124,6 +124,20 @@ describe('Navigation (index)', () => {
       expect(link).toHaveAttribute('href', '/instructor-dashboard');
     });
 
+    test('instructor with student access on /badges is treated as viewing-as-student: student items plus "Back to Instructor"', () => {
+      mockAuth({
+        user: { ...instructorUser, has_student_access: true },
+        isInstructor: true,
+        isStudent: false,
+      });
+      renderAt('/badges');
+
+      expect(screen.getByRole('link', { name: /^courses$/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /skill matrix/i })).not.toBeInTheDocument();
+      const link = screen.getByRole('link', { name: /back to instructor/i });
+      expect(link).toHaveAttribute('href', '/instructor-dashboard');
+    });
+
     test('instructor WITHOUT student access still sees instructor items even directly on /student-dashboard (no route guard here, just display logic)', () => {
       mockAuth({ user: instructorUser, isInstructor: true, isStudent: false });
       renderAt('/student-dashboard');

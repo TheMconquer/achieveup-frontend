@@ -14,7 +14,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
 
   const links = items.map((item) => {
     const Icon = item.icon;
-    const isActive = currentPath === item.href;
+    const isActive = currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
     if (item.disabled) {
       return (
@@ -59,7 +59,11 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
     );
   });
 
-  return isDesktop ? <nav className="space-y-2">{links}</nav> : <div className="space-y-1">{links}</div>;
+  return isDesktop ? (
+    <nav className="space-y-2">{links}</nav>
+  ) : (
+    <div className="space-y-1">{links}</div>
+  );
 };
 
 export default NavLinks;

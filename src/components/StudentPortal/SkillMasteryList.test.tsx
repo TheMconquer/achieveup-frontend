@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SkillMasteryList from './SkillMasteryList';
 
+// SkillMasteryList pulls in SkillVideoPanel, which imports the real axios-based api
+// client — mock it so Jest never has to transform axios's ESM build. None of the
+// cases below have a courseId, so the video panel never actually mounts.
+jest.mock('../../services/api', () => ({
+  skillVideoAPI: { getForSkill: jest.fn().mockResolvedValue({ data: { videos: [] } }) },
+}));
+
 describe('SkillMasteryList', () => {
   test('shows an empty-state message when there are no skills', () => {
     render(<SkillMasteryList skills={[]} />);

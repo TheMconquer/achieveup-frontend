@@ -1,11 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { canvasAPI, progressAPI } from '../services/api';
-import { CanvasCourse } from '../types';
-import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import SkillMasteryList from '../components/StudentPortal/SkillMasteryList';
-import { summarizeCourseProgress, AttemptedSkill } from '../utils/courseSummary';
+import { useAttemptedSkills } from '../hooks/useAttemptedSkills';
 import { isMastered } from '../utils/skillTiers';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -13,50 +10,11 @@ const SKILLS_PER_PAGE = 10;
 
 const StudentSkills: React.FC = () => {
   const { user } = useAuth();
-  const [attemptedSkills, setAttemptedSkills] = useState<AttemptedSkill[]>([]);
-  const [courses, setCourses] = useState<CanvasCourse[]>([]);
+  const { attemptedSkills, courses, loading, loadError } = useAttemptedSkills(
+    user?.canvas_student_id
+  );
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  const loadSkills = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    setLoadError(false);
-
-    let loadedCourses: CanvasCourse[] = [];
-    try {
-      const coursesResponse = await canvasAPI.getCourses();
-      loadedCourses = coursesResponse.data;
-    } catch (error) {
-      console.error('Error loading courses:', error);
-      toast.error('Could not load your courses. Please try refreshing.');
-      setLoadError(true);
-    }
-    setCourses(loadedCourses);
-
-    const progressResults = await Promise.all(
-      loadedCourses.map((course) =>
-        progressAPI
-          .getSkillProgress(user.canvas_student_id!, course.id)
-          .then((res) => ({ course, progress: res.data }))
-          .catch(() => ({ course, progress: null }))
-      )
-    );
-
-    const skills: AttemptedSkill[] = [];
-    progressResults.forEach(({ course, progress }) => {
-      skills.push(...summarizeCourseProgress(course, progress).attemptedSkills);
-    });
-
-    setAttemptedSkills(skills);
-    setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    loadSkills();
-  }, [loadSkills]);
 
   const visibleSkills = useMemo(() => {
     const filtered =
@@ -151,6 +109,7 @@ const StudentSkills: React.FC = () => {
             name: skill.name,
             score: skill.score,
             courseName: courseFilter === 'all' ? skill.courseName : undefined,
+            courseId: skill.courseId,
           }))}
         />
 

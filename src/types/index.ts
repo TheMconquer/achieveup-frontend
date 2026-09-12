@@ -121,6 +121,42 @@ export interface UpdateProgressRequest {
   };
 }
 
+// Skill Video Types
+export interface SkillVideo {
+  _id: string;
+  course_id: string;
+  matrix_id: string;
+  skill_name: string;
+  title: string;
+  link: string;
+  channel: string;
+  thumbnail: string;
+  source: 'manual' | 'ai_suggested';
+  status: 'published' | 'candidate';
+  added_by: string;
+  instructor_verified?: boolean;
+  timestamp_seconds?: number | null;
+  created_at: string;
+  updated_at: string;
+  upvotes?: number;
+  downvotes?: number;
+  student_vote?: 'upvote' | 'downvote' | null;
+}
+
+export interface AddSkillVideoRequest {
+  course_id: string;
+  matrix_id?: string;
+  skill_name: string;
+  link: string;
+  title?: string;
+  source?: 'manual' | 'ai_suggested';
+}
+
+export interface SkillVideoVoteRequest {
+  video_id: string;
+  vote_type: 'upvote' | 'downvote' | 'remove';
+}
+
 // Analytics Types
 export interface GraphData {
   timeSeriesData?: Array<{

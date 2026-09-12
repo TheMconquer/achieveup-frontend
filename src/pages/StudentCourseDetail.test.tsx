@@ -26,6 +26,9 @@ jest.mock('../services/api', () => ({
   canvasAPI: { getCourses: () => mockGetCourses() },
   progressAPI: { getSkillProgress: (...args: unknown[]) => mockGetSkillProgress(...args) },
   badgeAPI: { getStudentEarnedBadges: (...args: unknown[]) => mockGetStudentEarnedBadges(...args) },
+  // The Skills card's rows are now expandable to a SkillVideoPanel (SkillMasteryList
+  // passes courseId through), which calls this on expand.
+  skillVideoAPI: { getForSkill: jest.fn().mockResolvedValue({ data: { videos: [] } }) },
 }));
 
 const renderAtCourse = (courseId: string) =>

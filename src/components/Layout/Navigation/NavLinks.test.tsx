@@ -36,6 +36,20 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: /dashboard/i })).not.toHaveClass('bg-au-gold-selected');
   });
 
+  test('marks a link active for a sub-path of its href (e.g. /courses/123 under /courses)', () => {
+    const courseItems: NavigationItem[] = [
+      { name: 'Dashboard', href: '/student-dashboard', icon: Home },
+      { name: 'Courses', href: '/courses', icon: Sparkles },
+    ];
+    render(
+      <Wrapper>
+        <NavLinks items={courseItems} currentPath="/courses/123" variant="desktop" />
+      </Wrapper>
+    );
+    expect(screen.getByRole('link', { name: /courses/i })).toHaveClass('bg-au-gold-selected');
+    expect(screen.getByRole('link', { name: /dashboard/i })).not.toHaveClass('bg-au-gold-selected');
+  });
+
   test('calls onNavigate when a link is clicked (used to close the mobile drawer)', () => {
     const onNavigate = jest.fn();
     render(

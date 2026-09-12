@@ -1,4 +1,4 @@
-import { Home, BookOpen, Sparkles, Award } from 'lucide-react';
+import { Home, BookOpen, Sparkles, Award, Video } from 'lucide-react';
 import { NavigationItem } from './types';
 
 const instructorNavigationItems: NavigationItem[] = [
@@ -16,6 +16,11 @@ const instructorNavigationItems: NavigationItem[] = [
     name: 'Skill Assignment',
     href: '/skill-assignment',
     icon: BookOpen,
+  },
+  {
+    name: 'Skill Video Assignment',
+    href: '/skill-videos',
+    icon: Video,
   },
   {
     name: 'Student Progress',
@@ -39,6 +44,11 @@ const studentNavigationItems: NavigationItem[] = [
     name: 'Skills',
     href: '/skills',
     icon: Sparkles,
+  },
+  {
+    name: 'Skill Videos',
+    href: '/my-skill-videos',
+    icon: Video,
   },
   {
     name: 'Badges',

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
-import { skillMatrixAPI, skillVideoAPI } from '../services/api';
+import { skillMatrixAPI, skillVideoAPI, courseChannelsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
@@ -87,6 +87,18 @@ const SkillVideoCurator: React.FC = () => {
   const [findingMomentId, setFindingMomentId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  // Channel management state
+  const [channels, setChannels] = useState<string[]>([]);
+  const [newChannel, setNewChannel] = useState<string>('');
+  const [savingChannels, setSavingChannels] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!courseId) return;
+    courseChannelsAPI
+      .get(courseId)
+      .then((res) => setChannels(res.data.channels || []))
+      .catch(() => setChannels([]));
+  }, [courseId]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -186,6 +198,43 @@ const SkillVideoCurator: React.FC = () => {
       toast.error(error.response?.data?.message || 'Could not verify this video');
     } finally {
       setVerifyingId(null);
+    }
+  };
+  
+  // Channel management handlers
+  const handleAddChannelPreference = async () => {
+    const trimmed = newChannel.trim();
+    if (!trimmed) return;
+    if (channels.includes(trimmed)) {
+      toast.error('Channel already added');
+      return;
+    }
+    const updated = [...channels, trimmed];
+    setChannels(updated);
+    setNewChannel('');
+
+    try {
+      setSavingChannels(true);
+      await courseChannelsAPI.update(courseId, updated);
+      toast.success('Preferred channels updated');
+    } catch {
+      toast.error('Failed to update preferred channels');
+    } finally {
+      setSavingChannels(false);
+    }
+  };
+  const handleRemoveChannelPreference = async (channelToRemove: string) => {
+    const updated = channels.filter((c) => c !== channelToRemove);
+    setChannels(updated);
+
+    try {
+      setSavingChannels(true);
+      await courseChannelsAPI.update(courseId, updated);
+      toast.success('Channel preference removed');
+    } catch {
+      toast.error('Failed to update preferred channels');
+    } finally {
+      setSavingChannels(false);
     }
   };
 
@@ -327,6 +376,50 @@ const SkillVideoCurator: React.FC = () => {
           </div>
         </div>
       </Card>
+      
+      <Card
+        title="Preferred YouTube Channels"
+        subtitle="AI will prioritize these channel handles when fetching suggestions"
+      >
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {channels.length === 0 ? (
+              <span className="text-sm text-gray-400 italic">No channel preferences set (AI will search all of YouTube)</span>
+            ) : (
+            channels.map((channel) => (
+              <span
+                key={channel}
+                className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200"
+              >
+                {channel}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveChannelPreference(channel)}
+                  className="text-blue-500 hover:text-red-600 focus:outline-none"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <input
+            type="text"
+            placeholder="e.g. @3Blue1Brown or @freecodecamp"
+            value={newChannel}
+            onChange={(e) => setNewChannel(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddChannelPreference()}
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
+          <Button onClick={handleAddChannelPreference} loading={savingChannels} size="sm" variant="outline">
+            Add Channel
+          </Button>
+        </div>
+      </div>
+    </Card>
+          
 
       <Card
         title="Recommended Videos"

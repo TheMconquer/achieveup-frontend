@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { canvasAPI, badgeAPI } from '../services/api';
 import { CanvasCourse } from '../types';
 import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
 import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
-import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 
 const BADGES_PER_PAGE = 10;
 
@@ -100,11 +101,24 @@ const StudentBadges: React.FC = () => {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <div className="mb-1">
-        <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Badges</h1>
-        <p className="mt-1.5 text-sm text-gray-600">
-          Every badge you've earned, across all your courses — most recent first.
-        </p>
+      <div className="mb-1 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Badges</h1>
+          <p className="mt-1.5 text-sm text-gray-600">
+            Every badge you've earned, across all your courses — most recent first.
+          </p>
+        </div>
+        {user?.canvas_student_id && (
+          <Link
+            to={`/badges/${user.canvas_student_id}?name=${encodeURIComponent(user.name)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Share2 className="h-4 w-4" />
+            View & Share My Badges
+          </Link>
+        )}
       </div>
 
       {loadError && (

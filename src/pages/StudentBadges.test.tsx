@@ -164,6 +164,26 @@ describe('StudentBadges', () => {
     expect(screen.getByText('Courses Represented').nextSibling).toHaveTextContent('0');
   });
 
+  test('links to the student\'s own public badge page, matching the instructor-side link shape', async () => {
+    mockGetStudentEarnedBadges.mockResolvedValue({
+      data: { student_id: 'student-1', total_badges: 0, badges: [] },
+    });
+
+    render(
+      <MemoryRouter>
+        <StudentBadges />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /view & share my badges/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole('link', { name: /view & share my badges/i })).toHaveAttribute(
+      'href',
+      '/badges/student-1?name=Jordan%20Miller'
+    );
+  });
+
   test('shows an error banner when badges fail to load', async () => {
     mockGetStudentEarnedBadges.mockRejectedValue(new Error('network error'));
 

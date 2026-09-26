@@ -90,7 +90,7 @@ const StudentPublicBadges: React.FC = () => {
             case 'advanced': return 'bg-blue-600';
             case 'intermediate': return 'bg-ucf-gold';
             case 'beginner': return 'bg-green-600';
-            default: return 'bg-gray-600';
+            default: return 'bg-ucf-grey';
         }
     };
 
@@ -106,10 +106,10 @@ const StudentPublicBadges: React.FC = () => {
         return (
             <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
                 <div className="max-w-md w-full bg-white rounded-lg shadow p-8 text-center border-t-4 border-red-500">
-                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h2>
                     <p className="text-gray-600">{error}</p>
-                    <Link to="/login" className="mt-6 inline-block text-ucf-gold hover:text-yellow-600 font-medium">
+                    <Link to="/login" className="mt-6 inline-block text-ucf-gold hover:text-yellow-600 dark:hover:text-yellow-400 font-medium">
                         Return to Login
                     </Link>
                 </div>
@@ -147,7 +147,7 @@ const StudentPublicBadges: React.FC = () => {
 
                     <button
                         onClick={handleCopyLink}
-                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all"
+                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all"
                     >
                         {copied ? (
                             <><Check className="w-5 h-5 mr-2 text-green-400" /> Copied to Clipboard!</>
@@ -169,13 +169,13 @@ const StudentPublicBadges: React.FC = () => {
                             <div key={badge.badge_id} className="bg-white overflow-hidden shadow-lg rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
                                 <div className={`h-44 ${getBadgeColor(badge.badge_level)} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
                                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-                                    <Award className="absolute w-40 h-40 text-white opacity-20 z-0" />
+                                    <Award className="absolute w-40 h-40 text-ucf-white opacity-20 z-0" />
                                     <div className="z-10 text-center flex flex-col items-center">
-                                        <Award className="w-8 h-8 text-white mb-2 shadow-sm" />
-                                        <h3 className="text-lg font-bold text-white leading-tight px-2 drop-shadow-md">
+                                        <Award className="w-8 h-8 text-ucf-white mb-2 shadow-sm" />
+                                        <h3 className="text-lg font-bold text-ucf-white leading-tight px-2 drop-shadow-md">
                                             {badge.badge_name}
                                         </h3>
-                                        <p className="text-xs text-white opacity-90 mt-2 font-medium bg-black bg-opacity-20 px-3 py-1 rounded-full drop-shadow-sm">
+                                        <p className="text-xs text-ucf-white opacity-90 mt-2 font-medium bg-black bg-opacity-20 px-3 py-1 rounded-full drop-shadow-sm">
                                             AchieveUp Verified
                                         </p>
                                     </div>

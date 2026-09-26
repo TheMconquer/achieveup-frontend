@@ -87,7 +87,7 @@ const Signup: React.FC = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>}
+              {errors.name && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
@@ -110,7 +110,7 @@ const Signup: React.FC = () => {
                   placeholder="Enter your email address"
                 />
               </div>
-              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -135,7 +135,7 @@ const Signup: React.FC = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -171,7 +171,7 @@ const Signup: React.FC = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-red-600 text-sm mt-1">{errors.confirmPassword.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -195,31 +195,31 @@ const Signup: React.FC = () => {
                 />
               </div>
               {errors.canvasApiToken && (
-                <p className="text-red-600 text-sm mt-1">{errors.canvasApiToken.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.canvasApiToken.message}</p>
               )}
 
-              <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="mt-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <button
                   type="button"
                   onClick={() => setShowInstructions(!showInstructions)}
                   className="flex items-center justify-between w-full text-left"
                 >
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
                     How to get your Canvas API Token
                   </span>
                   {showInstructions ? (
-                    <ChevronUp className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   )}
                 </button>
                 {showInstructions && (
                   <>
-                    <p className="text-sm text-blue-800 mt-3 mb-3">
+                    <p className="text-sm text-blue-800 dark:text-blue-300 mt-3 mb-3">
                       Your token determines whether you get instructor or student access — if it
                       shows you teaching any courses, you'll get instructor access automatically.
                     </p>
-                    <ol className="text-sm text-blue-800 space-y-1">
+                    <ol className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                       <li>1. Log into your Canvas LMS account</li>
                       <li>2. Go to Account → Settings → Approved Integrations</li>
                       <li>3. Click "New Access Token"</li>

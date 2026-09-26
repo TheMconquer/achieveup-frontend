@@ -22,13 +22,13 @@ const StudentSkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose
           <p className="mb-2 font-medium text-gray-900">What the tags mean</p>
           <ul className="space-y-2">
             <li className="flex items-center gap-2">
-              <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+              <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                 Instructor Recommended
               </span>
               <span>Personally picked by your instructor.</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+              <span className="flex-shrink-0 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
                 Instructor Verified
               </span>
               <span>Found by AI, then reviewed and approved by your instructor.</span>
@@ -102,7 +102,7 @@ const StudentSkillVideos: React.FC = () => {
             type="button"
             onClick={() => setShowInfoModal(true)}
             aria-label="What the video tags and votes mean"
-            className="text-gray-400 hover:text-blue-600"
+            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
           >
             <Info className="h-5 w-5" />
           </button>
@@ -115,7 +115,7 @@ const StudentSkillVideos: React.FC = () => {
       {showInfoModal && <StudentSkillVideoInfoModal onClose={() => setShowInfoModal(false)} />}
 
       {loadError && (
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Some of your data couldn't be loaded from Canvas. Try refreshing the page.
         </div>

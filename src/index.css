@@ -4,16 +4,54 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Theme tokens — light (default) and dark. Redefining these specific values
+   (rather than adding dark: variants everywhere) is what makes the existing
+   bg-white / text-gray-900 / etc. classes throughout the app theme-aware. */
+:root {
+  color-scheme: light;
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-au-bg: #f7f6f3;
+}
+
+.dark {
+  /* Tells the browser to render native form controls, scrollbars, and
+     date/time pickers with dark chrome — these are OS-drawn and ignore
+     Tailwind classes entirely unless this is set. */
+  color-scheme: dark;
+  --color-white: #1c1f26;
+  --color-gray-50: #20232b;
+  --color-gray-100: #2a2d36;
+  --color-gray-200: #333640;
+  --color-gray-300: #454852;
+  --color-gray-400: #7d828c;
+  --color-gray-500: #9aa0ab;
+  --color-gray-600: #b6bcc7;
+  --color-gray-700: #d7dae0;
+  --color-gray-800: #e3e5e9;
+  --color-gray-900: #f5f6f8;
+  --color-au-bg: #111318;
+}
+
 /* Base styles */
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
   }
-  
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 text-gray-900 transition-colors duration-200;
   }
-  
+
   * {
     @apply border-gray-200;
   }

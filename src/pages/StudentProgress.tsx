@@ -150,9 +150,9 @@ const StudentProgress: React.FC = () => {
 
   const getRiskLevelColor = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 bg-green-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'high': return 'text-red-600 bg-red-100';
+      case 'low': return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
+      case 'medium': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40';
+      case 'high': return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -251,7 +251,7 @@ const StudentProgress: React.FC = () => {
                   }
                 }}
                 disabled={syncing}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Syncing...' : 'Sync Now'}
@@ -263,8 +263,8 @@ const StudentProgress: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{error}</p>
+        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 
@@ -280,7 +280,7 @@ const StudentProgress: React.FC = () => {
           </p>
           <a
             href="/settings"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600"
           >
             Configure Canvas Token
           </a>
@@ -294,15 +294,15 @@ const StudentProgress: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Total Students</p>
-              <div className="mt-2 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 font-bold">{studentData.students.length}</span>
+              <div className="mt-2 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">{studentData.students.length}</span>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Avg Skills Mastered</p>
-              <div className="mt-2 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 font-bold">
+              <div className="mt-2 w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-green-600 dark:text-green-400 font-bold">
                   {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
                 </span>
               </div>
@@ -310,8 +310,8 @@ const StudentProgress: React.FC = () => {
 
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Skills Tracked</p>
-              <div className="mt-2 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 font-bold">
+              <div className="mt-2 w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-purple-600 dark:text-purple-400 font-bold">
                   {Object.keys(studentData.skillDistribution).length}
                 </span>
               </div>
@@ -352,7 +352,7 @@ const StudentProgress: React.FC = () => {
                           to={`/badges/${student.id}?name=${encodeURIComponent(student.name)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-medium text-ucf-gold hover:text-yellow-600 hover:underline flex items-center"
+                          className="text-sm font-medium text-ucf-gold hover:text-yellow-600 dark:hover:text-yellow-400 hover:underline flex items-center"
                           title="View Student Badges"
                         >
                           {student.name}
@@ -368,8 +368,8 @@ const StudentProgress: React.FC = () => {
                                 <span className="text-sm text-gray-900 font-medium">{skill.skill}</span>
                                 <div className="flex items-center space-x-2">
                                   <span className="text-xs text-gray-600">{skill.score}%</span>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${skill.level === 'advanced' ? 'bg-green-100 text-green-800' :
-                                    skill.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${skill.level === 'advanced' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                                    skill.level === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
                                       'bg-gray-100 text-gray-800'
                                     }`}>
                                     {skill.level}
@@ -454,34 +454,34 @@ const StudentProgress: React.FC = () => {
             Student progress tracking requires completing the skill mapping workflow first and waiting for student submissions.
           </p>
 
-          <div className="max-w-md mx-auto bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-blue-900 mb-4">Complete Setup Steps:</h3>
+          <div className="max-w-md mx-auto bg-blue-50 dark:bg-blue-900/40 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-4">Complete Setup Steps:</h3>
             <div className="space-y-4 text-left">
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">1</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">1</span>
                 </div>
                 <div>
-                  <p className="text-blue-800 font-medium">Create skill matrix</p>
-                  <p className="text-blue-600 text-sm">Define skills for this course</p>
+                  <p className="text-blue-800 dark:text-blue-300 font-medium">Create skill matrix</p>
+                  <p className="text-blue-600 dark:text-blue-400 text-sm">Define skills for this course</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">2</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">2</span>
                 </div>
                 <div>
-                  <p className="font-medium text-blue-800">Assign skills to quiz questions</p>
-                  <p className="text-sm text-blue-600">Map quiz questions to specific skills</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Assign skills to quiz questions</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Map quiz questions to specific skills</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">3</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">3</span>
                 </div>
                 <div>
-                  <p className="font-medium text-blue-800">Students complete assessments</p>
-                  <p className="text-sm text-blue-600">Progress data will appear automatically</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Students complete assessments</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Progress data will appear automatically</p>
                 </div>
               </div>
             </div>
@@ -490,7 +490,7 @@ const StudentProgress: React.FC = () => {
           <div className="space-x-4">
             <a
               href="/skill-assignment"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
               Assign Skills to Questions
             </a>
@@ -529,47 +529,47 @@ const StudentProgress: React.FC = () => {
             <div className="p-6">
               {/* Student Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-lg">{selectedStudent.skillsMastered}</span>
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">{selectedStudent.skillsMastered}</span>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-blue-900">Skills Mastered</p>
-                      <p className="text-xs text-blue-600">Advanced or Intermediate level</p>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Skills Mastered</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400">Advanced or Intermediate level</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-purple-50 rounded-lg p-4">
+                <div className="bg-purple-50 dark:bg-purple-900/40 rounded-lg p-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <span className="text-purple-600 font-bold text-lg">{selectedStudent.badgesEarned}</span>
+                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                      <span className="text-purple-600 dark:text-purple-400 font-bold text-lg">{selectedStudent.badgesEarned}</span>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-purple-900">Badges Earned</p>
-                      <p className="text-xs text-purple-600">Achievement recognition</p>
+                      <p className="text-sm font-medium text-purple-900 dark:text-purple-200">Badges Earned</p>
+                      <p className="text-xs text-purple-600 dark:text-purple-400">Achievement recognition</p>
                     </div>
                   </div>
                 </div>
 
-                <div className={`rounded-lg p-4 ${selectedStudent.riskLevel === 'low' ? 'bg-green-50' :
-                  selectedStudent.riskLevel === 'medium' ? 'bg-yellow-50' : 'bg-red-50'
+                <div className={`rounded-lg p-4 ${selectedStudent.riskLevel === 'low' ? 'bg-green-50 dark:bg-green-900/40' :
+                  selectedStudent.riskLevel === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/40' : 'bg-red-50 dark:bg-red-900/40'
                   }`}>
                   <div className="flex items-center">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedStudent.riskLevel === 'low' ? 'bg-green-100' :
-                      selectedStudent.riskLevel === 'medium' ? 'bg-yellow-100' : 'bg-red-100'
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedStudent.riskLevel === 'low' ? 'bg-green-100 dark:bg-green-900/40' :
+                      selectedStudent.riskLevel === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/40' : 'bg-red-100 dark:bg-red-900/40'
                       }`}>
                       {getRiskIcon(selectedStudent.riskLevel)}
                     </div>
                     <div className="ml-3">
-                      <p className={`text-sm font-medium ${selectedStudent.riskLevel === 'low' ? 'text-green-900' :
-                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-900' : 'text-red-900'
+                      <p className={`text-sm font-medium ${selectedStudent.riskLevel === 'low' ? 'text-green-900 dark:text-green-200' :
+                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-900 dark:text-yellow-200' : 'text-red-900 dark:text-red-200'
                         }`}>
                         Risk Level: {selectedStudent.riskLevel}
                       </p>
-                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-600' :
-                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-600 dark:text-green-400' :
+                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                         {selectedStudent.riskLevel === 'low' ? 'Performing well across most skills' :
                           selectedStudent.riskLevel === 'medium' ? 'Some areas need attention' :
@@ -591,8 +591,8 @@ const StudentProgress: React.FC = () => {
                           <h4 className="text-md font-medium text-gray-900">{skillName}</h4>
                           <div className="flex items-center space-x-3">
                             <span className="text-lg font-semibold text-gray-900">{skillData.score}%</span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${skillData.level === 'advanced' ? 'bg-green-100 text-green-800' :
-                              skillData.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${skillData.level === 'advanced' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                              skillData.level === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
                                 'bg-gray-100 text-gray-800'
                               }`}>
                               {skillData.level}

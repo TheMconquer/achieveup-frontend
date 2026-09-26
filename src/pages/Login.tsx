@@ -71,7 +71,7 @@ const Login: React.FC = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -96,7 +96,7 @@ const Login: React.FC = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 

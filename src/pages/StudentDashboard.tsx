@@ -124,7 +124,7 @@ const StudentDashboard: React.FC = () => {
       </div>
 
       {loadError && (
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Some of your data couldn't be loaded from Canvas. Try refreshing the page.
         </div>

@@ -211,7 +211,7 @@ const InstructorDashboard: React.FC = () => {
       description: 'Manage Canvas integration and preferences',
       icon: Settings,
       href: '/settings',
-      color: 'bg-gray-500',
+      color: 'bg-ucf-grey',
       priority: 'low',
     },
   ];
@@ -244,7 +244,7 @@ const InstructorDashboard: React.FC = () => {
           <div className="hidden md:flex items-center space-x-3">
             <Link
               to="/skill-matrix"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Get Started
@@ -254,28 +254,28 @@ const InstructorDashboard: React.FC = () => {
 
         {/* Enhanced Status Indicators */}
         <div className="mt-4 flex items-center gap-3 flex-wrap">
-          <div className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+          <div className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300">
             <div className="flex items-center">
               <div className="w-2 h-2 bg-current rounded-full mr-2"></div>
               Instructor Dashboard
             </div>
           </div>
           {user?.hasCanvasToken ? (
-            <div className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <div className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
               <CheckCircle className="w-3 h-3 mr-1 inline" />
               Canvas Connected
             </div>
           ) : (
             <Link
               to="/settings"
-              className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors"
+              className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition-colors"
             >
               <AlertTriangle className="w-3 h-3 mr-1 inline" />
               Canvas Setup Required
             </Link>
           )}
           {courses.length > 0 && (
-            <div className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            <div className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
               <BookOpen className="w-3 h-3 mr-1 inline" />
               {courses.length} Course{courses.length !== 1 ? 's' : ''} Loaded
             </div>
@@ -284,18 +284,18 @@ const InstructorDashboard: React.FC = () => {
 
         {/* Canvas Token Warning for Users Without Token */}
         {!user?.hasCanvasToken && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <AlertTriangle className="h-5 w-5 text-yellow-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">Canvas Integration Required</h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Canvas Integration Required</h3>
+                <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                   <p>
                     To access your courses and use AchieveUp features, you need to add your Canvas
                     API token. Go to{' '}
-                    <Link to="/settings" className="font-medium underline hover:text-yellow-600">
+                    <Link to="/settings" className="font-medium underline hover:text-yellow-600 dark:hover:text-yellow-400">
                       Settings
                     </Link>{' '}
                     to configure it.
@@ -310,8 +310,8 @@ const InstructorDashboard: React.FC = () => {
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="text-center hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
-            <Home className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg mx-auto mb-4">
+            <Home className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
           <div className="text-sm text-gray-600">Active Courses</div>
@@ -319,8 +319,8 @@ const InstructorDashboard: React.FC = () => {
         </Card>
 
         <Card className="text-center hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-4">
-            <Users className="w-6 h-6 text-green-600" />
+          <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg mx-auto mb-4">
+            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{instructorStats.totalStudents}</div>
           <div className="text-sm text-gray-600">Total Students</div>
@@ -328,8 +328,8 @@ const InstructorDashboard: React.FC = () => {
         </Card>
 
         <Card className="text-center hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-4">
-            <Target className="w-6 h-6 text-purple-600" />
+          <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg mx-auto mb-4">
+            <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{skillMatricesCount}</div>
           <div className="text-sm text-gray-600">Skill Matrices</div>
@@ -339,8 +339,8 @@ const InstructorDashboard: React.FC = () => {
         </Card>
 
         <Card className="text-center hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg mx-auto mb-4">
-            <Brain className="w-6 h-6 text-yellow-600" />
+          <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg mx-auto mb-4">
+            <Brain className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">AI</div>
           <div className="text-sm text-gray-600">Powered</div>
@@ -365,18 +365,18 @@ const InstructorDashboard: React.FC = () => {
                   <div
                     className={`flex items-center p-4 rounded-lg border-2 transition-all ${
                       step.status === 'current'
-                        ? 'border-ucf-gold bg-yellow-50'
+                        ? 'border-ucf-gold bg-yellow-50 dark:bg-yellow-900/40'
                         : step.status === 'completed'
-                          ? 'border-green-300 bg-green-50'
+                          ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/40'
                           : 'border-gray-200 bg-gray-50'
                     }`}
                   >
                     <div
                       className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
                         step.status === 'current'
-                          ? 'bg-ucf-gold text-white'
+                          ? 'bg-ucf-gold text-ucf-white'
                           : step.status === 'completed'
-                            ? 'bg-green-500 text-white'
+                            ? 'bg-green-500 text-ucf-white'
                             : 'bg-gray-300 text-gray-600'
                       }`}
                     >
@@ -391,9 +391,9 @@ const InstructorDashboard: React.FC = () => {
                       <h3
                         className={`font-medium ${
                           step.status === 'current'
-                            ? 'text-yellow-900'
+                            ? 'text-yellow-900 dark:text-yellow-200'
                             : step.status === 'completed'
-                              ? 'text-green-900'
+                              ? 'text-green-900 dark:text-green-200'
                               : 'text-gray-700'
                         }`}
                       >
@@ -402,9 +402,9 @@ const InstructorDashboard: React.FC = () => {
                       <p
                         className={`text-sm ${
                           step.status === 'current'
-                            ? 'text-yellow-700'
+                            ? 'text-yellow-700 dark:text-yellow-300'
                             : step.status === 'completed'
-                              ? 'text-green-700'
+                              ? 'text-green-700 dark:text-green-300'
                               : 'text-gray-600'
                         }`}
                       >
@@ -415,7 +415,7 @@ const InstructorDashboard: React.FC = () => {
                     {step.status === 'current' && (
                       <Link
                         to={step.href}
-                        className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-ucf-gold bg-yellow-100 hover:bg-yellow-200 transition-colors"
+                        className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-ucf-gold bg-yellow-100 dark:bg-yellow-900/40 hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition-colors"
                       >
                         Start
                         <ArrowRight className="w-4 h-4 ml-1" />
@@ -444,7 +444,7 @@ const InstructorDashboard: React.FC = () => {
         headerActions={
           <Link
             to="/skill-matrix"
-            className="text-sm text-ucf-gold hover:text-yellow-700 font-medium"
+            className="text-sm text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
           >
             Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
           </Link>
@@ -463,7 +463,7 @@ const InstructorDashboard: React.FC = () => {
                   <div
                     className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}
                   >
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-ucf-white" />
                   </div>
                   <h3 className="font-medium text-gray-900 group-hover:text-gray-700 mb-2">
                     {action.title}
@@ -496,8 +496,8 @@ const InstructorDashboard: React.FC = () => {
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 truncate">{course.name}</p>
@@ -506,7 +506,7 @@ const InstructorDashboard: React.FC = () => {
                 </div>
                 <Link
                   to={`/skill-matrix?course=${course.id}`}
-                  className="text-xs text-ucf-gold hover:text-yellow-700 font-medium"
+                  className="text-xs text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
                 >
                   Setup
                 </Link>
@@ -521,7 +521,7 @@ const InstructorDashboard: React.FC = () => {
         ) : (
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Set up Canvas Integration</p>
                 <p className="text-xs text-gray-600">
@@ -530,7 +530,7 @@ const InstructorDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Start with One Course</p>
                 <p className="text-xs text-gray-600">
@@ -539,7 +539,7 @@ const InstructorDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Use AI Suggestions</p>
                 <p className="text-xs text-gray-600">
@@ -550,7 +550,7 @@ const InstructorDashboard: React.FC = () => {
             <div className="pt-3">
               <Link
                 to="/settings"
-                className="inline-flex items-center text-sm text-ucf-gold hover:text-yellow-700 font-medium"
+                className="inline-flex items-center text-sm text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
               >
                 Configure Canvas <ArrowRight className="w-4 h-4 ml-1" />
               </Link>

@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import MobileHeader from './MobileHeader';
+import { ThemeProvider } from '../../../contexts/ThemeContext';
 import { User } from '../../../types';
 import { CourseSearchState } from './types';
 
@@ -22,7 +23,9 @@ const courseSearch: CourseSearchState = {
 };
 
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <BrowserRouter>{children}</BrowserRouter>
+  <ThemeProvider>
+    <BrowserRouter>{children}</BrowserRouter>
+  </ThemeProvider>
 );
 
 const renderHeader = (props: Partial<React.ComponentProps<typeof MobileHeader>> = {}) =>

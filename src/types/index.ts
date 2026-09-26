@@ -171,6 +171,7 @@ export interface CanvasQuestion {
   quiz_id: string;
   attachment_ids?: string[];
   attachment_urls?: string[];
+  answer_texts?: string[];
 }
 
 // Component Props Types

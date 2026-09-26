@@ -35,6 +35,7 @@ interface CanvasQuestion {
   points?: number;
   attachment_ids?: string[];
   attachment_urls?: string[];
+  answer_texts?: string[];
 }
 
 interface QuestionSkills {
@@ -78,12 +79,12 @@ function extractTextFromHTML(htmlString: string) {
 // API payloads); Canvas question ids are only kept for React list keys / search.
 function getQuestionKey(question: CanvasQuestion): string {
   const text = extractTextFromHTML(question.question_text);
-  if (text) return text;
-  // Fall back to attachment IDs if question is image-only
+  const answers = question.answer_texts || [];
+  const answerPart = answers.length > 0 ? ' ' + [...answers].sort().join(' ') : '';
+  if (text) return text + answerPart;
   if (question.attachment_ids && question.attachment_ids.length > 0) {
-      return `attachment_${question.attachment_ids.join('_')}`;
+      return `attachment_${question.attachment_ids.join('_')}` + answerPart;
   }
-  // Last resort use Canvas ID
   return `question_${question.id}`;
 }
 

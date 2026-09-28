@@ -498,8 +498,7 @@ const SkillVideoCurator: React.FC = () => {
                     )}
                   </button>
                 )}
-                {video.source === 'manual' && (
-                  <button
+                {(<button
                     type="button"
                     onClick={() => handleFindMoment(video)}
                     disabled={findingMomentId === video._id}

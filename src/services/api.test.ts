@@ -253,8 +253,17 @@ describe('badgeAPI', () => {
     badgeAPI.getStudentEarnedBadges('s1');
     expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/student/s1/earned');
 
-    badgeAPI.getPublicStudentBadges('s1');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/public/badges/student/s1/earned');
+    badgeAPI.getPublicBadgesByShare('s1');
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/public/badges/share/s1/earned');
+
+    badgeAPI.getBadgeShareStatus();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/share-status');
+
+    badgeAPI.shareBadgeProfile();
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/share-profile');
+
+    badgeAPI.unshareBadgeProfile();
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/unshare-profile');
   });
 });
 

@@ -17,7 +17,7 @@ interface BadgeData {
 }
 
 const StudentPublicBadges: React.FC = () => {
-    const { studentId } = useParams<{ studentId: string }>();
+    const { shareId } = useParams<{ shareId: string }>();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const nameFromQuery = queryParams.get('name');
@@ -44,12 +44,12 @@ const StudentPublicBadges: React.FC = () => {
 
     useEffect(() => {
         const loadBadges = async () => {
-            if (!studentId) return;
+            if (!shareId) return;
             try {
                 setLoading(true);
-                const response = await badgeAPI.getPublicStudentBadges(studentId);
+                const response = await badgeAPI.getPublicBadgesByShare(shareId);
                 setBadges(response.data.badges || []);
-                
+
                 // If we don't have a name from the query, use the one from the API
                 if (!nameFromQuery && response.data.student_name) {
                     setStudentName(response.data.student_name);
@@ -58,14 +58,14 @@ const StudentPublicBadges: React.FC = () => {
             } catch (err: unknown) {
                 console.error('Error loading public badges:', err);
                 const message = getApiErrorMessage(err);
-                setError(message || 'Failed to load badges. The student ID might be invalid.');
+                setError(message || 'This share link is invalid or no longer active.');
             } finally {
                 setLoading(false);
             }
         };
 
         loadBadges();
-    }, [studentId, nameFromQuery]);
+    }, [shareId, nameFromQuery]);
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href)

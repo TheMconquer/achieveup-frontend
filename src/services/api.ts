@@ -162,8 +162,7 @@ export const badgeAPI = {
     }>;
   }>> =>
     api.get(`/achieveup/badges/student/${studentId}/earned`),
-  getPublicStudentBadges: (studentId: string): Promise<AxiosResponse<{
-    student_id: string;
+  getPublicBadgesByShare: (shareId: string): Promise<AxiosResponse<{
     student_name?: string;
     total_badges: number;
     badges: Array<{
@@ -175,10 +174,22 @@ export const badgeAPI = {
       earned_at: string;
       course_id: string;
       course_name?: string;
-      shareable_link?: string;
     }>;
   }>> =>
-    api.get(`/achieveup/public/badges/student/${studentId}/earned`),
+    api.get(`/achieveup/public/badges/share/${shareId}/earned`),
+  getBadgeShareStatus: (): Promise<AxiosResponse<{
+    shared: boolean;
+    share_link: string | null;
+  }>> =>
+    api.get('/achieveup/badges/share-status'),
+  shareBadgeProfile: (): Promise<AxiosResponse<{
+    message: string;
+    share_link: string;
+    share_id: string;
+  }>> =>
+    api.post('/achieveup/badges/share-profile'),
+  unshareBadgeProfile: (): Promise<AxiosResponse<{ message: string }>> =>
+    api.post('/achieveup/badges/unshare-profile'),
 };
 
 // Progress Tracking

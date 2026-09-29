@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import StudentBadges from './StudentBadges';
@@ -24,10 +24,18 @@ jest.mock('react-hot-toast', () => ({
 
 const mockGetCourses = jest.fn();
 const mockGetStudentEarnedBadges = jest.fn();
+const mockGetBadgeShareStatus = jest.fn();
+const mockShareBadgeProfile = jest.fn();
+const mockUnshareBadgeProfile = jest.fn();
 
 jest.mock('../services/api', () => ({
   canvasAPI: { getCourses: () => mockGetCourses() },
-  badgeAPI: { getStudentEarnedBadges: (...args: unknown[]) => mockGetStudentEarnedBadges(...args) },
+  badgeAPI: {
+    getStudentEarnedBadges: (...args: unknown[]) => mockGetStudentEarnedBadges(...args),
+    getBadgeShareStatus: () => mockGetBadgeShareStatus(),
+    shareBadgeProfile: () => mockShareBadgeProfile(),
+    unshareBadgeProfile: () => mockUnshareBadgeProfile(),
+  },
 }));
 
 describe('StudentBadges', () => {
@@ -35,6 +43,12 @@ describe('StudentBadges', () => {
     jest.clearAllMocks();
     mockGetCourses.mockResolvedValue({
       data: [{ id: 'course-1', name: 'Intro Programming', code: 'COP3502', term: 1 }],
+    });
+    // Most tests don't care about sharing state — default to "not shared"
+    // so they don't each need to stub it out themselves.
+    mockGetBadgeShareStatus.mockResolvedValue({ data: { shared: false, share_link: null } });
+    Object.assign(navigator, {
+      clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
     });
   });
 
@@ -175,6 +189,148 @@ describe('StudentBadges', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/couldn't be loaded/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('badge profile sharing', () => {
+    beforeEach(() => {
+      mockGetStudentEarnedBadges.mockResolvedValue({
+        data: { student_id: 'student-1', total_badges: 0, badges: [] },
+      });
+    });
+
+    test('shows a "Share Profile" prompt when not currently shared', async () => {
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/stop sharing/i)).not.toBeInTheDocument();
+    });
+
+    test('clicking "Share Profile" enables sharing and displays the returned link', async () => {
+      mockShareBadgeProfile.mockResolvedValue({
+        data: {
+          message: 'Badge profile shared successfully',
+          share_link: 'https://achieveup.ucf.edu/badges/share/abc123',
+          share_id: 'abc123',
+        },
+      });
+
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument());
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /share profile/i }));
+      });
+
+      expect(mockShareBadgeProfile).toHaveBeenCalledTimes(1);
+      expect(screen.getByDisplayValue('https://achieveup.ucf.edu/badges/share/abc123')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /stop sharing/i })).toBeInTheDocument();
+    });
+
+    test('when already shared, shows the existing link and a "Stop Sharing" control', async () => {
+      mockGetBadgeShareStatus.mockResolvedValue({
+        data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/existing1' },
+      });
+
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('https://achieveup.ucf.edu/badges/share/existing1')).toBeInTheDocument();
+      });
+      expect(screen.getByRole('button', { name: /stop sharing/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^share profile$/i })).not.toBeInTheDocument();
+    });
+
+    test('clicking "Stop Sharing" revokes the link and reverts to the unshared prompt', async () => {
+      mockGetBadgeShareStatus.mockResolvedValue({
+        data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/existing1' },
+      });
+      mockUnshareBadgeProfile.mockResolvedValue({ data: { message: 'Badge profile is no longer public' } });
+
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /stop sharing/i })).toBeInTheDocument());
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /stop sharing/i }));
+      });
+
+      expect(mockUnshareBadgeProfile).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('https://achieveup.ucf.edu/badges/share/existing1')).not.toBeInTheDocument();
+    });
+
+    test('the Copy button copies the current share link to the clipboard', async () => {
+      mockGetBadgeShareStatus.mockResolvedValue({
+        data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/existing1' },
+      });
+
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /^copy$/i })).toBeInTheDocument());
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^copy$/i }));
+      });
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        'https://achieveup.ucf.edu/badges/share/existing1'
+      );
+    });
+
+    test('a failed share status check does not block the rest of the page from loading', async () => {
+      mockGetBadgeShareStatus.mockRejectedValue(new Error('network error'));
+      mockGetStudentEarnedBadges.mockResolvedValue({
+        data: {
+          student_id: 'student-1',
+          total_badges: 1,
+          badges: [
+            {
+              badge_id: 'badge-1',
+              badge_name: 'Beginner in Loops',
+              skill_name: 'Loops',
+              badge_level: 'beginner',
+              progress_percentage: 33,
+              earned_at: '2026-08-01T00:00:00Z',
+              course_id: 'course-1',
+              course_name: 'Intro Programming',
+            },
+          ],
+        },
+      });
+
+      render(
+        <MemoryRouter>
+          <StudentBadges />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => expect(screen.getByText('Loops')).toBeInTheDocument());
+      // Defaults to the unshared prompt rather than erroring the whole page.
+      expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
     });
   });
 });

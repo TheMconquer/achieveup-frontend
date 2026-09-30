@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { badgeAPI } from '../services/api';
 import Card from '../components/common/Card';
-import { Award, Share2, AlertCircle, Check } from 'lucide-react';
+import { Award, Share2, AlertCircle, Check, BookOpen } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
 
 interface BadgeData {
@@ -125,9 +125,7 @@ const StudentPublicBadges: React.FC = () => {
                     <div className="flex justify-between h-16">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0 flex items-center">
-                                <div className="w-8 h-8 bg-ucf-gold rounded-lg flex items-center justify-center">
-                                    <span className="text-ucf-black font-bold text-lg">A</span>
-                                </div>
+                                <BookOpen className="h-9 w-9 text-au-gold" />
                                 <span className="ml-2 text-xl font-bold text-gray-900">AchieveUp</span>
                             </Link>
                         </div>

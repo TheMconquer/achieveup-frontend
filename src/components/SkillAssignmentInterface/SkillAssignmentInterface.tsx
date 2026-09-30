@@ -1106,17 +1106,15 @@ const SkillAssignmentInterface: React.FC = () => {
                                 )}
                               </div>
                               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                                <p className="text-gray-800 leading-relaxed">
-                                  {question.question_text ? (
-                                    <p className="text-gray-800 leading-relaxed">{question.question_text}</p>
-                                  ) : question.attachment_urls && question.attachment_urls.length > 0 ? (
-                                    question.attachment_urls.map((url, i) => (
-                                      <img key={i} src={url} alt="Question attachment" className="max-w-full rounded" />
-                                    ))
-                                  ) : (
-                                    <span className="text-gray-400 italic">Image-only question — no text content</span>
-                                  )}
-                                </p>
+                                {question.question_text ? (
+                                  <p className="text-gray-800 leading-relaxed">{question.question_text}</p>
+                                ) : question.attachment_urls && question.attachment_urls.length > 0 ? (
+                                  question.attachment_urls.map((url, i) => (
+                                    <img key={i} src={url} alt="Question attachment" className="max-w-full rounded" />
+                                  ))
+                                ) : (
+                                  <span className="text-gray-400 italic">Image-only question — no text content</span>
+                                )}
                               </div>
                             </div>
                           </div>

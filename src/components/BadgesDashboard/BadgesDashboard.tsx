@@ -202,7 +202,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                     <p className="text-gray-600 mb-4">
                         Badges are automatically created for each skill in your course's skill matrix.
                     </p>
-                    <div className="inline-flex items-center px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                    <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
                         <AlertCircle className="w-4 h-4 mr-2" />
                         Create a skill matrix first to enable badges
                     </div>
@@ -213,7 +213,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
 
     return (
         <Card title={`Course Badges (${badges.length} Skills)`} className="mt-8">
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
                 <div className="flex items-start">
                     <Target className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
@@ -245,7 +245,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                     <div className="flex items-center space-x-4 flex-1">
                                         {/* Badge Icon */}
                                         <div className={`w-16 h-16 ${iconColor} rounded-full flex items-center justify-center flex-shrink-0`}>
-                                            <Award className="w-8 h-8 text-white" />
+                                            <Award className="w-8 h-8 text-ucf-white" />
                                         </div>
 
                                         {/* Badge Info */}
@@ -255,7 +255,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                             </div>
                                             <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
                                             <div className="flex items-center space-x-4 text-sm">
-                                                <div className="flex items-center text-green-600">
+                                                <div className="flex items-center text-green-600 dark:text-green-400">
                                                     <CheckCircle className="w-4 h-4 mr-1" />
                                                     <span>{badge.studentsEarned.length} earned</span>
                                                 </div>
@@ -303,7 +303,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                         <button
                                             onClick={() => setShowEarned(true)}
                                             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${showEarned
-                                                ? 'bg-white text-green-600 border-b-2 border-green-600'
+                                                ? 'bg-white text-green-600 dark:text-green-400 border-b-2 border-green-600'
                                                 : 'text-gray-600 hover:text-gray-900'
                                                 }`}
                                         >
@@ -336,8 +336,8 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                         <div key={student.id} className="bg-white rounded-lg p-4 border border-gray-200">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center space-x-3">
-                                                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                                                        <CheckCircle className="w-5 h-5 text-green-600" />
+                                                                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
+                                                                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
@@ -347,7 +347,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className="text-lg font-semibold text-green-600">{student.skillScore}%</div>
+                                                                    <div className="text-lg font-semibold text-green-600 dark:text-green-400">{student.skillScore}%</div>
                                                                     <div className="text-xs text-gray-500">Skill Score</div>
                                                                 </div>
                                                             </div>
@@ -377,8 +377,8 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className={`text-lg font-semibold ${student.progress >= 25 ? 'text-green-600' :
-                                                                        student.progress >= 15 ? 'text-yellow-600' :
+                                                                    <div className={`text-lg font-semibold ${student.progress >= 25 ? 'text-green-600 dark:text-green-400' :
+                                                                        student.progress >= 15 ? 'text-yellow-600 dark:text-yellow-400' :
                                                                             'text-orange-600'
                                                                         }`}>
                                                                         {student.progress}%

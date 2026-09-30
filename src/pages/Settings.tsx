@@ -203,10 +203,10 @@ const Settings: React.FC = () => {
 
   // Canvas token instructions
   const CanvasTokenInstructions = () => (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+    <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
       <div className="flex items-start">
-        <Info className="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-        <div className="text-sm text-blue-800">
+        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+        <div className="text-sm text-blue-800 dark:text-blue-300">
           <p className="font-medium mb-2">
             How to get your Canvas API {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} Token:
           </p>
@@ -220,9 +220,9 @@ const Settings: React.FC = () => {
           </ol>
           
           {profile.canvasTokenType === 'instructor' && (
-            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-              <p className="text-xs font-medium text-yellow-800 mb-1">Instructor Token Benefits:</p>
-              <ul className="text-xs text-yellow-700 space-y-1">
+            <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded">
+              <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">Instructor Token Benefits:</p>
+              <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
                 <li>• Access to all courses you teach</li>
                 <li>• View and manage quiz questions</li>
                 <li>• Monitor student progress across courses</li>
@@ -235,7 +235,7 @@ const Settings: React.FC = () => {
           <div className="mt-3 p-2 bg-white rounded border">
             <p className="text-xs font-medium text-gray-700 mb-1">Current Status:</p>
             {user?.hasCanvasToken ? (
-              <p className="text-xs text-green-600">
+              <p className="text-xs text-green-600 dark:text-green-400">
                 ✅ {user.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} token is set and ready to use
               </p>
             ) : (
@@ -261,23 +261,23 @@ const Settings: React.FC = () => {
       
       {/* Canvas Integration Importance Notice */}
       {!user?.hasCanvasToken && (
-        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <Info className="h-6 w-6 text-blue-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-blue-900 mb-2">
+              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-2">
                 Canvas Integration Required
               </h3>
-              <p className="text-blue-800 mb-4">
+              <p className="text-blue-800 dark:text-blue-300 mb-4">
                 To use AchieveUp features like course access, skill matrix creation, and student progress tracking, 
                 you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses 
                 and provide AI-powered skill tracking.
               </p>
-              <div className="bg-blue-100 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">What you can do with Canvas integration:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="bg-blue-100 dark:bg-blue-900/40 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">What you can do with Canvas integration:</h4>
+                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                   <li>• Access your Canvas courses and quizzes</li>
                   <li>• Create skill matrices for your courses</li>
                   <li>• Assign skills to quiz questions with AI assistance</li>
@@ -349,7 +349,7 @@ const Settings: React.FC = () => {
                   disabled={testingConnection}
                 >
                   {connectionStatus?.connected ? (
-                    <Wifi className="w-4 h-4 mr-2 text-green-500" />
+                    <Wifi className="w-4 h-4 mr-2 text-green-500 dark:text-green-400" />
                   ) : (
                     <WifiOff className="w-4 h-4 mr-2 text-gray-500" />
                   )}
@@ -362,8 +362,8 @@ const Settings: React.FC = () => {
             {connectionStatus && (
               <div className={`mb-4 p-3 rounded-lg border ${
                 connectionStatus.connected 
-                  ? 'bg-green-50 border-green-200 text-green-800' 
-                  : 'bg-red-50 border-red-200 text-red-800'
+                  ? 'bg-green-50 dark:bg-green-900/40 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300' 
+                  : 'bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
               }`}>
                 <div className="flex items-center">
                   {connectionStatus.connected ? (
@@ -384,7 +384,7 @@ const Settings: React.FC = () => {
             {/* Status Indicator */}
             <div className="mb-4">
               {user?.hasCanvasToken ? (
-                <div className="flex items-center text-sm text-green-600"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
+                <div className="flex items-center text-sm text-green-600 dark:text-green-400"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
               ) : (
                 <div className="flex items-center text-sm text-gray-500"><div className="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>No token set</div>
               )}
@@ -397,7 +397,7 @@ const Settings: React.FC = () => {
                 {/* Token Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
                     <div className="flex items-center">
                       <input
                         type="radio"
@@ -407,9 +407,9 @@ const Settings: React.FC = () => {
                         readOnly
                         className="mr-2"
                       />
-                      <span className="text-sm font-medium text-blue-800">Instructor Token (Required)</span>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">This application is for instructors only</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
                   </div>
                 </div>
                 
@@ -441,7 +441,7 @@ const Settings: React.FC = () => {
                 {/* Token Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
                     <div className="flex items-center">
                       <input
                         type="radio"
@@ -451,9 +451,9 @@ const Settings: React.FC = () => {
                         readOnly
                         className="mr-2"
                       />
-                      <span className="text-sm font-medium text-blue-800">Instructor Token (Required)</span>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">This application is for instructors only</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
                   </div>
                 </div>
                 
@@ -495,7 +495,7 @@ const Settings: React.FC = () => {
                   <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)}>
                     <Edit className="w-4 h-4 mr-2" />Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} className="text-red-600 border-red-200 hover:text-red-800">
+                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:text-red-800 dark:hover:text-red-300">
                     Clear
                   </Button>
                 </div>

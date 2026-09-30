@@ -89,7 +89,7 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
             {loading ? (
               <p className="px-4 py-3 text-sm text-gray-500">Loading courses…</p>
             ) : error ? (
-              <p className="px-4 py-3 text-sm text-red-600">
+              <p className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
                 Couldn't load your courses. Please try again.
               </p>
             ) : results.length === 0 ? (

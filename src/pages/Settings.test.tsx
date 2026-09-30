@@ -179,7 +179,7 @@ describe('Canvas API token section - no token set', () => {
 
 // The Profile card also has its own "Edit" button, so any query for "Edit"
 // needs to be scoped to the Canvas API Token card specifically.
-const tokenCard = () => within(screen.getByText('Canvas API Token').closest('div.bg-ucf-white')!);
+const tokenCard = () => within(screen.getByText('Canvas API Token').closest('div.bg-white')!);
 
 describe('Canvas API token section - token already set', () => {
   test('shows the masked token with Edit/Clear actions and a Test Connection button', () => {

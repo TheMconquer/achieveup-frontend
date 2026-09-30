@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import UserMenu from './UserMenu';
+import { ThemeProvider } from '../../../contexts/ThemeContext';
 import { User } from '../../../types';
 
 const user: User = {
@@ -14,7 +15,9 @@ const user: User = {
 };
 
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <BrowserRouter>{children}</BrowserRouter>
+  <ThemeProvider>
+    <BrowserRouter>{children}</BrowserRouter>
+  </ThemeProvider>
 );
 
 const renderMenu = (props: Partial<React.ComponentProps<typeof UserMenu>> = {}) =>

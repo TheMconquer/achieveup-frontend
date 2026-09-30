@@ -44,11 +44,11 @@ export const tierLabel: Record<SkillTier, string> = {
 };
 
 export const tierTextClass: Record<SkillTier, string> = {
-  expert: 'text-purple-600',
-  advanced: 'text-blue-600',
-  intermediate: 'text-green-600',
-  beginner: 'text-amber-600',
-  developing: 'text-red-600',
+  expert: 'text-purple-600 dark:text-purple-400',
+  advanced: 'text-blue-600 dark:text-blue-400',
+  intermediate: 'text-green-600 dark:text-green-400',
+  beginner: 'text-amber-600 dark:text-amber-400',
+  developing: 'text-red-600 dark:text-red-400',
 };
 
 export const tierBarClass: Record<SkillTier, string> = {
@@ -60,11 +60,11 @@ export const tierBarClass: Record<SkillTier, string> = {
 };
 
 export const tierBgClass: Record<SkillTier, string> = {
-  expert: 'bg-purple-50',
-  advanced: 'bg-blue-50',
-  intermediate: 'bg-green-50',
-  beginner: 'bg-amber-50',
-  developing: 'bg-red-50',
+  expert: 'bg-purple-50 dark:bg-purple-900/40',
+  advanced: 'bg-blue-50 dark:bg-blue-900/40',
+  intermediate: 'bg-green-50 dark:bg-green-900/40',
+  beginner: 'bg-amber-50 dark:bg-amber-900/40',
+  developing: 'bg-red-50 dark:bg-red-900/40',
 };
 
 export const tierGradientClass: Record<SkillTier, string> = {

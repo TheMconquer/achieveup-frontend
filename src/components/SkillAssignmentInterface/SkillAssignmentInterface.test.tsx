@@ -38,10 +38,16 @@ jest.mock('react-hot-toast', () => ({
 
 const course = (id: string, name: string, code: string, term = 1) => ({ id, name, code, term });
 const quiz = (id: string, title: string, course_id: string) => ({ id, title, course_id });
-const question = (id: string, text: string, quiz_id: string) => ({
+const question = (
+  id: string,
+  text: string,
+  quiz_id: string,
+  extra: Partial<{ attachment_ids: string[]; attachment_urls: string[]; answer_texts: string[] }> = {}
+) => ({
   id,
   question_text: text,
   quiz_id,
+  ...extra,
 });
 
 const mockInstructorAuth = () => {
@@ -292,6 +298,93 @@ describe('selecting a quiz', () => {
     await waitFor(() => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Failed to load questions. Please try again.');
     });
+  });
+});
+
+describe('image-only questions and duplicate-question disambiguation', () => {
+  beforeEach(() => {
+    jest.mocked(canvasAPI.getInstructorCourses).mockResolvedValue({
+      data: [course('c1', 'Data Structures', 'COP3530-A 0002')],
+    } as any);
+    jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({
+      data: [quiz('q1', 'Quiz One', 'c1')],
+    } as any);
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({ data: [] } as any);
+  });
+
+  test('an image-only question with no text renders its attachment instead of blank text', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', '', 'q1', {
+          attachment_ids: ['att1'],
+          attachment_urls: ['https://cdn.example.com/q1.png'],
+        }),
+      ],
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    const image = await screen.findByRole('img', { name: 'Question attachment' });
+    expect(image).toHaveAttribute('src', 'https://cdn.example.com/q1.png');
+
+    // The attachment id (not empty text) is used as the AI-analysis correlation id.
+    await waitForQuestionsToSettle('q1');
+    expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        questions: [expect.objectContaining({ id: 'attachment_att1', text: 'attachment_att1' })],
+      })
+    );
+  });
+
+  test('an image-only question with no attachments shows a placeholder instead of blank text', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [question('cq1', '', 'q1')],
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    expect(
+      await screen.findByText('Image-only question — no text content')
+    ).toBeInTheDocument();
+  });
+
+  test('two questions with identical text but different answers keep separate saved skill assignments', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'Which is a mammal?', 'q1', { answer_texts: ['Dog'] }),
+        question('cq2', 'Which is a mammal?', 'q1', { answer_texts: ['Cat'] }),
+      ],
+    } as any);
+    // Only the "Dog" variant has a saved skill - if the two questions collided
+    // on the same key (the bug this branch fixes), both cards would show it.
+    jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
+      data: { question_skills: { 'Which is a mammal? Dog': ['Zoology'] } },
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+    await waitFor(() => expect(screen.getAllByText('Which is a mammal?')).toHaveLength(2));
+    await waitForQuestionsToSettle('q1');
+
+    const assignedCard = screen.getByText('Assigned').closest('div.flex') as HTMLElement;
+    expect(within(assignedCard).getByText('1')).toBeInTheDocument();
+
+    const cards = screen
+      .getAllByText('Which is a mammal?')
+      .map((el) => el.closest('div.overflow-hidden') as HTMLElement);
+    const cardsWithSkill = cards.filter((card) => within(card).queryAllByText('Zoology').length > 0);
+    expect(cardsWithSkill).toHaveLength(1);
   });
 });
 

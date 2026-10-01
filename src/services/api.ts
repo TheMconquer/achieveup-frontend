@@ -139,6 +139,15 @@ export const skillVideoAPI = {
     api.post(`/achieveup/skill-videos/${videoId}/verify`),
 };
 
+// YouTube Channel Preferences
+export const courseChannelsAPI = {
+  get: (courseId: string): Promise<AxiosResponse<{ channels: string[] }>> =>
+    api.get(`/achieveup/instructor/courses/${courseId}/channels`),
+
+  update: (courseId: string, channels: string[]): Promise<AxiosResponse<{ success: boolean; channels: string[] }>> =>
+    api.put(`/achieveup/instructor/courses/${courseId}/channels`, { channels }),
+};
+
 // Badge Management
 export const badgeAPI = {
   generate: (data: GenerateBadgeRequest): Promise<AxiosResponse<Badge[]>> =>

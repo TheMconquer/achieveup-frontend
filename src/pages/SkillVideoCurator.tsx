@@ -97,7 +97,11 @@ const SkillVideoCurator: React.FC = () => {
     courseChannelsAPI
       .get(courseId)
       .then((res) => setChannels(res.data.channels || []))
-      .catch(() => setChannels([]));
+      .catch((err) => {
+        toast.error('Could not load preferred channels for this course.');
+        setChannels([])
+
+      });
   }, [courseId]);
 
   useEffect(() => {
@@ -203,13 +207,22 @@ const SkillVideoCurator: React.FC = () => {
   
   // Channel management handlers
   const handleAddChannelPreference = async () => {
+    // Prevent execution if already saving or input is empty
+    if (savingChannels) return;
     const trimmed = newChannel.trim();
     if (!trimmed) return;
-    if (channels.includes(trimmed)) {
+
+    // Case-insensitive duplicate check
+    const isDuplicate = channels.some(
+      (ch) => ch.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (isDuplicate) {
       toast.error('Channel already added');
       return;
     }
+    const previousChannels = [...channels];
     const updated = [...channels, trimmed];
+
     setChannels(updated);
     setNewChannel('');
 
@@ -218,12 +231,18 @@ const SkillVideoCurator: React.FC = () => {
       await courseChannelsAPI.update(courseId, updated);
       toast.success('Preferred channels updated');
     } catch {
+      // Rollback to previous state on failure
+      setChannels(previousChannels);
       toast.error('Failed to update preferred channels');
     } finally {
       setSavingChannels(false);
     }
   };
   const handleRemoveChannelPreference = async (channelToRemove: string) => {
+    // Prevent execution if already saving or input is empty
+    if (savingChannels) return;
+    
+    const previousChannels = [...channels];
     const updated = channels.filter((c) => c !== channelToRemove);
     setChannels(updated);
 
@@ -232,6 +251,8 @@ const SkillVideoCurator: React.FC = () => {
       await courseChannelsAPI.update(courseId, updated);
       toast.success('Channel preference removed');
     } catch {
+      // Rollback on failure
+      setChannels(previousChannels);
       toast.error('Failed to update preferred channels');
     } finally {
       setSavingChannels(false);
@@ -394,8 +415,11 @@ const SkillVideoCurator: React.FC = () => {
                 {channel}
                 <button
                   type="button"
+                  disabled={savingChannels}
                   onClick={() => handleRemoveChannelPreference(channel)}
-                  className="text-blue-500 hover:text-red-600 focus:outline-none"
+                  title={`Remove ${channel}`}
+                  aria-label={`Remove ${channel}`}
+                  className="text-blue-500 hover:text-red-600 focus:outline-none disabled:opacity-50"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -407,13 +431,23 @@ const SkillVideoCurator: React.FC = () => {
         <div className="flex gap-2 pt-2">
           <input
             type="text"
+            disabled={savingChannels}
             placeholder="e.g. @3Blue1Brown or @freecodecamp"
             value={newChannel}
             onChange={(e) => setNewChannel(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddChannelPreference()}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { 
+                e.preventDefault();
+                if (!savingChannels) handleAddChannelPreference();
+              }}}
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
           />
-          <Button onClick={handleAddChannelPreference} loading={savingChannels} size="sm" variant="outline">
+          <Button 
+            onClick={handleAddChannelPreference} 
+            loading={savingChannels} 
+            size="sm" 
+            variant="outline"
+          >
             Add Channel
           </Button>
         </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { canvasAPI, badgeAPI } from '../services/api';
 import { CanvasCourse } from '../types';
@@ -7,6 +8,7 @@ import Card from '../components/common/Card';
 import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
 import { AlertTriangle, ChevronLeft, ChevronRight, Share2, Copy, Check } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 const BADGES_PER_PAGE = 10;
 
@@ -24,8 +26,9 @@ const StudentBadges: React.FC = () => {
   const [loadError, setLoadError] = useState(false);
 
   const [shareLink, setShareLink] = useState<string | null>(null);
+  const [sharingOptedOut, setSharingOptedOut] = useState(false);
   const [shareActionLoading, setShareActionLoading] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const { copied: linkCopied, copy: copyShareLink } = useCopyToClipboard();
 
   const loadBadges = useCallback(async () => {
     if (!user) return;
@@ -66,7 +69,8 @@ const StudentBadges: React.FC = () => {
     }
 
     if (shareStatusResult.status === 'fulfilled') {
-      setShareLink(shareStatusResult.value.data.shared ? shareStatusResult.value.data.share_link : null);
+      setShareLink(shareStatusResult.value.data.share_link);
+      setSharingOptedOut(shareStatusResult.value.data.opted_out);
     } else {
       console.error('Error loading badge share status:', shareStatusResult.reason);
     }
@@ -78,35 +82,17 @@ const StudentBadges: React.FC = () => {
     loadBadges();
   }, [loadBadges]);
 
-  const handleToggleShare = async () => {
+  const handleGetShareLink = async () => {
     setShareActionLoading(true);
     try {
-      if (shareLink) {
-        await badgeAPI.unshareBadgeProfile();
-        setShareLink(null);
-        toast.success('Your badge profile is no longer public.');
-      } else {
-        const response = await badgeAPI.shareBadgeProfile();
-        setShareLink(response.data.share_link);
-        toast.success('Your badge profile is now shareable.');
-      }
+      const response = await badgeAPI.generateBadgeShareLink();
+      setShareLink(response.data.share_link);
     } catch (err: unknown) {
-      console.error('Error updating badge sharing:', err);
-      toast.error(getApiErrorMessage(err) || 'Could not update your sharing settings.');
+      console.error('Error creating badge share link:', err);
+      toast.error(getApiErrorMessage(err) || 'Could not create your share link.');
     } finally {
       setShareActionLoading(false);
     }
-  };
-
-  const handleCopyShareLink = () => {
-    if (!shareLink) return;
-    navigator.clipboard
-      .writeText(shareLink)
-      .then(() => {
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 2000);
-      })
-      .catch((err) => console.error('Failed to copy share link:', err));
   };
 
   // Distinct courses that actually have a badge — used for the "Courses
@@ -171,7 +157,15 @@ const StudentBadges: React.FC = () => {
       </div>
 
       <Card title="Share Your Achievements">
-        {shareLink ? (
+        {sharingOptedOut ? (
+          <p className="text-sm text-gray-600">
+            Badge sharing is turned off.{' '}
+            <Link to="/settings" className="font-medium text-au-gold hover:underline">
+              Turn it back on in Settings
+            </Link>{' '}
+            to get a public link.
+          </p>
+        ) : shareLink ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <p className="text-sm text-gray-600 sm:flex-shrink-0">
               Anyone with this link can view your badges:
@@ -184,38 +178,28 @@ const StudentBadges: React.FC = () => {
               className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm text-gray-700"
               aria-label="Your public badge profile link"
             />
-            <div className="flex flex-shrink-0 gap-2">
-              <button
-                type="button"
-                onClick={handleCopyShareLink}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {linkCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                {linkCopied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                type="button"
-                onClick={handleToggleShare}
-                disabled={shareActionLoading}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Stop Sharing
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => copyShareLink(shareLink)}
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {linkCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {linkCopied ? 'Copied' : 'Copy'}
+            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-gray-600">
-              Your badges are private by default. Turn this on to get a public link you can share.
+              Get a public link you can share to show off your badges.
             </p>
             <button
               type="button"
-              onClick={handleToggleShare}
+              onClick={handleGetShareLink}
               disabled={shareActionLoading}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-au-gold px-4 py-1.5 text-sm font-medium text-gray-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Share2 className="h-4 w-4" />
-              Share Profile
+              Share Badges
             </button>
           </div>
         )}

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { CheckCircle, AlertTriangle, RefreshCw, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronRight, Share2, Copy, Check } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';
+import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
+import { badgeAPI } from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { CanvasCourse } from '../types';
 
 
@@ -41,6 +45,112 @@ interface RawStudentAnalytics {
   averageScores: Record<string, number>;
 }
 
+// Inline, authenticated view of one student's badges plus a way to generate
+// a public share link for them — e.g. to send to a student locked out of
+// their own account. Keeps its own fetch/share state so expanding one row
+// doesn't need the parent table to track more than "which id is open".
+const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: string }> = ({
+  studentId,
+  courseId,
+}) => {
+  const [badges, setBadges] = useState<RecentBadgeSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
+    badgeAPI
+      .getStudentEarnedBadges(studentId, courseId)
+      .then((res) => {
+        if (cancelled) return;
+        setBadges(
+          res.data.badges.map((badge) => ({
+            id: badge.badge_id,
+            skillName: badge.skill_name,
+            courseName: badge.course_name || 'Course',
+            level: badge.badge_level,
+            earnedAt: badge.earned_at,
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error('Error loading student badges:', err);
+        if (!cancelled) setLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId, courseId]);
+
+  const handleGetShareLink = async () => {
+    setShareLoading(true);
+    try {
+      const response = await badgeAPI.generateBadgeShareLink(studentId, courseId);
+      setShareLink(response.data.share_link);
+    } catch (err: unknown) {
+      console.error('Error creating badge share link:', err);
+      toast.error(getApiErrorMessage(err) || 'Could not create a share link for this student.');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 p-4 space-y-4">
+      {loading ? (
+        <div className="flex justify-center py-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" />
+        </div>
+      ) : loadError ? (
+        <p className="text-sm text-red-600">Could not load this student's badges.</p>
+      ) : (
+        <RecentBadgesGrid badges={badges} />
+      )}
+
+      <div className="border-t border-gray-200 pt-3">
+        {shareLink ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              readOnly
+              value={shareLink}
+              onFocus={(e) => e.target.select()}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
+              aria-label="Public badge share link for this student"
+            />
+            <button
+              type="button"
+              onClick={() => copy(shareLink)}
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleGetShareLink}
+            disabled={shareLoading}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Share2 className="h-4 w-4" />
+            Get Share Link
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Student Progress Component
 const StudentProgress: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -51,6 +161,7 @@ const StudentProgress: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentProgressEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // Load courses on component mount
   useEffect(() => {
@@ -346,18 +457,24 @@ const StudentProgress: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {studentData.students.map((student) => (
-                    <tr key={student.id} className="hover:bg-gray-50">
+                    <React.Fragment key={student.id}>
+                    <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          to={`/badges/${student.id}?name=${encodeURIComponent(student.name)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedStudentId((current) => (current === student.id ? null : student.id))
+                          }
                           className="text-sm font-medium text-ucf-gold hover:text-yellow-600 hover:underline flex items-center"
                           title="View Student Badges"
                         >
+                          {expandedStudentId === student.id ? (
+                            <ChevronDown className="w-3 h-3 mr-1" />
+                          ) : (
+                            <ChevronRight className="w-3 h-3 mr-1" />
+                          )}
                           {student.name}
-                          <ArrowUpRight className="w-3 h-3 ml-1" />
-                        </Link>
+                        </button>
                         <div className="text-sm text-gray-500">{student.id}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -413,6 +530,14 @@ const StudentProgress: React.FC = () => {
                         </button>
                       </td>
                     </tr>
+                    {expandedStudentId === student.id && (
+                      <tr>
+                        <td colSpan={5} className="p-0">
+                          <InstructorStudentBadgesPanel studentId={student.id} courseId={selectedCourse} />
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

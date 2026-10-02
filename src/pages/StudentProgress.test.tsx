@@ -3,12 +3,13 @@ import { render, screen, waitFor, fireEvent, act, within } from '@testing-librar
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import StudentProgress from './StudentProgress';
-import { canvasInstructorAPI, instructorAPI } from '../services/api';
+import { canvasInstructorAPI, instructorAPI, badgeAPI } from '../services/api';
 import { toast } from 'react-hot-toast';
 
 jest.mock('../services/api', () => ({
   canvasInstructorAPI: { getInstructorCourses: jest.fn() },
   instructorAPI: { getCourseStudentAnalytics: jest.fn(), forceSyncCourse: jest.fn() },
+  badgeAPI: { getStudentEarnedBadges: jest.fn(), generateBadgeShareLink: jest.fn() },
 }));
 
 // StudentProgress.tsx dynamically imports this (`const { toast } = await
@@ -292,5 +293,114 @@ describe('Sync Now', () => {
     await waitFor(() => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Failed to sync data. Please try again.');
     });
+  });
+});
+
+describe('instructor badge view', () => {
+  beforeEach(() => {
+    Object.assign(navigator, {
+      clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  test('clicking a student name expands an inline, authenticated badge view scoped to the selected course', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(badgeAPI.getStudentEarnedBadges).mockResolvedValue({
+      data: {
+        student_id: 's1',
+        total_badges: 1,
+        badges: [
+          {
+            badge_id: 'b1',
+            badge_name: 'Beginner in Loops',
+            skill_name: 'Loops',
+            badge_level: 'beginner',
+            progress_percentage: 33,
+            earned_at: '2026-08-01T00:00:00Z',
+            course_id: 'c1',
+            course_name: 'Data Structures',
+          },
+        ],
+      },
+    } as any);
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Jordan Miller'));
+
+    await waitFor(() => expect(screen.getByText('Loops')).toBeInTheDocument());
+    expect(badgeAPI.getStudentEarnedBadges).toHaveBeenCalledWith('s1', 'c1');
+  });
+
+  test('clicking "Get Share Link" shows a copyable link for that student', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(badgeAPI.getStudentEarnedBadges).mockResolvedValue({
+      data: { student_id: 's1', total_badges: 0, badges: [] },
+    } as any);
+    jest.mocked(badgeAPI.generateBadgeShareLink).mockResolvedValue({
+      data: {
+        message: 'Badge profile shared successfully',
+        share_link: 'https://achieveup.ucf.edu/badges/share/xyz',
+        share_id: 'xyz',
+      },
+    } as any);
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Jordan Miller'));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /get share link/i })).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /get share link/i }));
+    });
+
+    expect(badgeAPI.generateBadgeShareLink).toHaveBeenCalledWith('s1', 'c1');
+    expect(screen.getByDisplayValue('https://achieveup.ucf.edu/badges/share/xyz')).toBeInTheDocument();
+  });
+
+  test('a student who has opted out shows an error toast instead of a link', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(badgeAPI.getStudentEarnedBadges).mockResolvedValue({
+      data: { student_id: 's1', total_badges: 0, badges: [] },
+    } as any);
+    jest.mocked(badgeAPI.generateBadgeShareLink).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { message: 'This student has opted out of badge sharing' } },
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Jordan Miller'));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /get share link/i })).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /get share link/i }));
+    });
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith('This student has opted out of badge sharing');
+    });
+    expect(screen.queryByRole('button', { name: /^copy$/i })).not.toBeInTheDocument();
+  });
+
+  test('clicking the student name again collapses the badge view', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(badgeAPI.getStudentEarnedBadges).mockResolvedValue({
+      data: { student_id: 's1', total_badges: 0, badges: [] },
+    } as any);
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Jordan Miller'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /get share link/i })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Jordan Miller'));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /get share link/i })).not.toBeInTheDocument()
+    );
   });
 });

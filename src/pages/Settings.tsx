@@ -4,11 +4,66 @@ import { validatePassword } from '../utils/passwordPolicy';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff } from 'lucide-react';
+import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { authAPI, canvasAPI } from '../services/api';
+import { authAPI, canvasAPI, badgeAPI } from '../services/api';
 import { User as UserType } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
+
+// A separate component (not nested inside Settings) so its own loading/opted-out
+// state survives re-renders of the rest of the settings form.
+const BadgeSharingSettings: React.FC = () => {
+  const [optedOut, setOptedOut] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    badgeAPI
+      .getBadgeShareStatus()
+      .then((res) => setOptedOut(res.data.opted_out))
+      .catch((err) => console.error('Error loading badge sharing status:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleToggle = async () => {
+    setSaving(true);
+    try {
+      if (optedOut) {
+        await badgeAPI.optInToBadgeSharing();
+        setOptedOut(false);
+        toast.success('Badge sharing turned on.');
+      } else {
+        await badgeAPI.optOutOfBadgeSharing();
+        setOptedOut(true);
+        toast.success('Badge sharing turned off.');
+      }
+    } catch (err: unknown) {
+      console.error('Error updating badge sharing preference:', err);
+      toast.error(getApiErrorMessage(err) || 'Could not update your badge sharing preference.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center mb-4">
+        <Share2 className="w-6 h-6 text-primary-600 mr-2" />
+        <h2 className="text-xl font-semibold text-gray-900">Badge Sharing</h2>
+      </div>
+      <p className="text-gray-600 mb-4">
+        {optedOut
+          ? 'Your badges are private. No one, including your instructors, can generate a public link to them.'
+          : 'Your badges can be shared via a public link — by you, or by an instructor who teaches you (useful if you ever lose access to your account).'}
+      </p>
+      <Button variant="outline" onClick={handleToggle} loading={saving} disabled={saving}>
+        {optedOut ? 'Turn On Badge Sharing' : 'Turn Off Badge Sharing'}
+      </Button>
+    </Card>
+  );
+};
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -503,6 +558,8 @@ const Settings: React.FC = () => {
             )}
             <CanvasTokenInstructions />
           </Card>
+
+          {user?.role === 'student' && <BadgeSharingSettings />}
         </div>
         {/* Right column: Password Reset - spans entire right side */}
         <div className="lg:row-span-2">

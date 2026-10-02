@@ -4,6 +4,7 @@ import { badgeAPI } from '../services/api';
 import Card from '../components/common/Card';
 import { Award, Share2, AlertCircle, Check, BookOpen } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 interface BadgeData {
     badge_id: string;
@@ -25,7 +26,7 @@ const StudentPublicBadges: React.FC = () => {
     const [badges, setBadges] = useState<BadgeData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [copied, setCopied] = useState(false);
+    const { copied, copy: copyLink } = useCopyToClipboard();
     const [studentName, setStudentName] = useState<string | null>(nameFromQuery);
 
     useEffect(() => {
@@ -67,16 +68,7 @@ const StudentPublicBadges: React.FC = () => {
         loadBadges();
     }, [shareId, nameFromQuery]);
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href)
-            .then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            })
-            .catch(err => {
-                console.error("Failed to copy link: ", err);
-            });
-    };
+    const handleCopyLink = () => copyLink(window.location.href);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'N/A';

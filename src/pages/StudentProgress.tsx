@@ -55,7 +55,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
 }) => {
   const [badges, setBadges] = useState<RecentBadgeSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const { copied, copy } = useCopyToClipboard();
@@ -63,7 +63,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setLoadError(false);
+    setLoadError(null);
     badgeAPI
       .getStudentEarnedBadges(studentId, courseId)
       .then((res) => {
@@ -80,7 +80,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
       })
       .catch((err) => {
         console.error('Error loading student badges:', err);
-        if (!cancelled) setLoadError(true);
+        if (!cancelled) setLoadError(getApiErrorMessage(err) || "Could not load this student's badges.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -110,7 +110,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
           <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" />
         </div>
       ) : loadError ? (
-        <p className="text-sm text-red-600">Could not load this student's badges.</p>
+        <p className="text-sm text-red-600">{loadError}</p>
       ) : (
         <RecentBadgesGrid badges={badges} />
       )}

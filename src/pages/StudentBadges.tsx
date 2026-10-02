@@ -95,9 +95,6 @@ const StudentBadges: React.FC = () => {
     }
   };
 
-  // Distinct courses that actually have a badge — used for the "Courses
-  // Represented" stat, which is a narrower question than "how many courses
-  // am I enrolled in" (that's what `courses` / the filter dropdown answer).
   const coursesWithBadges = useMemo(() => {
     return new Set(badges.map((badge) => badge.courseId)).size;
   }, [badges]);

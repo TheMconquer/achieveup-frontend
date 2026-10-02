@@ -8,8 +8,6 @@ interface UseCopyToClipboardResult {
   copy: (text: string) => void;
 }
 
-// Shared by every "copy this link" button so the clipboard-availability
-// check and the copied-confirmation timing live in one place.
 export function useCopyToClipboard(): UseCopyToClipboardResult {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -17,9 +15,6 @@ export function useCopyToClipboard(): UseCopyToClipboardResult {
   useEffect(() => () => clearTimeout(resetTimer.current), []);
 
   const copy = useCallback((text: string) => {
-    // navigator.clipboard is undefined outside a secure context (plain
-    // http, or some embedded/older browsers) — calling .writeText on it
-    // would throw synchronously, before any Promise exists to .catch.
     if (!navigator.clipboard) {
       console.error('Clipboard API is not available in this browser/context.');
       return;

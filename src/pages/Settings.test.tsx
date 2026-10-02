@@ -338,6 +338,15 @@ describe('password change', () => {
 });
 
 describe('badge sharing settings', () => {
+  test('a failed status check shows an error instead of guessing the toggle state', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockRejectedValue(new Error('network error'));
+    mockAuth(studentUser);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByText(/could not load your badge sharing settings/i)).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /turn (on|off) badge sharing/i })).not.toBeInTheDocument();
+  });
+
   test('does not render for an instructor', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
     mockAuth(withoutToken);

@@ -303,6 +303,25 @@ describe('instructor badge view', () => {
     });
   });
 
+  test('a failed badge load shows the real backend error, not a generic one', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(badgeAPI.getStudentEarnedBadges).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { message: 'Could not verify your Canvas enrollment right now. Please try again shortly.' } },
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Jordan Miller'));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Could not verify your Canvas enrollment right now. Please try again shortly.')
+      ).toBeInTheDocument()
+    );
+  });
+
   test('clicking a student name expands an inline, authenticated badge view scoped to the selected course', async () => {
     oneCourse();
     jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));

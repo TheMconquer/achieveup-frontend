@@ -51,7 +51,20 @@ const studentUser = {
   canvasTokenType: 'student' as const,
 };
 
-const mockAuth = (user: typeof withoutToken | typeof studentUser, refreshUser = jest.fn()) => {
+// An instructor whose Canvas token also validates as a student enrollment --
+// same dual-role case RequireRole already lets into /badges.
+const dualRoleInstructor = {
+  ...withToken,
+  id: 'u3',
+  name: 'Dana Dual-Role',
+  email: 'dana@example.com',
+  has_student_access: true,
+};
+
+const mockAuth = (
+  user: typeof withoutToken | typeof studentUser | typeof dualRoleInstructor,
+  refreshUser = jest.fn()
+) => {
   jest.mocked(useAuth).mockReturnValue({
     user,
     loading: false,
@@ -347,13 +360,22 @@ describe('badge sharing settings', () => {
     expect(screen.queryByRole('button', { name: /turn (on|off) badge sharing/i })).not.toBeInTheDocument();
   });
 
-  test('does not render for an instructor', async () => {
+  test('does not render for an instructor with no student enrollment', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
     mockAuth(withoutToken);
     render(<Settings />);
 
     expect(screen.queryByText('Badge Sharing')).not.toBeInTheDocument();
     expect(badgeAPI.getBadgeShareStatus).not.toHaveBeenCalled();
+  });
+
+  test('renders for a dual-role instructor who also has student portal access', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(dualRoleInstructor);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /turn off badge sharing/i })).toBeInTheDocument();
   });
 
   test('shows a turn-off control for a student who is currently shareable', async () => {

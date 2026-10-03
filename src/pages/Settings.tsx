@@ -571,7 +571,13 @@ const Settings: React.FC = () => {
             <CanvasTokenInstructions />
           </Card>
 
-          {user?.role === 'student' && <BadgeSharingSettings />}
+          {/* Same "does this account reach the student portal" check RequireRole
+              uses for /badges — a dual-role instructor with a student
+              enrollment (has_student_access) can share badges there, so they
+              need the opt-out control here too, not just plain students. */}
+          {(user?.role === 'student' || (user?.role === 'instructor' && !!user?.has_student_access)) && (
+            <BadgeSharingSettings />
+          )}
         </div>
         {/* Right column: Password Reset - spans entire right side */}
         <div className="lg:row-span-2">

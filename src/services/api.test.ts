@@ -251,10 +251,28 @@ describe('badgeAPI', () => {
     expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/course/c1');
 
     badgeAPI.getStudentEarnedBadges('s1');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/student/s1/earned');
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/student/s1/earned', { params: undefined });
 
-    badgeAPI.getPublicStudentBadges('s1');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/public/badges/student/s1/earned');
+    badgeAPI.getStudentEarnedBadges('s1', 'c1');
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/student/s1/earned', { params: { course_id: 'c1' } });
+
+    badgeAPI.getPublicBadgesByShare('s1');
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/public/badges/share/s1/earned');
+
+    badgeAPI.getBadgeShareStatus();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/badges/share-status');
+
+    badgeAPI.generateBadgeShareLink();
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/share-profile', undefined);
+
+    badgeAPI.generateBadgeShareLink('s1', 'c1');
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/share-profile', { student_id: 's1', course_id: 'c1' });
+
+    badgeAPI.optOutOfBadgeSharing();
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/opt-out');
+
+    badgeAPI.optInToBadgeSharing();
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/badges/opt-in');
   });
 });
 

@@ -36,6 +36,7 @@ interface CanvasQuestion {
   attachment_ids?: string[];
   attachment_urls?: string[];
   answer_texts?: string[];
+  question_key?: string;
 }
 
 interface QuestionSkills {
@@ -73,17 +74,11 @@ function extractTextFromHTML(htmlString: string) {
   return div.textContent || div.innerText || '';
 }
 
-// Question text is now the identifier used for skill assignment (state keys,
-// API payloads); Canvas question ids are only kept for React list keys / search.
+// The backend builds question_key (normalized text + answers) with the same
+// function the submission sync uses, so assignments and results always match.
+// Don't build keys on the frontend.
 function getQuestionKey(question: CanvasQuestion): string {
-  const text = extractTextFromHTML(question.question_text);
-  const answers = question.answer_texts || [];
-  const answerPart = answers.length > 0 ? ' ' + [...answers].sort().join(' ') : '';
-  if (text) return text + answerPart;
-  if (question.attachment_ids && question.attachment_ids.length > 0) {
-      return `attachment_${question.attachment_ids.join('_')}` + answerPart;
-  }
-  return `question_${question.id}`;
+  return question.question_key ?? `question_${question.id}`;
 }
 
 const SkillAssignmentInterface: React.FC = () => {

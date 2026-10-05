@@ -36,7 +36,7 @@ interface CanvasQuestion {
   attachment_ids?: string[];
   attachment_urls?: string[];
   answer_texts?: string[];
-  question_key: string;
+  question_key?: string;
 }
 
 interface QuestionSkills {

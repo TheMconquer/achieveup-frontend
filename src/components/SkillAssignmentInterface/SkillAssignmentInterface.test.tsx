@@ -543,7 +543,7 @@ describe('SCRUM-172: skill assignment uses the backend question_key', () => {
     expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
       expect.objectContaining({ questions: [expect.objectContaining({ id: 'has a key' })] })
     );
-    expect(missingKeyToastCount()).toBe(1);
+    expect(toast.error).toHaveBeenCalledWith(MISSING_KEY_TOAST, { id: 'missing-question-keys' });
 
     // Only the keyed question is shown.
     expect(screen.queryByText('No key')).not.toBeInTheDocument();
@@ -569,7 +569,7 @@ describe('SCRUM-172: skill assignment uses the backend question_key', () => {
     await openQuiz();
 
     expect(skillAssignmentAPI.getAssignments).toHaveBeenCalledWith('c1', ['has a key']);
-    expect(missingKeyToastCount()).toBe(1);
+    expect(toast.error).toHaveBeenCalledWith(MISSING_KEY_TOAST, { id: 'missing-question-keys' });
     expect(screen.queryByText('Empty key')).not.toBeInTheDocument();
   });
 
@@ -588,7 +588,7 @@ describe('SCRUM-172: skill assignment uses the backend question_key', () => {
     await selectQuiz('q1');
 
     expect(await screen.findByText('No Questions Found')).toBeInTheDocument();
-    expect(missingKeyToastCount()).toBe(1);
+    expect(toast.error).toHaveBeenCalledWith(MISSING_KEY_TOAST, { id: 'missing-question-keys' });
     expect(skillAssignmentAPI.getAssignments).not.toHaveBeenCalled();
     expect(skillAssignmentAPI.analyzeQuestions).not.toHaveBeenCalled();
     expect(jest.mocked(toast.error)).not.toHaveBeenCalledWith('Failed to load questions. Please try again.');

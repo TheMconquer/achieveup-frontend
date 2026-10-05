@@ -485,7 +485,9 @@ const SkillAssignmentInterface: React.FC = () => {
           (q: CanvasQuestion) => !!q.question_key
         );
         if (keyedQuestions.length < sanitizedQuestions.length) {
-          toast.error('Some questions could not be identified. Please reload the page.');
+          toast.error('Some questions could not be identified. Please reload the page.', {
+            id: 'missing-question-keys',
+          });
         }
 
         setQuestions(keyedQuestions);

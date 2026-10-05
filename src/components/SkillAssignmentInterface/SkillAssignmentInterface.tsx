@@ -152,11 +152,12 @@ const SkillAssignmentInterface: React.FC = () => {
           matrixId: selectedMatrix,
           questions: questions.map((q) => {
             const questionKey = getQuestionKey(q);
+            const questionAndAnswersText = `${q.question_text} ${(q.answer_texts || []).join(' ')}`.trim();
             return {
               // Backend echoes id back, so suggestions are keyed by question_key.
               // text is the readable question for the AI, not the normalized key.
               id: questionKey,
-              text: q.question_text || questionKey,
+              text: questionAndAnswersText || questionKey,
               type: q.question_type || 'multiple_choice',
               points: q.points || 1,
             };

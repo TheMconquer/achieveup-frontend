@@ -76,12 +76,13 @@ function extractTextFromHTML(htmlString: string) {
 // Question text is now the identifier used for skill assignment (state keys,
 // API payloads); Canvas question ids are only kept for React list keys / search.
 function getQuestionKey(question: CanvasQuestion): string {
-  const text = extractTextFromHTML(question.question_text);
+  // question.question_text is already decoded via extractTextFromHTML
+  const text = question.question_text;
   const answers = question.answer_texts || [];
   const answerPart = answers.length > 0 ? ' ' + [...answers].sort().join(' ') : '';
   if (text) return text + answerPart;
   if (question.attachment_ids && question.attachment_ids.length > 0) {
-      return `attachment_${question.attachment_ids.join('_')}` + answerPart;
+    return `attachment_${question.attachment_ids.join('_')}` + answerPart;
   }
   return `question_${question.id}`;
 }
@@ -124,7 +125,11 @@ const SkillAssignmentInterface: React.FC = () => {
   const watchedQuiz = watch('quizId');
 
   const { isInstructor } = useAuth();
-  const { courses, loading: coursesLoading, error: coursesError } = useCourseList<CanvasCourse>(isInstructor);
+  const {
+    courses,
+    loading: coursesLoading,
+    error: coursesError,
+  } = useCourseList<CanvasCourse>(isInstructor);
 
   useEffect(() => {
     if (coursesError) {
@@ -199,9 +204,7 @@ const SkillAssignmentInterface: React.FC = () => {
           0
         );
         if (totalSuggestions === 0) {
-          toast.error(
-            'AI analysis returned no suggestions, create custom skill'
-          );
+          toast.error('AI analysis returned no suggestions, create custom skill');
         } else {
           toast.success(
             `AI analyzed ${questions.length} questions and provided ${totalSuggestions} skill suggestions`
@@ -219,10 +222,10 @@ const SkillAssignmentInterface: React.FC = () => {
         const status = axiosError?.response?.status;
         if (status === 400) {
           const errorMsg =
-            axiosError?.response?.data?.message || axiosError?.response?.data?.error || 'Bad request format';
-          toast.error(
-            `Error Loading suggestion. Create Custom skill. AI service: ${errorMsg}`
-          );
+            axiosError?.response?.data?.message ||
+            axiosError?.response?.data?.error ||
+            'Bad request format';
+          toast.error(`Error Loading suggestion. Create Custom skill. AI service: ${errorMsg}`);
         } else if (status === 401) {
           toast.error('Authentication failed. Please check your instructor token in Settings.');
         } else if (status === 403) {
@@ -450,18 +453,16 @@ const SkillAssignmentInterface: React.FC = () => {
         setAvailableMatrices([]);
         setSelectedMatrix('');
         setSelectedMatrixData(null);
-
       } else if (status !== undefined && status >= 500) {
         toast.error('Server error while loading matrices.');
         setAvailableMatrices([]);
         setSelectedMatrix('');
         setSelectedMatrixData(null);
       } else {
-        const message = axiosError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
+        const message =
+          axiosError?.message ?? (error instanceof Error ? error.message : 'Unknown error');
         console.warn('Failed to load skill matrices:', message);
-        toast.error(
-          `Failed to load skill matrices: ${message}. Please try again.`
-        );
+        toast.error(`Failed to load skill matrices: ${message}. Please try again.`);
 
         // Fallback Error
         setAvailableMatrices([]);
@@ -517,8 +518,8 @@ const SkillAssignmentInterface: React.FC = () => {
         setHumanReviewStatus(initialReviewStatus);
 
         // Auto-analyze questions if instructor and questions exist
-        if (isInstructor && response.data.length > 0) {
-          analyzeQuestionsWithAI(response.data);
+        if (isInstructor && sanitizedQuestions.length > 0) {
+          analyzeQuestionsWithAI(sanitizedQuestions);
         }
       } catch (error) {
         console.error('Error loading questions:', error);
@@ -769,7 +770,9 @@ const SkillAssignmentInterface: React.FC = () => {
               <select
                 {...register('quizId', { required: 'Please select a quiz' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
-                disabled={!selectedCourse || loading || !selectedMatrix || availableMatrices.length === 0}
+                disabled={
+                  !selectedCourse || loading || !selectedMatrix || availableMatrices.length === 0
+                }
               >
                 <option value="">
                   {!selectedCourse
@@ -1104,15 +1107,28 @@ const SkillAssignmentInterface: React.FC = () => {
                                 )}
                               </div>
                               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                                {question.question_text ? (
-                                  <p className="text-gray-800 leading-relaxed">{question.question_text}</p>
-                                ) : question.attachment_urls && question.attachment_urls.length > 0 ? (
-                                  question.attachment_urls.map((url, i) => (
-                                    <img key={i} src={url} alt="Question attachment" className="max-w-full rounded" />
-                                  ))
-                                ) : (
-                                  <span className="text-gray-400 italic">Image-only question — no text content</span>
+                                {question.question_text && (
+                                  <p className="text-gray-800 leading-relaxed">
+                                    {question.question_text}
+                                  </p>
                                 )}
+                                {question.attachment_urls &&
+                                  question.attachment_urls.length > 0 &&
+                                  question.attachment_urls.map((url, i) => (
+                                    <img
+                                      key={i}
+                                      src={url}
+                                      alt="Question attachment"
+                                      className="max-w-full rounded mt-2"
+                                    />
+                                  ))}
+                                {!question.question_text &&
+                                  (!question.attachment_urls ||
+                                    question.attachment_urls.length === 0) && (
+                                    <span className="text-gray-400 italic">
+                                      Image-only question — no text content
+                                    </span>
+                                  )}
                               </div>
                             </div>
                           </div>

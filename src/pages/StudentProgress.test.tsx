@@ -422,4 +422,99 @@ describe('instructor badge view', () => {
       expect(screen.queryByRole('button', { name: /get share link/i })).not.toBeInTheDocument()
     );
   });
+
+  describe('paging through a student\'s badges', () => {
+    // Badges are named "Skill 1" ... "Skill N" so a test can say exactly
+    // which ones should be on screen.
+    const earnedBadges = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        badge_id: `b${i + 1}`,
+        badge_name: `Beginner in Skill ${i + 1}`,
+        skill_name: `Skill ${i + 1}`,
+        badge_level: 'beginner',
+        progress_percentage: 33,
+        earned_at: '2026-08-01T00:00:00Z',
+        course_id: 'c1',
+        course_name: 'Data Structures',
+      }));
+
+    const openStudentWithBadges = async (count: number) => {
+      oneCourse();
+      jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+      jest.mocked(badgeAPI.getStudentEarnedBadges).mockResolvedValue({
+        data: { student_id: 's1', total_badges: count, badges: earnedBadges(count) },
+      } as any);
+      renderPage();
+
+      await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Jordan Miller'));
+      // The share button renders while badges are still loading, so wait for
+      // the badges themselves.
+      await waitFor(() => expect(screen.getByText('Skill 1')).toBeInTheDocument());
+    };
+
+    const visibleSkills = () => screen.queryAllByText(/^Skill \d+$/).map((el) => el.textContent);
+
+    test('shows five badges at a time and lets the instructor move through every page', async () => {
+      await openStudentWithBadges(12);
+
+      expect(visibleSkills()).toEqual(['Skill 1', 'Skill 2', 'Skill 3', 'Skill 4', 'Skill 5']);
+      expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+      expect(visibleSkills()).toEqual(['Skill 6', 'Skill 7', 'Skill 8', 'Skill 9', 'Skill 10']);
+      expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
+
+      // The last page only holds the remainder.
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+      expect(visibleSkills()).toEqual(['Skill 11', 'Skill 12']);
+
+      fireEvent.click(screen.getByRole('button', { name: /previous/i }));
+      expect(visibleSkills()).toEqual(['Skill 6', 'Skill 7', 'Skill 8', 'Skill 9', 'Skill 10']);
+    });
+
+    test('cannot page past the first or last page', async () => {
+      await openStudentWithBadges(7);
+
+      expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
+
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeEnabled();
+    });
+
+    test('shows no paging controls when every badge fits on one page', async () => {
+      await openStudentWithBadges(5);
+
+      expect(visibleSkills()).toHaveLength(5);
+      expect(screen.queryByText(/^Page \d+ of \d+$/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
+    });
+
+    test('paging controls keep working after a share link is generated', async () => {
+      await openStudentWithBadges(8);
+      jest.mocked(badgeAPI.generateBadgeShareLink).mockResolvedValue({
+        data: {
+          message: 'Badge profile shared successfully',
+          share_link: 'https://achieveupapp.com/badges/share/xyz',
+          share_id: 'xyz',
+        },
+      } as any);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /get share link/i }));
+      });
+      expect(screen.getByDisplayValue('https://achieveupapp.com/badges/share/xyz')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      expect(visibleSkills()).toEqual(['Skill 6', 'Skill 7', 'Skill 8']);
+      // Paging must not throw away the link that was just generated.
+      expect(screen.getByDisplayValue('https://achieveupapp.com/badges/share/xyz')).toBeInTheDocument();
+    });
+  });
 });

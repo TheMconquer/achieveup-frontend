@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { CheckCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronRight, Share2, Copy, Check } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Share2, Copy, Check } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';
 import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
@@ -45,6 +45,9 @@ interface RawStudentAnalytics {
   averageScores: Record<string, number>;
 }
 
+// Kept small since this panel sits inside an expanded table row.
+const BADGES_PER_PAGE = 5;
+
 // Inline, authenticated view of one student's badges plus a way to generate
 // a public share link for them — e.g. to send to a student locked out of
 // their own account. Keeps its own fetch/share state so expanding one row
@@ -58,12 +61,14 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
   const [loadError, setLoadError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const { copied, copy } = useCopyToClipboard();
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
+    setPage(1);
     badgeAPI
       .getStudentEarnedBadges(studentId, courseId)
       .then((res) => {
@@ -103,6 +108,10 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(badges.length / BADGES_PER_PAGE));
+  const pagedBadges = badges.slice((page - 1) * BADGES_PER_PAGE, page * BADGES_PER_PAGE);
+  const showPagination = !loading && !loadError && totalPages > 1;
+
   return (
     <div className="bg-gray-50 p-4 space-y-4">
       {loading ? (
@@ -112,12 +121,12 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
       ) : loadError ? (
         <p className="text-sm text-red-600">{loadError}</p>
       ) : (
-        <RecentBadgesGrid badges={badges} />
+        <RecentBadgesGrid badges={pagedBadges} />
       )}
 
-      <div className="border-t border-gray-200 pt-3">
+      <div className="flex flex-col gap-3 border-t border-gray-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
         {shareLink ? (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
               readOnly
@@ -145,6 +154,34 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
             <Share2 className="h-4 w-4" />
             Get Share Link
           </button>
+        )}
+
+        {showPagination && (
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </button>
+
+            <span className="text-xs text-gray-500">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
     </div>

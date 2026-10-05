@@ -38,17 +38,30 @@ jest.mock('react-hot-toast', () => ({
 
 const course = (id: string, name: string, code: string, term = 1) => ({ id, name, code, term });
 const quiz = (id: string, title: string, course_id: string) => ({ id, title, course_id });
+// SCRUM-172: the backend now sends `question_key` and the frontend uses it
+// verbatim. By default this helper uses the raw text as the key (falling back
+// to `question_<id>` like the backend's `or f"question_{id}"`) so tests that
+// don't care about keying stay readable. Tests that DO care pass an explicit
+// backend-shaped key, or `question_key: undefined` to simulate a missing one.
 const question = (
   id: string,
   text: string,
   quiz_id: string,
-  extra: Partial<{ attachment_ids: string[]; attachment_urls: string[]; answer_texts: string[] }> = {}
+  extra: Partial<{
+    attachment_ids: string[];
+    attachment_urls: string[];
+    answer_texts: string[];
+    question_key: string | undefined;
+  }> = {}
 ) => ({
   id,
   question_text: text,
   quiz_id,
+  question_key: text || `question_${id}`,
   ...extra,
 });
+
+const MISSING_KEY_TOAST = 'Some questions could not be identified. Please reload the page.';
 
 const mockInstructorAuth = () => {
   jest.mocked(useAuth).mockReturnValue({
@@ -259,13 +272,13 @@ describe('selecting a quiz', () => {
 
   test('loads and sanitizes questions, pulls previously-saved skills, and auto-triggers AI analysis for instructors', async () => {
     jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
-      data: [question('cq1', 'What is <b>HTML</b>?', 'q1')],
+      data: [question('cq1', 'What is <b>HTML</b>?', 'q1', { question_key: 'what is html?' })],
     } as any);
     jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
-      data: { question_skills: { 'What is HTML?': ['HTML Fundamentals'] } },
+      data: { question_skills: { 'what is html?': ['HTML Fundamentals'] } },
     } as any);
     jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({
-      data: [{ questionId: 'What is HTML?', suggestedSkills: ['HTML Fundamentals'] }],
+      data: [{ questionId: 'what is html?', suggestedSkills: ['HTML Fundamentals'] }],
     } as any);
 
     render(<SkillAssignmentInterface />);
@@ -318,6 +331,7 @@ describe('image-only questions and duplicate-question disambiguation', () => {
         question('cq1', '', 'q1', {
           attachment_ids: ['att1'],
           attachment_urls: ['https://cdn.example.com/q1.png'],
+          question_key: 'attachment_att1',
         }),
       ],
     } as any);
@@ -331,7 +345,7 @@ describe('image-only questions and duplicate-question disambiguation', () => {
     const image = await screen.findByRole('img', { name: 'Question attachment' });
     expect(image).toHaveAttribute('src', 'https://cdn.example.com/q1.png');
 
-    // The attachment id (not empty text) is used as the AI-analysis correlation id.
+    // The backend's attachment-based key (not empty text) is the AI-analysis correlation id.
     await waitForQuestionsToSettle('q1');
     expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -359,14 +373,20 @@ describe('image-only questions and duplicate-question disambiguation', () => {
   test('two questions with identical text but different answers keep separate saved skill assignments', async () => {
     jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
       data: [
-        question('cq1', 'Which is a mammal?', 'q1', { answer_texts: ['Dog'] }),
-        question('cq2', 'Which is a mammal?', 'q1', { answer_texts: ['Cat'] }),
+        question('cq1', 'Which is a mammal?', 'q1', {
+          answer_texts: ['dog'],
+          question_key: 'which is a mammal? dog',
+        }),
+        question('cq2', 'Which is a mammal?', 'q1', {
+          answer_texts: ['cat'],
+          question_key: 'which is a mammal? cat',
+        }),
       ],
     } as any);
-    // Only the "Dog" variant has a saved skill - if the two questions collided
-    // on the same key (the bug this branch fixes), both cards would show it.
+    // Only the "dog" variant has a saved skill - if the two questions collided
+    // on the same key, both cards would show it.
     jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
-      data: { question_skills: { 'Which is a mammal? Dog': ['Zoology'] } },
+      data: { question_skills: { 'which is a mammal? dog': ['Zoology'] } },
     } as any);
 
     render(<SkillAssignmentInterface />);
@@ -385,6 +405,208 @@ describe('image-only questions and duplicate-question disambiguation', () => {
       .map((el) => el.closest('div.overflow-hidden') as HTMLElement);
     const cardsWithSkill = cards.filter((card) => within(card).queryAllByText('Zoology').length > 0);
     expect(cardsWithSkill).toHaveLength(1);
+  });
+});
+
+describe('SCRUM-172: skill assignment uses the backend question_key', () => {
+  beforeEach(() => {
+    jest.mocked(canvasAPI.getInstructorCourses).mockResolvedValue({
+      data: [course('c1', 'Data Structures', 'COP3530-A 0002')],
+    } as any);
+    jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({
+      data: [quiz('q1', 'Quiz One', 'c1')],
+    } as any);
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({ data: [] } as any);
+  });
+
+  const openQuiz = async () => {
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+    await waitForQuestionsToSettle('q1');
+  };
+
+  const missingKeyToastCount = () =>
+    jest.mocked(toast.error).mock.calls.filter(([msg]) => msg === MISSING_KEY_TOAST).length;
+
+  test('loads saved assignments by question_key, not by the displayed question text', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [question('cq1', 'What is <b>HTML</b>?', 'q1', { question_key: 'what is html?' })],
+    } as any);
+    jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
+      data: { question_skills: { 'what is html?': ['HTML Fundamentals'] } },
+    } as any);
+
+    await openQuiz();
+
+    expect(skillAssignmentAPI.getAssignments).toHaveBeenCalledWith('c1', ['what is html?']);
+    // The card still displays the sanitized text, while the saved skill lands on it via the key.
+    const card = closestCard('What is HTML?');
+    expect(within(card).getByText('HTML Fundamentals')).toBeInTheDocument();
+  });
+
+  test('uses question_key verbatim and never rebuilds it from text + answers', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'Which is a mammal?', 'q1', {
+          answer_texts: ['Dog', 'Cat'],
+          question_key: 'backend-key-123',
+        }),
+      ],
+    } as any);
+
+    await openQuiz();
+
+    expect(skillAssignmentAPI.getAssignments).toHaveBeenCalledWith('c1', ['backend-key-123']);
+    // The old frontend-built key would have been "Which is a mammal? Cat Dog".
+    const requestedKeys = jest.mocked(skillAssignmentAPI.getAssignments).mock.calls[0][1];
+    expect(requestedKeys).not.toContain('Which is a mammal? Cat Dog');
+  });
+
+  test('sends question_key as the AI-analysis id and renders suggestions returned under that key', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [question('cq1', 'What is <b>HTML</b>?', 'q1', { question_key: 'what is html?' })],
+    } as any);
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockResolvedValue({
+      data: [{ questionId: 'what is html?', suggestedSkills: ['Markup Basics'] }],
+    } as any);
+
+    await openQuiz();
+
+    expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        questions: [expect.objectContaining({ id: 'what is html?', text: 'what is html?' })],
+      })
+    );
+    const card = closestCard('What is HTML?');
+    expect(await within(card).findByRole('button', { name: /markup basics/i })).toBeInTheDocument();
+  });
+
+  test('saving sends question_skills keyed by question_key', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [question('cq1', 'What is <b>HTML</b>?', 'q1', { question_key: 'what is html?' })],
+    } as any);
+    jest.mocked(skillAssignmentAPI.assign).mockResolvedValue({ data: { success: true } } as any);
+
+    await openQuiz();
+
+    const card = closestCard('What is HTML?');
+    fireEvent.keyPress(within(card).getByPlaceholderText('Add custom skill...'), {
+      key: 'Enter',
+      code: 'Enter',
+      charCode: 13,
+      target: { value: 'Markup' },
+    });
+    await waitFor(() => expect(within(card).getByText('Markup')).toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByRole('button', { name: /save skill assignments/i })[0]);
+
+    await waitFor(() => {
+      expect(skillAssignmentAPI.assign).toHaveBeenCalledWith({
+        course_id: 'c1',
+        question_skills: { 'what is html?': ['Markup'] },
+      });
+    });
+  });
+
+  test('does not show the missing-key toast when every question has a question_key', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'Q1', 'q1', { question_key: 'q1' }),
+        question('cq2', 'Q2', 'q1', { question_key: 'q2' }),
+      ],
+    } as any);
+
+    await openQuiz();
+
+    expect(missingKeyToastCount()).toBe(0);
+  });
+
+  test('questions without question_key are skipped and reported once; only real keys are looked up, analyzed, and saved', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'Has a key', 'q1', { question_key: 'has a key' }),
+        question('cq2', 'No key', 'q1', { question_key: undefined }),
+      ],
+    } as any);
+    jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
+      data: { question_skills: { 'has a key': ['Keyed Skill'] } },
+    } as any);
+    jest.mocked(skillAssignmentAPI.assign).mockResolvedValue({ data: { success: true } } as any);
+
+    await openQuiz();
+
+    // No question_<id> key is invented for the keyless question.
+    expect(skillAssignmentAPI.getAssignments).toHaveBeenCalledWith('c1', ['has a key']);
+    expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({ questions: [expect.objectContaining({ id: 'has a key' })] })
+    );
+    expect(missingKeyToastCount()).toBe(1);
+
+    // Only the keyed question is shown.
+    expect(screen.queryByText('No key')).not.toBeInTheDocument();
+    expect(within(closestCard('Has a key')).getByText('Keyed Skill')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /save skill assignments/i })[0]);
+    await waitFor(() => {
+      expect(skillAssignmentAPI.assign).toHaveBeenCalledWith({
+        course_id: 'c1',
+        question_skills: { 'has a key': ['Keyed Skill'] },
+      });
+    });
+  });
+
+  test('an empty-string question_key is treated as missing, not used as the key ""', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'Has a key', 'q1', { question_key: 'has a key' }),
+        question('cq2', 'Empty key', 'q1', { question_key: '' }),
+      ],
+    } as any);
+
+    await openQuiz();
+
+    expect(skillAssignmentAPI.getAssignments).toHaveBeenCalledWith('c1', ['has a key']);
+    expect(missingKeyToastCount()).toBe(1);
+    expect(screen.queryByText('Empty key')).not.toBeInTheDocument();
+  });
+
+  test('when no question has a key, it reports once and stops without a misleading load failure', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'First', 'q1', { question_key: undefined }),
+        question('cq2', 'Second', 'q1', { question_key: undefined }),
+      ],
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    expect(await screen.findByText('No Questions Found')).toBeInTheDocument();
+    expect(missingKeyToastCount()).toBe(1);
+    expect(skillAssignmentAPI.getAssignments).not.toHaveBeenCalled();
+    expect(skillAssignmentAPI.analyzeQuestions).not.toHaveBeenCalled();
+    expect(jest.mocked(toast.error)).not.toHaveBeenCalledWith('Failed to load questions. Please try again.');
+  });
+
+  test('a quiz with zero questions shows "No Questions Found" without an error toast', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({ data: [] } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    expect(await screen.findByText('No Questions Found')).toBeInTheDocument();
+    expect(skillAssignmentAPI.getAssignments).not.toHaveBeenCalled();
+    expect(missingKeyToastCount()).toBe(0);
+    expect(jest.mocked(toast.error)).not.toHaveBeenCalledWith('Failed to load questions. Please try again.');
   });
 });
 

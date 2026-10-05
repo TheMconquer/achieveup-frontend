@@ -487,16 +487,21 @@ const SkillAssignmentInterface: React.FC = () => {
         if (keyedQuestions.length < sanitizedQuestions.length) {
           toast.error('Some questions could not be identified. Please reload the page.');
         }
+
         setQuestions(keyedQuestions);
         setSelectedQuiz(quizId);
+
+        if (keyedQuestions.length === 0) {
+          return;
+        }
 
         // Pull assigned skills from AchieveUp DB, keyed by question key
         const questionTexts = keyedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
 
         const skillsResponse = await skillAssignmentAPI.getAssignments(
-          selectedCourse,
-          questionTexts
-        );
+                  selectedCourse,
+                  questionTexts
+                );
 
         // Expected shape:
         // { question_skills: { [questionKey]: string[] } }

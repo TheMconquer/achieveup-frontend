@@ -36,7 +36,7 @@ interface CanvasQuestion {
   attachment_ids?: string[];
   attachment_urls?: string[];
   answer_texts?: string[];
-  question_key?: string;
+  question_key: string;
 }
 
 interface QuestionSkills {
@@ -78,7 +78,7 @@ function extractTextFromHTML(htmlString: string) {
 // function the submission sync uses, so assignments and results always match.
 // Don't build keys on the frontend.
 function getQuestionKey(question: CanvasQuestion): string {
-  return question.question_key ?? `question_${question.id}`;
+  return question.question_key as string;
 }
 
 const SkillAssignmentInterface: React.FC = () => {
@@ -480,11 +480,18 @@ const SkillAssignmentInterface: React.FC = () => {
           ...q,
           question_text: extractTextFromHTML(q.question_text),
         }));
-        setQuestions(sanitizedQuestions);
+
+        const keyedQuestions: CanvasQuestion[] = sanitizedQuestions.filter(
+          (q: CanvasQuestion) => !!q.question_key
+        );
+        if (keyedQuestions.length < sanitizedQuestions.length) {
+          toast.error('Some questions could not be identified. Please reload the page.');
+        }
+        setQuestions(keyedQuestions);
         setSelectedQuiz(quizId);
 
-        // Pull assigned skills from AchieveUp DB, keyed by question text
-        const questionTexts = sanitizedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
+        // Pull assigned skills from AchieveUp DB, keyed by question key
+        const questionTexts = keyedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
 
         const skillsResponse = await skillAssignmentAPI.getAssignments(
           selectedCourse,
@@ -492,7 +499,7 @@ const SkillAssignmentInterface: React.FC = () => {
         );
 
         // Expected shape:
-        // { question_skills: { [questionText]: string[] } }
+        // { question_skills: { [questionKey]: string[] } }
         const savedSkills = skillsResponse.data?.question_skills || {};
 
         // Initialize question skills and status
@@ -500,7 +507,7 @@ const SkillAssignmentInterface: React.FC = () => {
         const initialStatus: AIAnalysisStatus = {};
         const initialReviewStatus: HumanReviewStatus = {};
 
-        sanitizedQuestions.forEach((question: CanvasQuestion) => {
+        keyedQuestions.forEach((question: CanvasQuestion) => {
           const questionKey = getQuestionKey(question);
           initialSkills[questionKey] = savedSkills[questionKey] ?? [];
           initialStatus[questionKey] = 'pending';
@@ -512,8 +519,8 @@ const SkillAssignmentInterface: React.FC = () => {
         setHumanReviewStatus(initialReviewStatus);
 
         // Auto-analyze questions if instructor and questions exist
-        if (isInstructor && response.data.length > 0) {
-          analyzeQuestionsWithAI(response.data);
+        if (isInstructor && keyedQuestions.length > 0) {
+          analyzeQuestionsWithAI(keyedQuestions);
         }
       } catch (error) {
         console.error('Error loading questions:', error);

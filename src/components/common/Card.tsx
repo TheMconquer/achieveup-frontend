@@ -13,7 +13,7 @@ const Card: React.FC<CardProps> = ({
   return (
     <div 
       className={clsx(
-        'bg-ucf-white rounded-lg shadow-md overflow-hidden',
+        'bg-white rounded-lg shadow-md overflow-hidden',
         className
       )}
       {...props}

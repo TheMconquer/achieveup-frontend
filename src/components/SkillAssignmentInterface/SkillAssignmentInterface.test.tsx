@@ -40,7 +40,7 @@ const course = (id: string, name: string, code: string, term = 1) => ({ id, name
 const quiz = (id: string, title: string, course_id: string) => ({ id, title, course_id });
 // SCRUM-172: the backend now sends `question_key` and the frontend uses it
 // verbatim. By default this helper uses the raw text as the key (falling back
-// to `question_<id>` like the backend's `or f"question_{id}"`) so tests that
+// to `question_<id>` like build_question_key's fallback) so tests that
 // don't care about keying stay readable. Tests that DO care pass an explicit
 // backend-shaped key, or `question_key: undefined` to simulate a missing one.
 const question = (
@@ -61,7 +61,7 @@ const question = (
   ...extra,
 });
 
-const MISSING_KEY_TOAST = 'Some questions could not be identified. Please reload the page.';
+const MISSING_KEY_TOAST = 'Some questions could not be identified and were skipped.';
 
 const mockInstructorAuth = () => {
   jest.mocked(useAuth).mockReturnValue({
@@ -477,7 +477,7 @@ describe('SCRUM-172: skill assignment uses the backend question_key', () => {
 
     expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
       expect.objectContaining({
-        questions: [expect.objectContaining({ id: 'what is html?', text: 'what is html?' })],
+        questions: [expect.objectContaining({ id: 'what is html?', text: 'What is HTML?' })],
       })
     );
     const card = closestCard('What is HTML?');

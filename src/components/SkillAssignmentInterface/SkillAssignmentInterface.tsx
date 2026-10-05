@@ -147,12 +147,12 @@ const SkillAssignmentInterface: React.FC = () => {
           quizId: selectedQuiz,
           matrixId: selectedMatrix,
           questions: questions.map((q) => {
-            const questionText = getQuestionKey(q);
+            const questionKey = getQuestionKey(q);
             return {
-              // Backend just echoes this back as the correlation id; using
-              // question text here so suggestions come back keyed by text.
-              id: questionText,
-              text: questionText,
+              // Backend echoes id back, so suggestions are keyed by question_key.
+              // text is the readable question for the AI, not the normalized key.
+              id: questionKey,
+              text: q.question_text || questionKey,
               type: q.question_type || 'multiple_choice',
               points: q.points || 1,
             };
@@ -485,7 +485,7 @@ const SkillAssignmentInterface: React.FC = () => {
           (q: CanvasQuestion) => !!q.question_key
         );
         if (keyedQuestions.length < sanitizedQuestions.length) {
-          toast.error('Some questions could not be identified. Please reload the page.', {
+          toast.error('Some questions could not be identified and were skipped.', {
             id: 'missing-question-keys',
           });
         }
@@ -501,9 +501,9 @@ const SkillAssignmentInterface: React.FC = () => {
         const questionTexts = keyedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
 
         const skillsResponse = await skillAssignmentAPI.getAssignments(
-                  selectedCourse,
-                  questionTexts
-                );
+          selectedCourse,
+          questionTexts
+        );
 
         // Expected shape:
         // { question_skills: { [questionKey]: string[] } }

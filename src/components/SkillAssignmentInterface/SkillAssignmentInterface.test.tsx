@@ -430,7 +430,7 @@ describe('image-only questions and duplicate-question disambiguation', () => {
 
   test('auto-triggered AI analysis receives HTML-stripped text, not raw HTML', async () => {
     jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
-      data: [question('cq1', 'What is <b>HTML</b>?', 'q1')],
+            data: [question('cq1', 'What is <b>HTML</b>?', 'q1', { question_key: 'what is html?' })],
     } as any);
 
     render(<SkillAssignmentInterface />);
@@ -442,7 +442,7 @@ describe('image-only questions and duplicate-question disambiguation', () => {
     await waitFor(() => {
       expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
         expect.objectContaining({
-          questions: [expect.objectContaining({ id: 'What is HTML?', text: 'What is HTML?' })],
+                    questions: [expect.objectContaining({ id: 'what is html?', text: 'What is HTML?' })],
         })
       );
     });

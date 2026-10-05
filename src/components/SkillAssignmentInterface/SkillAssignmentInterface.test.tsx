@@ -406,6 +406,47 @@ describe('image-only questions and duplicate-question disambiguation', () => {
     const cardsWithSkill = cards.filter((card) => within(card).queryAllByText('Zoology').length > 0);
     expect(cardsWithSkill).toHaveLength(1);
   });
+
+  test('a question with both text and an attachment shows both, not just the text', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [
+        question('cq1', 'What does this diagram show?', 'q1', {
+          attachment_ids: ['att1'],
+          attachment_urls: ['https://cdn.example.com/diagram.png'],
+        }),
+      ],
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    await waitFor(() => expect(screen.getByText('What does this diagram show?')).toBeInTheDocument());
+    const image = await screen.findByRole('img', { name: 'Question attachment' });
+    expect(image).toHaveAttribute('src', 'https://cdn.example.com/diagram.png');
+  });
+
+  test('auto-triggered AI analysis receives HTML-stripped text, not raw HTML', async () => {
+    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({
+      data: [question('cq1', 'What is <b>HTML</b>?', 'q1')],
+    } as any);
+
+    render(<SkillAssignmentInterface />);
+    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
+    await selectCourse('c1');
+    await waitFor(() => expect(selectByLabel('Quiz')).toBeInTheDocument());
+    await selectQuiz('q1');
+
+    await waitFor(() => {
+      expect(skillAssignmentAPI.analyzeQuestions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          questions: [expect.objectContaining({ id: 'What is HTML?', text: 'What is HTML?' })],
+        })
+      );
+    });
+  });
 });
 
 describe('SCRUM-172: skill assignment uses the backend question_key', () => {

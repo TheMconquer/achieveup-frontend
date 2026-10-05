@@ -1,9 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // These specific tokens (white, gray-*, au.bg) are redefined as CSS
+        // variables (see src/index.css :root / .dark) so the existing
+        // bg-white / text-gray-900 / etc. classes used throughout the app
+        // automatically flip for dark mode — no per-component changes needed.
+        white: 'var(--color-white)',
+        gray: {
+          50: 'var(--color-gray-50)',
+          100: 'var(--color-gray-100)',
+          200: 'var(--color-gray-200)',
+          300: 'var(--color-gray-300)',
+          400: 'var(--color-gray-400)',
+          500: 'var(--color-gray-500)',
+          600: 'var(--color-gray-600)',
+          700: 'var(--color-gray-700)',
+          800: 'var(--color-gray-800)',
+          900: 'var(--color-gray-900)',
+        },
+
         // UCF Colors
         'ucf-black': '#000000',
         'ucf-gold': '#FFCA06', // RGB 255, 202, 6
@@ -44,7 +63,7 @@ module.exports = {
         // exactly (e.g. navy #111827 === secondary-900, body #374151 ===
         // secondary-700). Only the gold accent and app background are new.
         au: {
-          bg: '#f7f6f3',
+          bg: 'var(--color-au-bg)',
           gold: '#F5A800',
           'gold-light': '#FFF4D9',
           'gold-selected': '#FFF5DF',

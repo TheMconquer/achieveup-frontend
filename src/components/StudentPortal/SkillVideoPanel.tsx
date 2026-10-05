@@ -82,7 +82,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   if (loadError) {
     return (
-      <p className="py-4 text-center text-sm text-red-600">
+      <p className="py-4 text-center text-sm text-red-600 dark:text-red-400">
         Couldn't load recommended videos. Try again later.
       </p>
     );
@@ -120,11 +120,11 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
               {video.title}
               <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-400" />
               {video.source === 'manual' ? (
-                <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                   Instructor Recommended
                 </span>
               ) : video.instructor_verified ? (
-                <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                <span className="flex-shrink-0 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
                   Instructor Verified
                 </span>
               ) : null}
@@ -137,7 +137,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
               onClick={() => handleVote(video, 'upvote')}
               title="This helped"
               className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'upvote' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                video.student_vote === 'upvote' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               <ThumbsUp className="h-4 w-4" />
@@ -148,7 +148,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
               onClick={() => handleVote(video, 'downvote')}
               title="This didn't help"
               className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'downvote' ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'
+                video.student_vote === 'downvote' ? 'text-red-600 dark:text-red-400' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               <ThumbsDown className="h-4 w-4" />

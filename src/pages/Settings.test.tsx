@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import Settings from './Settings';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI, canvasAPI } from '../services/api';
+import { authAPI, canvasAPI, badgeAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 jest.mock('../contexts/AuthContext', () => ({
@@ -18,6 +18,11 @@ jest.mock('../services/api', () => ({
   },
   canvasAPI: {
     testConnection: jest.fn(),
+  },
+  badgeAPI: {
+    getBadgeShareStatus: jest.fn(),
+    optOutOfBadgeSharing: jest.fn(),
+    optInToBadgeSharing: jest.fn(),
   },
 }));
 
@@ -37,7 +42,29 @@ const withoutToken = {
 
 const withToken = { ...withoutToken, hasCanvasToken: true };
 
-const mockAuth = (user: typeof withoutToken, refreshUser = jest.fn()) => {
+const studentUser = {
+  ...withToken,
+  id: 'u2',
+  name: 'Sam Student',
+  email: 'sam@example.com',
+  role: 'student' as const,
+  canvasTokenType: 'student' as const,
+};
+
+// An instructor whose Canvas token also validates as a student enrollment --
+// same dual-role case RequireRole already lets into /badges.
+const dualRoleInstructor = {
+  ...withToken,
+  id: 'u3',
+  name: 'Dana Dual-Role',
+  email: 'dana@example.com',
+  has_student_access: true,
+};
+
+const mockAuth = (
+  user: typeof withoutToken | typeof studentUser | typeof dualRoleInstructor,
+  refreshUser = jest.fn()
+) => {
   jest.mocked(useAuth).mockReturnValue({
     user,
     loading: false,
@@ -320,5 +347,64 @@ describe('password change', () => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('New passwords do not match');
     });
     expect(jest.mocked(toast.error)).not.toHaveBeenCalledWith('Password must be at least 8 characters');
+  });
+});
+
+describe('badge sharing settings', () => {
+  test('a failed status check shows an error instead of guessing the toggle state', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockRejectedValue(new Error('network error'));
+    mockAuth(studentUser);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByText(/could not load your badge sharing settings/i)).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: /turn (on|off) badge sharing/i })).not.toBeInTheDocument();
+  });
+
+  test('does not render for an instructor with no student enrollment', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(withoutToken);
+    render(<Settings />);
+
+    expect(screen.queryByText('Badge Sharing')).not.toBeInTheDocument();
+    expect(badgeAPI.getBadgeShareStatus).not.toHaveBeenCalled();
+  });
+
+  test('renders for a dual-role instructor who also has student portal access', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(dualRoleInstructor);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /turn off badge sharing/i })).toBeInTheDocument();
+  });
+
+  test('shows a turn-off control for a student who is currently shareable', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/x', opted_out: false } } as any);
+    mockAuth(studentUser);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /turn off badge sharing/i })).toBeInTheDocument();
+  });
+
+  test('shows a turn-on control for a student who has opted out', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: true } } as any);
+    mockAuth(studentUser);
+    render(<Settings />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /turn on badge sharing/i })).toBeInTheDocument());
+  });
+
+  test('clicking the toggle calls the matching opt-in/opt-out endpoint and flips the control', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/x', opted_out: false } } as any);
+    jest.mocked(badgeAPI.optOutOfBadgeSharing).mockResolvedValue({ data: { message: 'Badge sharing turned off', opted_out: true } } as any);
+    mockAuth(studentUser);
+    render(<Settings />);
+
+    const toggle = await screen.findByRole('button', { name: /turn off badge sharing/i });
+    fireEvent.click(toggle);
+
+    await waitFor(() => expect(badgeAPI.optOutOfBadgeSharing).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('button', { name: /turn on badge sharing/i })).toBeInTheDocument();
   });
 });

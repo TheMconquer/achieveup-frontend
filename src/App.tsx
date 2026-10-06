@@ -34,7 +34,7 @@ const AppRoutes: React.FC = () => {
       {/* Public routes - no login required */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/badges/:studentId" element={<StudentPublicBadges />} />
+      <Route path="/badges/share/:shareId" element={<StudentPublicBadges />} />
 
       {/* Either role - just needs to be logged in */}
       <Route element={<RequireRole roles={['student', 'instructor']} />}>

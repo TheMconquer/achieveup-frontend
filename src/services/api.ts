@@ -147,7 +147,7 @@ export const badgeAPI = {
     api.get(`/achieveup/badges/${studentId}`),
   getCourseBadges: (courseId: string): Promise<AxiosResponse<unknown>> =>
     api.get(`/achieveup/badges/course/${courseId}`),
-  getStudentEarnedBadges: (studentId: string): Promise<AxiosResponse<{
+  getStudentEarnedBadges: (studentId: string, courseId?: string): Promise<AxiosResponse<{
     student_id: string;
     total_badges: number;
     badges: Array<{
@@ -161,9 +161,8 @@ export const badgeAPI = {
       course_name: string;
     }>;
   }>> =>
-    api.get(`/achieveup/badges/student/${studentId}/earned`),
-  getPublicStudentBadges: (studentId: string): Promise<AxiosResponse<{
-    student_id: string;
+    api.get(`/achieveup/badges/student/${studentId}/earned`, { params: courseId ? { course_id: courseId } : undefined }),
+  getPublicBadgesByShare: (shareId: string): Promise<AxiosResponse<{
     student_name?: string;
     total_badges: number;
     badges: Array<{
@@ -175,10 +174,28 @@ export const badgeAPI = {
       earned_at: string;
       course_id: string;
       course_name?: string;
-      shareable_link?: string;
     }>;
   }>> =>
-    api.get(`/achieveup/public/badges/student/${studentId}/earned`),
+    api.get(`/achieveup/public/badges/share/${shareId}/earned`),
+  getBadgeShareStatus: (): Promise<AxiosResponse<{
+    shared: boolean;
+    share_link: string | null;
+    opted_out: boolean;
+  }>> =>
+    api.get('/achieveup/badges/share-status'),
+  // With no args, shares the caller's own profile. An instructor passes
+  // studentId (and courseId, as a hint for which course to check first) to
+  // get a share link for a student they teach instead.
+  generateBadgeShareLink: (studentId?: string, courseId?: string): Promise<AxiosResponse<{
+    message: string;
+    share_link: string;
+    share_id: string;
+  }>> =>
+    api.post('/achieveup/badges/share-profile', studentId ? { student_id: studentId, course_id: courseId } : undefined),
+  optOutOfBadgeSharing: (): Promise<AxiosResponse<{ message: string; opted_out: boolean }>> =>
+    api.post('/achieveup/badges/opt-out'),
+  optInToBadgeSharing: (): Promise<AxiosResponse<{ message: string; opted_out: boolean }>> =>
+    api.post('/achieveup/badges/opt-in'),
 };
 
 // Progress Tracking

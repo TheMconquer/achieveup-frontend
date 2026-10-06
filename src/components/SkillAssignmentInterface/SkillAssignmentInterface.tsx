@@ -133,7 +133,7 @@ const SkillAssignmentInterface: React.FC = () => {
 
   // Backend AI analysis for all questions
   const analyzeQuestionsWithAI = useCallback(
-    async (questions: CanvasQuestion[]): Promise<void> => {
+    async (questions: CanvasQuestion[], courseId: string, quizId: string): Promise<void> => {
       if (!isInstructor || questions.length === 0) {
         return;
       }
@@ -147,8 +147,8 @@ const SkillAssignmentInterface: React.FC = () => {
 
       try {
         const requestData = {
-          courseId: selectedCourse,
-          quizId: selectedQuiz,
+          courseId: courseId,
+          quizId: quizId,
           matrixId: selectedMatrix,
           questions: questions.map((q) => {
             const questionKey = getQuestionKey(q);
@@ -238,7 +238,7 @@ const SkillAssignmentInterface: React.FC = () => {
     // every render, and including it would make this callback (and everything
     // that depends on it) unstable, re-triggering the load effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isInstructor, selectedCourse, selectedQuiz, selectedMatrix]
+        [isInstructor, selectedMatrix]
   );
 
   const getSection = useCallback((courseCode: string) => {
@@ -528,7 +528,7 @@ const SkillAssignmentInterface: React.FC = () => {
 
         // Auto-analyze questions if instructor and questions exist
         if (isInstructor && keyedQuestions.length > 0) {
-          analyzeQuestionsWithAI(keyedQuestions);
+          analyzeQuestionsWithAI(keyedQuestions, selectedCourse, quizId);
         }
       } catch (error) {
         console.error('Error loading questions:', error);
@@ -978,7 +978,7 @@ const SkillAssignmentInterface: React.FC = () => {
                     <div className="flex space-x-3">
                       <Button
                         type="button"
-                        onClick={() => analyzeQuestionsWithAI(questions)}
+                        onClick={() => analyzeQuestionsWithAI(questions, selectedCourse, selectedQuiz)}
                         loading={autoAnalysisInProgress}
                         disabled={questions.length === 0}
                         className="flex items-center"

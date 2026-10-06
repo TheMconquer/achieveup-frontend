@@ -9,6 +9,7 @@ import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -169,8 +170,8 @@ const SkillVideoCurator: React.FC = () => {
           ? `Found it — jumps to ${formatTimestamp(res.data.timestamp_seconds)}`
           : 'Moment found'
       );
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not find a relevant moment');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Could not find a relevant moment');
     } finally {
       setFindingMomentId(null);
     }
@@ -182,8 +183,8 @@ const SkillVideoCurator: React.FC = () => {
       const res = await skillVideoAPI.verify(video._id);
       setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
       toast.success('Marked as instructor verified');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not verify this video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Could not verify this video');
     } finally {
       setVerifyingId(null);
     }

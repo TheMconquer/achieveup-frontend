@@ -36,6 +36,7 @@ interface CanvasQuestion {
   attachment_ids?: string[];
   attachment_urls?: string[];
   answer_texts?: string[];
+  question_key?: string;
 }
 
 interface QuestionSkills {
@@ -73,18 +74,11 @@ function extractTextFromHTML(htmlString: string) {
   return div.textContent || div.innerText || '';
 }
 
-// Question text is now the identifier used for skill assignment (state keys,
-// API payloads); Canvas question ids are only kept for React list keys / search.
+// The backend builds question_key (normalized text + answers) with the same
+// function the submission sync uses, so assignments and results always match.
+// Don't build keys on the frontend.
 function getQuestionKey(question: CanvasQuestion): string {
-  // question.question_text is already decoded via extractTextFromHTML
-  const text = question.question_text;
-  const answers = question.answer_texts || [];
-  const answerPart = answers.length > 0 ? ' ' + [...answers].sort().join(' ') : '';
-  if (text) return text + answerPart;
-  if (question.attachment_ids && question.attachment_ids.length > 0) {
-    return `attachment_${question.attachment_ids.join('_')}` + answerPart;
-  }
-  return `question_${question.id}`;
+  return question.question_key as string;
 }
 
 const SkillAssignmentInterface: React.FC = () => {
@@ -139,7 +133,7 @@ const SkillAssignmentInterface: React.FC = () => {
 
   // Backend AI analysis for all questions
   const analyzeQuestionsWithAI = useCallback(
-    async (questions: CanvasQuestion[]): Promise<void> => {
+    async (questions: CanvasQuestion[], courseId: string, quizId: string): Promise<void> => {
       if (!isInstructor || questions.length === 0) {
         return;
       }
@@ -153,16 +147,17 @@ const SkillAssignmentInterface: React.FC = () => {
 
       try {
         const requestData = {
-          courseId: selectedCourse,
-          quizId: selectedQuiz,
+          courseId: courseId,
+          quizId: quizId,
           matrixId: selectedMatrix,
           questions: questions.map((q) => {
-            const questionText = getQuestionKey(q);
+            const questionKey = getQuestionKey(q);
+            const questionAndAnswersText = `${q.question_text} ${(q.answer_texts || []).join(' ')}`.trim();
             return {
-              // Backend just echoes this back as the correlation id; using
-              // question text here so suggestions come back keyed by text.
-              id: questionText,
-              text: questionText,
+              // Backend echoes id back, so suggestions are keyed by question_key.
+              // text is the readable question for the AI, not the normalized key.
+              id: questionKey,
+              text: questionAndAnswersText || questionKey,
               type: q.question_type || 'multiple_choice',
               points: q.points || 1,
             };
@@ -243,7 +238,7 @@ const SkillAssignmentInterface: React.FC = () => {
     // every render, and including it would make this callback (and everything
     // that depends on it) unstable, re-triggering the load effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isInstructor, selectedCourse, selectedQuiz, selectedMatrix]
+        [isInstructor, selectedMatrix]
   );
 
   const getSection = useCallback((courseCode: string) => {
@@ -486,11 +481,25 @@ const SkillAssignmentInterface: React.FC = () => {
           ...q,
           question_text: extractTextFromHTML(q.question_text),
         }));
-        setQuestions(sanitizedQuestions);
+
+        const keyedQuestions: CanvasQuestion[] = sanitizedQuestions.filter(
+          (q: CanvasQuestion) => !!q.question_key
+        );
+        if (keyedQuestions.length < sanitizedQuestions.length) {
+          toast.error('Some questions could not be identified and were skipped.', {
+            id: 'missing-question-keys',
+          });
+        }
+
+        setQuestions(keyedQuestions);
         setSelectedQuiz(quizId);
 
-        // Pull assigned skills from AchieveUp DB, keyed by question text
-        const questionTexts = sanitizedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
+        if (keyedQuestions.length === 0) {
+          return;
+        }
+
+        // Pull assigned skills from AchieveUp DB, keyed by question key
+        const questionTexts = keyedQuestions.map((q: CanvasQuestion) => getQuestionKey(q));
 
         const skillsResponse = await skillAssignmentAPI.getAssignments(
           selectedCourse,
@@ -498,7 +507,7 @@ const SkillAssignmentInterface: React.FC = () => {
         );
 
         // Expected shape:
-        // { question_skills: { [questionText]: string[] } }
+        // { question_skills: { [questionKey]: string[] } }
         const savedSkills = skillsResponse.data?.question_skills || {};
 
         // Initialize question skills and status
@@ -506,7 +515,7 @@ const SkillAssignmentInterface: React.FC = () => {
         const initialStatus: AIAnalysisStatus = {};
         const initialReviewStatus: HumanReviewStatus = {};
 
-        sanitizedQuestions.forEach((question: CanvasQuestion) => {
+        keyedQuestions.forEach((question: CanvasQuestion) => {
           const questionKey = getQuestionKey(question);
           initialSkills[questionKey] = savedSkills[questionKey] ?? [];
           initialStatus[questionKey] = 'pending';
@@ -518,8 +527,8 @@ const SkillAssignmentInterface: React.FC = () => {
         setHumanReviewStatus(initialReviewStatus);
 
         // Auto-analyze questions if instructor and questions exist
-        if (isInstructor && sanitizedQuestions.length > 0) {
-          analyzeQuestionsWithAI(sanitizedQuestions);
+        if (isInstructor && keyedQuestions.length > 0) {
+          analyzeQuestionsWithAI(keyedQuestions, selectedCourse, quizId);
         }
       } catch (error) {
         console.error('Error loading questions:', error);
@@ -969,7 +978,7 @@ const SkillAssignmentInterface: React.FC = () => {
                     <div className="flex space-x-3">
                       <Button
                         type="button"
-                        onClick={() => analyzeQuestionsWithAI(questions)}
+                        onClick={() => analyzeQuestionsWithAI(questions, selectedCourse, selectedQuiz)}
                         loading={autoAnalysisInProgress}
                         disabled={questions.length === 0}
                         className="flex items-center"

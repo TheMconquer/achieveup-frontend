@@ -13,6 +13,24 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script>
+      (function () {
+        // Applies the dark class before React mounts, so there's no flash of
+        // the wrong theme on first paint. ThemeProvider (src/contexts/ThemeContext.tsx)
+        // owns the actual state afterward and keeps this in sync.
+        try {
+          var stored = localStorage.getItem('achieveup-theme');
+          var isDark =
+            stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — default to light, no-op */
+        }
+      })();
+    </script>
     <div id="root"></div>
   </body>
 </html> 

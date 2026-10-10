@@ -40,6 +40,11 @@ function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
       />
     );
   }
+
+  if (user!.canvasTokenStatus === 'expired' && location.pathname !== '/settings') {
+    return <Navigate to="/settings" replace />;
+  }
+
   return <Outlet />;
 }
 

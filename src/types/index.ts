@@ -38,6 +38,7 @@ export interface CanvasTokenValidationRequest {
 export interface SkillMatrix {
   _id: string;
   course_id: string;
+  course_name?: string;
   matrix_name: string;
   skills: string[];
   created_at: string;
@@ -46,6 +47,7 @@ export interface SkillMatrix {
 
 export interface CreateSkillMatrixRequest {
   course_id: string;
+  course_name?: string;
   matrix_name: string;
   skills: string[];
 }

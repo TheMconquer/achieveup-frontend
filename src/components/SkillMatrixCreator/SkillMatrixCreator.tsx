@@ -567,6 +567,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
     try {
       const matrixData = {
         course_id: selectedCourse,
+        course_name: selectedCourseData?.name,
         matrix_name: data.matrixName,
         skills: finalSkills,
         description: data.description,

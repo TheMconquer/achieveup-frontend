@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userData = userResponse.data.user || userResponse.data;
           setUser(userData);
 
-          if (userData.canvasTokenStatus === 'Expiring soon') {
+          if (userData.canvasTokenStatus === 'Expiring Soon' && userData.canvasTokenExpiresAt) {
             toast.error(`Your Canvas token expires on ${new Date(userData.canvasTokenExpiresAt).toLocaleDateString()}. Please update it in Settings.`);
           }
 

@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation  } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+const location = useLocation();
 
 /* 
 This component is used as part of the authentication / routing system. 
@@ -41,7 +42,7 @@ function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
     );
   }
 
-  if (user!.canvasTokenStatus === 'expired' && location.pathname !== '/settings') {
+  if (user!.canvasTokenStatus === 'Expired' && location.pathname !== '/settings') {
     return <Navigate to="/settings" replace />;
   }
 

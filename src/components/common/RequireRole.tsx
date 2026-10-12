@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation  } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-const location = useLocation();
 
 /* 
 This component is used as part of the authentication / routing system. 
@@ -9,6 +8,7 @@ It checks if the user is authenticated and has the required role(s) to access a 
 
 function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (

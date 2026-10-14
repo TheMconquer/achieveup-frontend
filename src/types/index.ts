@@ -47,7 +47,6 @@ export interface SkillMatrix {
 
 export interface CreateSkillMatrixRequest {
   course_id: string;
-  course_name?: string;
   matrix_name: string;
   skills: string[];
 }

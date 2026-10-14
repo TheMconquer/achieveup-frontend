@@ -321,7 +321,6 @@ describe('SkillMatrixCreator Component', () => {
     await waitFor(() => {
       expect(mockCreateMatrix).toHaveBeenCalledWith({
         course_id: 'course1',
-        course_name: 'Introduction to Web Development',
         matrix_name: 'Introduction to Web Development - Skills Matrix',
         skills: ['HTML/CSS Fundamentals', 'JavaScript Programming', 'Responsive Design'],
         description: undefined,

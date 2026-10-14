@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation  } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 /* 
@@ -8,6 +8,7 @@ It checks if the user is authenticated and has the required role(s) to access a 
 
 function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -40,6 +41,11 @@ function RequireRole({ roles }: { roles?: Array<'student' | 'instructor'> }) {
       />
     );
   }
+
+  if (user!.canvasTokenStatus === 'Expired' && location.pathname !== '/settings') {
+    return <Navigate to="/settings" replace />;
+  }
+
   return <Outlet />;
 }
 

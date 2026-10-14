@@ -12,6 +12,8 @@ export interface User {
   // True when an instructor account's Canvas token also validates as a
   // student enrollment somewhere (Canvas roles are per-course, not per-user).
   has_student_access?: boolean;
+  canvasTokenExpiresAt?: string | null;
+  canvasTokenStatus?: 'Valid' | 'Expiring Soon' | 'Expired';
 }
 
 export interface SignupRequest {

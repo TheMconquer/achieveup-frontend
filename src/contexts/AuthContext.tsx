@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import axios from 'axios';
 import { authAPI } from '../services/api';
 import { User, SignupRequest } from '../types';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -99,6 +100,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userResponse = await authAPI.me();
           const userData = userResponse.data.user || userResponse.data;
           setUser(userData);
+
+          if (userData.canvasTokenStatus === 'Expiring Soon' && userData.canvasTokenExpiresAt) {
+            toast.error(`Your Canvas token expires on ${new Date(userData.canvasTokenExpiresAt).toLocaleDateString()}. Please update it in Settings.`);
+          }
+
           setBackendAvailable(true);
           return;
         } catch (meError: unknown) {

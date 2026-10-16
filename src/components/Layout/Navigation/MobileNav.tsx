@@ -1,6 +1,7 @@
 import React from 'react';
 import NavLinks from './NavLinks';
 import { NavigationItem } from './types';
+import DialogPanel from '../../common/DialogPanel';
 
 interface MobileNavProps {
   navigationItems: NavigationItem[];
@@ -17,11 +18,20 @@ const MobileNav: React.FC<MobileNavProps> = ({ navigationItems, currentPath, onC
 
       {/* Mobile sidebar - starts below the fixed mobile header */}
 
-      <div className="absolute left-0 top-16 h-[calc(100%-4rem)] w-[280px] overflow-y-auto bg-white shadow-xl">
+      <DialogPanel
+        className="absolute left-0 top-16 h-[calc(100%-4rem)] w-[280px] overflow-y-auto bg-white shadow-xl"
+        onClose={onClose}
+        aria-label="Navigation menu"
+      >
         <div className="p-4">
-          <NavLinks items={navigationItems} currentPath={currentPath} variant="mobile" onNavigate={onClose} />
+          <NavLinks
+            items={navigationItems}
+            currentPath={currentPath}
+            variant="mobile"
+            onNavigate={onClose}
+          />
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 };

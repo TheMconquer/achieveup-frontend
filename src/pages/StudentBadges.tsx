@@ -157,7 +157,7 @@ const StudentBadges: React.FC = () => {
         {sharingOptedOut ? (
           <p className="text-sm text-gray-600">
             Badge sharing is turned off.{' '}
-            <Link to="/settings" className="font-medium text-au-gold hover:underline">
+            <Link to="/settings" className="font-medium text-amber-700 dark:text-au-gold hover:underline">
               Turn it back on in Settings
             </Link>{' '}
             to get a public link.
@@ -180,7 +180,7 @@ const StudentBadges: React.FC = () => {
               onClick={() => copyShareLink(shareLink)}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              {linkCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {linkCopied ? <Check className="h-4 w-4 text-green-700 dark:text-green-400" /> : <Copy className="h-4 w-4" />}
               {linkCopied ? 'Copied' : 'Copy'}
             </button>
           </div>
@@ -193,7 +193,7 @@ const StudentBadges: React.FC = () => {
               type="button"
               onClick={handleGetShareLink}
               disabled={shareActionLoading}
-              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-au-gold px-4 py-1.5 text-sm font-medium text-gray-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-au-gold px-4 py-1.5 text-sm font-medium text-ucf-black hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Share2 className="h-4 w-4" />
               Share Badges

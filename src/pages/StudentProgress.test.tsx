@@ -165,7 +165,7 @@ test('opening the Details modal shows the full skill breakdown, including a 0/0 
   renderPage();
 
   await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
-  fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Details for Jordan Miller' }));
 
   const modal = within(screen.getByText('Jordan Miller - Detailed View').closest('.fixed')!);
   // 0 questionsAttempted must not divide-by-zero into NaN%.
@@ -181,7 +181,7 @@ test('closing the Details modal via its close button removes it', async () => {
   renderPage();
 
   await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
-  fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Details for Jordan Miller' }));
   expect(screen.getByText('Jordan Miller - Detailed View')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));

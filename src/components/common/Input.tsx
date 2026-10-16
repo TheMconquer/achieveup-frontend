@@ -32,7 +32,7 @@ const Input: React.FC<InputProps> = ({
       <input
         id={inputId}
         className={clsx(
-          'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold focus:border-transparent transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+          'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold focus:border-transparent transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
           error
             ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
             : 'border-gray-300',
@@ -49,7 +49,7 @@ const Input: React.FC<InputProps> = ({
       {(error || helperText) && (
         <p id={descriptionId} className={clsx(
           'mt-1 text-sm',
-          error ? 'text-red-600 dark:text-red-400' : 'text-gray-500'
+          error ? 'text-red-700 dark:text-red-400' : 'text-gray-500'
         )}>
           {error || helperText}
         </p>

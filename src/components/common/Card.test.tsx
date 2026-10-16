@@ -11,7 +11,7 @@ describe('Card', () => {
 
   test('renders no header when neither title nor headerActions is passed', () => {
     const { container } = render(<Card>Body</Card>);
-    expect(container.querySelector('h3')).not.toBeInTheDocument();
+    expect(container.querySelector('h2')).not.toBeInTheDocument();
   });
 
   test('renders the header when title is passed, even with no subtitle', () => {
@@ -30,7 +30,7 @@ describe('Card', () => {
     // this locks in that subtitle alone, with neither, renders nothing.
     const { container } = render(<Card subtitle="Orphan subtitle">Body</Card>);
     expect(screen.queryByText('Orphan subtitle')).not.toBeInTheDocument();
-    expect(container.querySelector('h3')).not.toBeInTheDocument();
+    expect(container.querySelector('h2')).not.toBeInTheDocument();
   });
 
   test('renders subtitle text when title is also present', () => {

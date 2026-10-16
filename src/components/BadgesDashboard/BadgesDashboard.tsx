@@ -196,7 +196,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
             <Card title="Course Badges" className="mt-8">
                 <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Award className="w-8 h-8 text-gray-400" />
+                        <Award className="w-8 h-8 text-gray-500" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No Badges Available</h3>
                     <p className="text-gray-600 mb-4">
@@ -231,7 +231,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                         : 0;
 
                     // Alternate through three colors
-                    const colors = ['bg-ucf-gold', 'bg-blue-500', 'bg-purple-500'];
+                    const colors = ['bg-amber-600', 'bg-blue-500', 'bg-purple-500'];
                     const iconColor = colors[index % 3];
 
                     return (
@@ -239,6 +239,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                             {/* Badge Header - Clickable */}
                             <button
                                 onClick={() => toggleBadge(badge.id)}
+                                aria-expanded={isExpanded}
                                 className="w-full p-6 bg-white hover:bg-gray-50 transition-colors text-left"
                             >
                                 <div className="flex items-center justify-between">
@@ -255,11 +256,11 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                             </div>
                                             <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
                                             <div className="flex items-center space-x-4 text-sm">
-                                                <div className="flex items-center text-green-600 dark:text-green-400">
+                                                <div className="flex items-center text-green-700 dark:text-green-400">
                                                     <CheckCircle className="w-4 h-4 mr-1" />
                                                     <span>{badge.studentsEarned.length} earned</span>
                                                 </div>
-                                                <div className="flex items-center text-orange-600">
+                                                <div className="flex items-center text-orange-700 dark:text-orange-400">
                                                     <Clock className="w-4 h-4 mr-1" />
                                                     <span>{badge.studentsNotEarned.length} in progress</span>
                                                 </div>
@@ -286,9 +287,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                         {/* Expand Icon */}
                                         <div className="flex-shrink-0">
                                             {isExpanded ? (
-                                                <ChevronUp className="w-5 h-5 text-gray-400" />
+                                                <ChevronUp className="w-5 h-5 text-gray-500" />
                                             ) : (
-                                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                                                <ChevronDown className="w-5 h-5 text-gray-500" />
                                             )}
                                         </div>
                                     </div>
@@ -302,8 +303,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                     <div className="flex border-b border-gray-200">
                                         <button
                                             onClick={() => setShowEarned(true)}
+                                            aria-pressed={showEarned}
                                             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${showEarned
-                                                ? 'bg-white text-green-600 dark:text-green-400 border-b-2 border-green-600'
+                                                ? 'bg-white text-green-700 dark:text-green-400 border-b-2 border-green-600'
                                                 : 'text-gray-600 hover:text-gray-900'
                                                 }`}
                                         >
@@ -314,8 +316,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                         </button>
                                         <button
                                             onClick={() => setShowEarned(false)}
+                                            aria-pressed={!showEarned}
                                             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${!showEarned
-                                                ? 'bg-white text-orange-600 border-b-2 border-orange-600'
+                                                ? 'bg-white text-orange-700 dark:text-orange-400 border-b-2 border-orange-600'
                                                 : 'text-gray-600 hover:text-gray-900'
                                                 }`}
                                         >
@@ -337,7 +340,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
-                                                                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                                                        <CheckCircle className="w-5 h-5 text-green-700 dark:text-green-400" />
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
@@ -347,7 +350,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className="text-lg font-semibold text-green-600 dark:text-green-400">{student.skillScore}%</div>
+                                                                    <div className="text-lg font-semibold text-green-700 dark:text-green-400">{student.skillScore}%</div>
                                                                     <div className="text-xs text-gray-500">Skill Score</div>
                                                                 </div>
                                                             </div>
@@ -369,7 +372,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                             <div className="flex items-center justify-between mb-3">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                                                        <Clock className="w-5 h-5 text-orange-600" />
+                                                                        <Clock className="w-5 h-5 text-orange-700 dark:text-orange-400" />
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
@@ -377,9 +380,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="text-right">
-                                                                    <div className={`text-lg font-semibold ${student.progress >= 25 ? 'text-green-600 dark:text-green-400' :
-                                                                        student.progress >= 15 ? 'text-yellow-600 dark:text-yellow-400' :
-                                                                            'text-orange-600'
+                                                                    <div className={`text-lg font-semibold ${student.progress >= 25 ? 'text-green-700 dark:text-green-400' :
+                                                                        student.progress >= 15 ? 'text-yellow-700 dark:text-yellow-400' :
+                                                                            'text-orange-700 dark:text-orange-400'
                                                                         }`}>
                                                                         {student.progress}%
                                                                     </div>

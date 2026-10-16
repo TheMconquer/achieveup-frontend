@@ -40,7 +40,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <button
           onClick={onToggleNav}
           aria-label="Toggle navigation menu"
-          className="flex flex-shrink-0 items-center justify-center rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-au-gold"
+          aria-expanded={isNavOpen}
+          className="flex flex-shrink-0 items-center justify-center rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-au-gold"
         >
           {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -65,7 +66,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <div className="relative flex-shrink-0">
           <button
             onClick={() => setShowAccountMenu((open) => !open)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-au-gold text-sm font-semibold text-gray-900"
+            onKeyDown={(e) => e.key === 'Escape' && setShowAccountMenu(false)}
+            aria-label="Account menu"
+            aria-expanded={showAccountMenu}
+            aria-haspopup="true"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-au-gold text-sm font-semibold text-ucf-black"
           >
             {user?.name?.charAt(0)?.toUpperCase() || 'S'}
           </button>

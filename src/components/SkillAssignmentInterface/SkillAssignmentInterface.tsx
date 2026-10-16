@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Lightbulb,
@@ -559,6 +559,27 @@ const SkillAssignmentInterface: React.FC = () => {
     }));
   };
 
+  // Removing a skill unmounts its button, so once the list has re-rendered,
+  // hand focus to the neighbouring skill (or the question's custom-skill box)
+  // instead of letting it drop to <body>.
+  const pendingSkillFocusRef = useRef<{ questionNumber: number; removedIndex: number } | null>(
+    null
+  );
+  useEffect(() => {
+    const pending = pendingSkillFocusRef.current;
+    if (!pending) return;
+    pendingSkillFocusRef.current = null;
+    const buttons = document.querySelectorAll<HTMLButtonElement>(
+      `[data-assigned-skills="${pending.questionNumber}"] button`
+    );
+    const next = buttons[pending.removedIndex] ?? buttons[pending.removedIndex - 1];
+    (next ?? document.getElementById(`custom-skill-q${pending.questionNumber}`))?.focus();
+  }, [questionSkills]);
+
+  const focusAfterSkillRemoval = (questionNumber: number, removedIndex: number): void => {
+    pendingSkillFocusRef.current = { questionNumber, removedIndex };
+  };
+
   const removeSkillFromQuestion = (questionText: string, skillIndex: number): void => {
     setQuestionSkills((prev) => ({
       ...prev,
@@ -717,6 +738,7 @@ const SkillAssignmentInterface: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto p-6">
       <Card
+        titleAs="h1"
         title="Skill Assignment Interface"
         subtitle="Assign skills to quiz questions using AI-powered analysis and zero-shot classification"
       >
@@ -724,10 +746,11 @@ const SkillAssignmentInterface: React.FC = () => {
           {/* Course and Quiz Selection */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Course</label>
+              <label htmlFor="skill-assignment-course" className="block text-sm font-medium text-gray-700 mb-2">Course</label>
               <select
+                id="skill-assignment-course"
                 {...register('courseId', { required: 'Please select a course' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
               >
                 <option value="">Select a course</option>
                 {Array.isArray(courses) &&
@@ -738,16 +761,17 @@ const SkillAssignmentInterface: React.FC = () => {
                   ))}
               </select>
               {errors.courseId && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.courseId.message}</p>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.courseId.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Skill Matrix</label>
+              <label htmlFor="skill-assignment-matrix" className="block text-sm font-medium text-gray-700 mb-2">Skill Matrix</label>
               <select
+                id="skill-assignment-matrix"
                 value={selectedMatrix}
                 onChange={(e) => handleMatrixSelection(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                 disabled={!selectedCourse || loadingMatrices}
               >
                 <option value="">
@@ -775,10 +799,11 @@ const SkillAssignmentInterface: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quiz</label>
+              <label htmlFor="skill-assignment-quiz" className="block text-sm font-medium text-gray-700 mb-2">Quiz</label>
               <select
+                id="skill-assignment-quiz"
                 {...register('quizId', { required: 'Please select a quiz' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                 disabled={
                   !selectedCourse || loading || !selectedMatrix || availableMatrices.length === 0
                 }
@@ -798,7 +823,7 @@ const SkillAssignmentInterface: React.FC = () => {
                   ))}
               </select>
               {errors.quizId && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.quizId.message}</p>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.quizId.message}</p>
               )}
             </div>
           </div>
@@ -807,11 +832,11 @@ const SkillAssignmentInterface: React.FC = () => {
           {!selectedCourse && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-gray-400" />
+                <BookOpen className="w-8 h-8 text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h2 className="text-lg font-medium text-gray-900 mb-2">
                 Select a Course to Get Started
-              </h3>
+              </h2>
               <p className="text-gray-600">
                 Choose one of your courses above to view and assign skills to quiz questions.
               </p>
@@ -821,7 +846,7 @@ const SkillAssignmentInterface: React.FC = () => {
           {showImportBox && selectedPastCourseData && (
             <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-medium text-blue-900 dark:text-blue-200">Similar Course Found</h4>
+                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200">Similar Course Found</h3>
                 <button
                   type="button"
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
@@ -837,15 +862,15 @@ const SkillAssignmentInterface: React.FC = () => {
           {selectedCourse && !selectedQuiz && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-gray-400" />
+                <Target className="w-8 h-8 text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Quiz</h3>
+              <h2 className="text-lg font-medium text-gray-900 mb-2">Select a Quiz</h2>
               <p className="text-gray-600">
                 Choose a quiz from the dropdown above to view its questions and assign skills.
               </p>
               {quizzes.length === 0 && selectedCourse && !loading && (
                 <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg max-w-md mx-auto">
-                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">No Quizzes Found</h4>
+                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">No Quizzes Found</h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     This course doesn't have any quizzes yet. Create quizzes in Canvas to start
                     assigning skills to questions.
@@ -860,9 +885,9 @@ const SkillAssignmentInterface: React.FC = () => {
             <div className="mb-8 p-4 bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-start justify-between">
                 <div>
-                  <h4 className="text-lg font-medium text-green-900 dark:text-green-200 mb-2">
+                  <h2 className="text-lg font-medium text-green-900 dark:text-green-200 mb-2">
                     Using Skill Matrix: {selectedMatrixData.matrix_name}
-                  </h4>
+                  </h2>
                   <p className="text-sm text-green-700 dark:text-green-300 mb-3">
                     {selectedMatrixData.skills.length} skills available for assignment
                   </p>
@@ -876,14 +901,14 @@ const SkillAssignmentInterface: React.FC = () => {
                       </span>
                     ))}
                     {selectedMatrixData.skills.length > 8 && (
-                      <span className="text-xs text-green-600 dark:text-green-400">
+                      <span className="text-xs text-green-700 dark:text-green-400">
                         +{selectedMatrixData.skills.length - 8} more skills
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="ml-4">
-                  <span className="text-xs text-green-600 dark:text-green-400">
+                  <span className="text-xs text-green-700 dark:text-green-400">
                     Created: {new Date(selectedMatrixData.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -896,10 +921,10 @@ const SkillAssignmentInterface: React.FC = () => {
             <div className="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-yellow-600 dark:text-yellow-400 text-lg">⚠️</span>
+                  <span className="text-yellow-700 dark:text-yellow-400 text-lg">⚠️</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">No Skill Matrix Selected</h4>
+                  <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">No Skill Matrix Selected</h3>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
                     Please select a skill matrix to see available skills for assignment.
                   </p>
@@ -928,11 +953,11 @@ const SkillAssignmentInterface: React.FC = () => {
                 <div className="bg-green-50 dark:bg-green-900/40 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 dark:text-green-400 font-bold">{stats.assignedQuestions}</span>
+                      <span className="text-green-700 dark:text-green-400 font-bold">{stats.assignedQuestions}</span>
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-green-900 dark:text-green-200">Assigned</p>
-                      <p className="text-xs text-green-600 dark:text-green-400">Have skills assigned</p>
+                      <p className="text-xs text-green-700 dark:text-green-400">Have skills assigned</p>
                     </div>
                   </div>
                 </div>
@@ -940,11 +965,11 @@ const SkillAssignmentInterface: React.FC = () => {
                 <div className="bg-yellow-50 dark:bg-yellow-900/40 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg flex items-center justify-center">
-                      <span className="text-yellow-600 dark:text-yellow-400 font-bold">{stats.unassignedQuestions}</span>
+                      <span className="text-yellow-700 dark:text-yellow-400 font-bold">{stats.unassignedQuestions}</span>
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">Unassigned</p>
-                      <p className="text-xs text-yellow-600 dark:text-yellow-400">Need skill assignment</p>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-400">Need skill assignment</p>
                     </div>
                   </div>
                 </div>
@@ -969,7 +994,7 @@ const SkillAssignmentInterface: React.FC = () => {
                     <div className="flex items-center">
                       <Brain className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">AI-Powered Analysis</h3>
+                        <h2 className="text-lg font-medium text-gray-900">AI-Powered Analysis</h2>
                         <p className="text-sm text-gray-600">
                           Let AI analyze questions and suggest skills automatically
                         </p>
@@ -1006,15 +1031,17 @@ const SkillAssignmentInterface: React.FC = () => {
                 <div className="flex-1">
                   <Input
                     placeholder="Search questions..."
+                    aria-label="Search questions"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full"
                   />
                 </div>
                 <select
+                  aria-label="Filter questions"
                   value={skillFilter}
                   onChange={(e) => setSkillFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                 >
                   <option value="all">All Questions</option>
                   <option value="assigned">Assigned Questions</option>
@@ -1024,20 +1051,21 @@ const SkillAssignmentInterface: React.FC = () => {
 
               {/* Bulk Operations */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Bulk Operations</h4>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Bulk Operations</h3>
 
                 {/* Matrix Skills Quick Assignment */}
                 {selectedMatrixData && (
                   <div className="mb-4">
-                    <h5 className="text-xs font-medium text-gray-700 mb-2">
+                    <h4 className="text-xs font-medium text-gray-700 mb-2">
                       Quick Assign from Matrix:
-                    </h5>
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {getMatrixSkills().map((skill: string, index: number) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => bulkAssignSkill(skill)}
+                          aria-label={`${skill}: add to all questions`}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
                         >
                           {skill}
@@ -1052,6 +1080,7 @@ const SkillAssignmentInterface: React.FC = () => {
                   <div className="flex-1">
                     <Input
                       placeholder="Enter custom skill name for bulk assignment..."
+                      aria-label="Custom skill name for all questions"
                       value={bulkSkill}
                       onChange={(e) => setBulkSkill(e.target.value)}
                     />
@@ -1097,9 +1126,9 @@ const SkillAssignmentInterface: React.FC = () => {
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <div className="flex items-center mb-2">
-                                <h3 className="text-lg font-medium text-gray-900">
+                                <h2 className="text-lg font-medium text-gray-900">
                                   Question {questionNumber}
-                                </h3>
+                                </h2>
                                 {analysisStatus === 'analyzing' && (
                                   <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400 ml-2 animate-spin" />
                                 )}
@@ -1134,7 +1163,7 @@ const SkillAssignmentInterface: React.FC = () => {
                                 {!question.question_text &&
                                   (!question.attachment_urls ||
                                     question.attachment_urls.length === 0) && (
-                                    <span className="text-gray-400 italic">
+                                    <span className="text-gray-500 italic">
                                       Image-only question — no text content
                                     </span>
                                   )}
@@ -1145,9 +1174,9 @@ const SkillAssignmentInterface: React.FC = () => {
                           {/* AI Suggestions */}
                           {questionSuggestions.length > 0 && (
                             <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                              <h3 className="text-sm font-medium text-gray-700 mb-2">
                                 AI Suggestions
-                              </h4>
+                              </h3>
                               <div className="flex flex-wrap gap-2">
                                 {Array.isArray(questionSuggestions) &&
                                   questionSuggestions.map((skill, index) => (
@@ -1155,6 +1184,7 @@ const SkillAssignmentInterface: React.FC = () => {
                                       key={index}
                                       type="button"
                                       onClick={() => addSuggestionToQuestion(questionKey, skill)}
+                                      aria-label={`${skill}: add to Question ${questionNumber}`}
                                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                         assignedSkills.includes(skill)
                                           ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 cursor-default'
@@ -1176,12 +1206,12 @@ const SkillAssignmentInterface: React.FC = () => {
                           {/* AI ran successfully but found no matching skill for this question */}
                           {analysisStatus === 'completed' && questionSuggestions.length === 0 && (
                             <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                              <h3 className="text-sm font-medium text-gray-700 mb-2">
                                 AI Suggestions
-                              </h4>
+                              </h3>
                               <div className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                                 <div className="flex items-center">
-                                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mr-2" />
+                                  <AlertCircle className="w-4 h-4 text-yellow-700 dark:text-yellow-400 mr-2" />
                                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
                                     <strong>No matching skill found.</strong> The AI analyzed this
                                     question but didn't find any skill in your matrix that fits it.
@@ -1197,12 +1227,12 @@ const SkillAssignmentInterface: React.FC = () => {
                           {/* The AI call itself failed for this question (network/server error) */}
                           {analysisStatus === 'error' && (
                             <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                              <h3 className="text-sm font-medium text-gray-700 mb-2">
                                 AI Suggestions
-                              </h4>
+                              </h3>
                               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                 <div className="flex items-center">
-                                  <AlertCircle className="w-4 h-4 text-red-600 mr-2" />
+                                  <AlertCircle className="w-4 h-4 text-red-700 dark:text-red-400 mr-2" />
                                   <p className="text-sm text-red-800">
                                     <strong>AI analysis failed.</strong> The request to analyze this
                                     question didn't complete, so no suggestions were generated.
@@ -1217,15 +1247,16 @@ const SkillAssignmentInterface: React.FC = () => {
 
                           {selectedMatrixData && (
                             <div className="mb-4">
-                              <h5 className="text-xs font-medium text-gray-700 mb-2">
+                              <h3 className="text-xs font-medium text-gray-700 mb-2">
                                 Quick Assign from Matrix:
-                              </h5>
+                              </h3>
                               <div className="flex flex-wrap gap-2">
                                 {getMatrixSkills().map((skill: string, index: number) => (
                                   <button
                                     key={index}
                                     type="button"
                                     onClick={() => addSuggestionToQuestion(questionKey, skill)}
+                                    aria-label={`${skill}: add to Question ${questionNumber}`}
                                     className="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
                                   >
                                     {skill}
@@ -1237,11 +1268,11 @@ const SkillAssignmentInterface: React.FC = () => {
 
                           {/* Assigned Skills */}
                           <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">
                               Assigned Skills
-                            </h4>
+                            </h3>
                             {assignedSkills.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2" data-assigned-skills={questionNumber}>
                                 {Array.isArray(assignedSkills) &&
                                   assignedSkills.map((skill, index) => (
                                     <span
@@ -1251,8 +1282,12 @@ const SkillAssignmentInterface: React.FC = () => {
                                       {skill}
                                       <button
                                         type="button"
-                                        onClick={() => removeSkillFromQuestion(questionKey, index)}
-                                        className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                                        onClick={() => {
+                                          focusAfterSkillRemoval(questionNumber, index);
+                                          removeSkillFromQuestion(questionKey, index);
+                                        }}
+                                        aria-label={`Remove ${skill} from Question ${questionNumber}`}
+                                        className="ml-1 -mr-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
                                       >
                                         ×
                                       </button>
@@ -1267,7 +1302,9 @@ const SkillAssignmentInterface: React.FC = () => {
                           {/* Manual Skill Assignment */}
                           <div className="flex items-center space-x-2">
                             <Input
+                              id={`custom-skill-q${questionNumber}`}
                               placeholder="Add custom skill..."
+                              aria-label={`Add custom skill to Question ${questionNumber}`}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1302,9 +1339,9 @@ const SkillAssignmentInterface: React.FC = () => {
           {selectedCourse && selectedQuiz && questions.length === 0 && !loading && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-gray-400" />
+                <AlertCircle className="w-8 h-8 text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Found</h3>
+              <h2 className="text-lg font-medium text-gray-900 mb-2">No Questions Found</h2>
               <p className="text-gray-600">
                 This quiz doesn't have any questions yet. Add questions in Canvas to assign skills.
               </p>

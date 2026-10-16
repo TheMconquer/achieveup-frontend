@@ -82,7 +82,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   if (loadError) {
     return (
-      <p className="py-4 text-center text-sm text-red-600 dark:text-red-400">
+      <p className="py-4 text-center text-sm text-red-700 dark:text-red-400">
         Couldn't load recommended videos. Try again later.
       </p>
     );
@@ -106,7 +106,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
           {video.thumbnail && (
             <img
               src={video.thumbnail}
-              alt={video.title}
+              alt=""
               className="h-14 w-24 flex-shrink-0 rounded-md object-cover"
             />
           )}
@@ -118,7 +118,8 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
           >
             <span className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
               {video.title}
-              <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-400" />
+              <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-500" aria-hidden="true" />
+              <span className="sr-only">(opens in new tab)</span>
               {video.source === 'manual' ? (
                 <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                   Instructor Recommended
@@ -136,8 +137,10 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
               type="button"
               onClick={() => handleVote(video, 'upvote')}
               title="This helped"
+              aria-label={`This helped: ${video.title} (${video.upvotes ?? 0})`}
+              aria-pressed={video.student_vote === 'upvote'}
               className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'upvote' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-gray-600'
+                video.student_vote === 'upvote' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
               <ThumbsUp className="h-4 w-4" />
@@ -147,8 +150,10 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
               type="button"
               onClick={() => handleVote(video, 'downvote')}
               title="This didn't help"
+              aria-label={`This didn't help: ${video.title} (${video.downvotes ?? 0})`}
+              aria-pressed={video.student_vote === 'downvote'}
               className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'downvote' ? 'text-red-600 dark:text-red-400' : 'text-gray-400 hover:text-gray-600'
+                video.student_vote === 'downvote' ? 'text-red-700 dark:text-red-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
               <ThumbsDown className="h-4 w-4" />

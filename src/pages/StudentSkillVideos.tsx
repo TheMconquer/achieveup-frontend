@@ -5,15 +5,16 @@ import SkillVideoPanel from '../components/StudentPortal/SkillVideoPanel';
 import { useAttemptedSkills } from '../hooks/useAttemptedSkills';
 import { tierForScore, tierLabel, tierTextClass, tierBgClass } from '../utils/skillTiers';
 import { AlertTriangle, ChevronLeft, ChevronRight, PlayCircle, Info, X, ThumbsUp, ThumbsDown } from 'lucide-react';
+import DialogPanel from '../components/common/DialogPanel';
 
 const SKILLS_PER_PAGE = 5;
 
 const StudentSkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl">
+    <DialogPanel className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl" onClose={onClose} labelledBy="about-videos-title">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">About These Videos</h2>
-        <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+        <h2 id="about-videos-title" className="text-lg font-semibold text-gray-900">About These Videos</h2>
+        <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-600">
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -44,19 +45,19 @@ const StudentSkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose
         <div>
           <p className="mb-2 font-medium text-gray-900">What upvote / downvote means</p>
           <p className="flex items-start gap-2">
-            <ThumbsUp className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+            <ThumbsUp className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
             <span>
               Click if the video actually helped you understand the skill — it tells your
               instructor this video is working.
             </span>
           </p>
           <p className="mt-2 flex items-start gap-2">
-            <ThumbsDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+            <ThumbsDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
             <span>Click if it didn't help — this flags it so your instructor can swap it out.</span>
           </p>
         </div>
       </div>
-    </div>
+    </DialogPanel>
   </div>
 );
 
@@ -102,7 +103,7 @@ const StudentSkillVideos: React.FC = () => {
             type="button"
             onClick={() => setShowInfoModal(true)}
             aria-label="What the video tags and votes mean"
-            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
           >
             <Info className="h-5 w-5" />
           </button>

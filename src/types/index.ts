@@ -217,6 +217,7 @@ export interface ButtonProps {
   className?: string;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
+  'aria-label'?: string;
   // Associates a button that lives outside its <form> (e.g. a sticky save
   // bar rendered after the form closes) with that form by id, so it can be
   // a real type="submit" button instead of faking submission via onClick.
@@ -240,6 +241,7 @@ export interface CardProps {
   subtitle?: string;
   className?: string;
   headerActions?: React.ReactNode;
+  titleAs?: 'h1' | 'h2' | 'h3';
 }
 
 export interface BadgeCardProps {

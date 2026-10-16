@@ -215,7 +215,8 @@ describe('Canvas API token section - token already set', () => {
 
     expect(screen.getByText('Token is set')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /test connection/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^edit$/i })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Edit profile' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Canvas API token' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
   });
 
@@ -279,7 +280,7 @@ describe('Canvas API token section - token already set', () => {
     mockAuth(withToken);
     render(<Settings />);
 
-    fireEvent.click(tokenCard().getByRole('button', { name: /^edit$/i }));
+    fireEvent.click(tokenCard().getByRole('button', { name: 'Edit Canvas API token' }));
 
     expect(screen.getByPlaceholderText(/paste your canvas api token/i)).toBeInTheDocument();
   });

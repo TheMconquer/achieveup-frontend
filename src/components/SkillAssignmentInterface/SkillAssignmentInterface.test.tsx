@@ -821,7 +821,7 @@ describe('bulk assignment', () => {
   test('bulk-assigning a matrix skill adds it to every currently-filtered question, not just one', async () => {
     await setupWithMatrixAndQuestions();
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Skill A' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Skill A: add to all questions' }));
 
     await waitFor(() => {
       expect(jest.mocked(toast.success)).toHaveBeenCalledWith('Added "Skill A" to 2 questions');

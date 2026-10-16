@@ -37,7 +37,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="p-8">
           {/* Header */}
@@ -56,7 +56,7 @@ const Login: React.FC = () => {
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="email"
                   {...register('email', {
@@ -67,36 +67,37 @@ const Login: React.FC = () => {
                     },
                   })}
                   type="email"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="password"
                   {...register('password', {
                     required: 'Password is required',
                   })}
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -109,7 +110,7 @@ const Login: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/signup" className="text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 font-medium">
                 Create account
               </Link>
             </p>
@@ -117,7 +118,7 @@ const Login: React.FC = () => {
 
           {/* Features Preview */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">What you can do:</h3>
+            <h2 className="text-sm font-medium text-gray-900 mb-3">What you can do:</h2>
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
@@ -139,7 +140,7 @@ const Login: React.FC = () => {
           </div>
         </Card>
       </div>
-    </div>
+    </main>
   );
 };
 

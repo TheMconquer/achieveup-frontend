@@ -58,7 +58,7 @@ describe('Signup Component', () => {
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^confirm password$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/canvas api token/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
@@ -156,7 +156,7 @@ describe('Signup Component', () => {
     );
 
     const passwordInput = screen.getByLabelText(/^password$/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const confirmPasswordInput = screen.getByLabelText(/^confirm password$/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
 
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
@@ -180,7 +180,7 @@ describe('Signup Component', () => {
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/^password$/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const confirmPasswordInput = screen.getByLabelText(/^confirm password$/i);
     const tokenInput = screen.getByLabelText(/canvas api token/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
 
@@ -221,7 +221,7 @@ describe('Signup Component', () => {
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/^password$/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const confirmPasswordInput = screen.getByLabelText(/^confirm password$/i);
     const tokenInput = screen.getByLabelText(/canvas api token/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
 
@@ -259,7 +259,7 @@ describe('Signup Component', () => {
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/^password$/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const confirmPasswordInput = screen.getByLabelText(/^confirm password$/i);
     const tokenInput = screen.getByLabelText(/canvas api token/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
 
@@ -306,7 +306,7 @@ describe('Signup Component', () => {
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/^password$/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const confirmPasswordInput = screen.getByLabelText(/^confirm password$/i);
     const tokenInput = screen.getByLabelText(/canvas api token/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
 

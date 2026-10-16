@@ -1,0 +1,9 @@
+# Most of AchieveUp sits behind a login, so crawlers only ever see the
+# public pages (login, sign-up and shared badge links).
+#
+# Shared badge pages are kept out of search results with a noindex header and
+# meta tag instead of a Disallow rule here: a crawler has to be allowed to
+# fetch a page to see its noindex, and a disallowed URL can still be listed
+# if other sites link to it.
+User-agent: *
+Allow: /

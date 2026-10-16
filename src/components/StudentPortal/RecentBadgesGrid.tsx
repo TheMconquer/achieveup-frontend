@@ -42,7 +42,7 @@ const RecentBadgesGrid: React.FC<RecentBadgesGridProps> = ({ badges }) => {
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold text-gray-900">{badge.skillName}</div>
-              <div className="truncate text-xs text-gray-400">
+              <div className="truncate text-xs text-gray-500">
                 {badge.courseName} · {formatEarnedDate(badge.earnedAt)}
               </div>
             </div>

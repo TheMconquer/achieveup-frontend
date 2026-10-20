@@ -3,7 +3,6 @@
   publish = "build"
 
 [build.environment]
-  REACT_APP_API_URL = "https://gen-ai-prime-3ddeabb35bd7.herokuapp.com"
   REACT_APP_ENVIRONMENT = "production"
 
 [[redirects]]

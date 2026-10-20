@@ -158,7 +158,7 @@ export const badgeAPI = {
       progress_percentage: number;
       earned_at: string;
       course_id: string;
-      course_name: string;
+      course_name: string | null;
     }>;
   }>> =>
     api.get(`/achieveup/badges/student/${studentId}/earned`, { params: courseId ? { course_id: courseId } : undefined }),
@@ -173,7 +173,7 @@ export const badgeAPI = {
       progress_percentage: number;
       earned_at: string;
       course_id: string;
-      course_name?: string;
+      course_name?: string | null;
     }>;
   }>> =>
     api.get(`/achieveup/public/badges/share/${shareId}/earned`),

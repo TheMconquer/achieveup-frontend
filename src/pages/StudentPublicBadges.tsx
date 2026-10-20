@@ -14,7 +14,7 @@ interface BadgeData {
     progress_percentage: number;
     earned_at: string;
     course_id: string;
-    course_name?: string;
+    course_name?: string | null;
 }
 
 const StudentPublicBadges: React.FC = () => {

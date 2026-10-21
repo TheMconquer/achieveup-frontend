@@ -53,8 +53,8 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
         <Search
           className={
             isDesktop
-              ? 'pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400'
-              : 'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400'
+              ? 'pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500'
+              : 'pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500'
           }
         />
 
@@ -73,10 +73,11 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
             }
           }}
           placeholder="Search courses..."
+          aria-label="Search courses"
           className={
             isDesktop
-              ? 'h-[42px] w-full rounded-lg border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-au-gold focus:ring-1 focus:ring-au-gold'
-              : 'h-9 w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-700 outline-none transition focus:border-au-gold focus:bg-white focus:ring-1 focus:ring-au-gold'
+              ? 'h-[42px] w-full rounded-lg border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-700 outline-none transition focus:border-amber-700 dark:focus:border-au-gold focus:ring-2 focus:ring-amber-700 dark:focus:ring-au-gold'
+              : 'h-9 w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-700 outline-none transition focus:border-amber-700 dark:focus:border-au-gold focus:bg-white focus:ring-2 focus:ring-amber-700 dark:focus:ring-au-gold'
           }
         />
       </div>
@@ -89,7 +90,7 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
             {loading ? (
               <p className="px-4 py-3 text-sm text-gray-500">Loading courses…</p>
             ) : error ? (
-              <p className="px-4 py-3 text-sm text-red-600 dark:text-red-400">
+              <p className="px-4 py-3 text-sm text-red-700 dark:text-red-400">
                 Couldn't load your courses. Please try again.
               </p>
             ) : results.length === 0 ? (
@@ -102,7 +103,7 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
                   className="flex w-full flex-col items-start px-4 py-2.5 text-left hover:bg-gray-50"
                 >
                   <span className="text-sm font-medium text-gray-900">{course.name}</span>
-                  <span className="text-xs text-gray-400">{course.code}</span>
+                  <span className="text-xs text-gray-500">{course.code}</span>
                 </button>
               ))
             )}

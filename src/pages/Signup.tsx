@@ -53,7 +53,7 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="p-8">
           {/* Header */}
@@ -72,7 +72,7 @@ const Signup: React.FC = () => {
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="name"
                   {...register('name', {
@@ -83,11 +83,11 @@ const Signup: React.FC = () => {
                     },
                   })}
                   type="text"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your full name"
                 />
               </div>
-              {errors.name && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.name.message}</p>}
+              {errors.name && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
@@ -95,7 +95,7 @@ const Signup: React.FC = () => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="email"
                   {...register('email', {
@@ -106,11 +106,11 @@ const Signup: React.FC = () => {
                     },
                   })}
                   type="email"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter your email address"
                 />
               </div>
-              {errors.email && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -118,24 +118,25 @@ const Signup: React.FC = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="password"
                   {...register('password', passwordRules)}
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Create a strong password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -147,7 +148,7 @@ const Signup: React.FC = () => {
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="confirmPassword"
                   {...register('confirmPassword', {
@@ -155,13 +156,14 @@ const Signup: React.FC = () => {
                     validate: (value) => value === password || 'Passwords do not match',
                   })}
                   type={showConfirmPassword ? 'text' : 'password'}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Confirm your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -171,7 +173,7 @@ const Signup: React.FC = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -183,25 +185,27 @@ const Signup: React.FC = () => {
                 Canvas API Token
               </label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="canvasApiToken"
                   {...register('canvasApiToken', {
                     required: 'Canvas API token is required to sign up',
                   })}
                   type="password"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
                   placeholder="Paste your Canvas API token"
                 />
               </div>
               {errors.canvasApiToken && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.canvasApiToken.message}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.canvasApiToken.message}</p>
               )}
 
               <div className="mt-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <button
                   type="button"
                   onClick={() => setShowInstructions(!showInstructions)}
+                  aria-expanded={showInstructions}
+                  aria-controls="canvas-token-instructions"
                   className="flex items-center justify-between w-full text-left"
                 >
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
@@ -214,7 +218,7 @@ const Signup: React.FC = () => {
                   )}
                 </button>
                 {showInstructions && (
-                  <>
+                  <div id="canvas-token-instructions">
                     <p className="text-sm text-blue-800 dark:text-blue-300 mt-3 mb-3">
                       Your token determines whether you get instructor or student access — if it
                       shows you teaching any courses, you'll get instructor access automatically.
@@ -228,7 +232,7 @@ const Signup: React.FC = () => {
                       <li>6. Copy the generated token (it starts with numbers/letters)</li>
                       <li>7. Paste it in the field above</li>
                     </ol>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -242,7 +246,7 @@ const Signup: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 font-medium">
                 Sign in
               </Link>
             </p>
@@ -250,7 +254,7 @@ const Signup: React.FC = () => {
 
           {/* Features Preview */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">What you'll get:</h3>
+            <h2 className="text-sm font-medium text-gray-900 mb-3">What you'll get:</h2>
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-primary-600 rounded-full mr-3"></div>
@@ -272,7 +276,7 @@ const Signup: React.FC = () => {
           </div>
         </Card>
       </div>
-    </div>
+    </main>
   );
 };
 

@@ -58,7 +58,7 @@ const BadgeSharingSettings: React.FC = () => {
         <h2 className="text-xl font-semibold text-gray-900">Badge Sharing</h2>
       </div>
       {loadError ? (
-        <p className="text-red-600">
+        <p className="text-red-700 dark:text-red-400">
           Could not load your badge sharing settings. Please refresh the page to try again.
         </p>
       ) : (
@@ -302,11 +302,11 @@ const Settings: React.FC = () => {
           <div className="mt-3 p-2 bg-white rounded border">
             <p className="text-xs font-medium text-gray-700 mb-1">Current Status:</p>
             {user?.hasCanvasToken ? (
-              <p className="text-xs text-green-600 dark:text-green-400">
+              <p className="text-xs text-green-700 dark:text-green-400">
                 ✅ {user.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} token is set and ready to use
               </p>
             ) : (
-              <p className="text-xs text-orange-600">
+              <p className="text-xs text-orange-700 dark:text-orange-400">
                 ⚠️ No token set - {profile.canvasTokenType === 'instructor' ? 'instructor features' : 'courses'} won't load until you add one
               </p>
             )}
@@ -367,7 +367,7 @@ const Settings: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
               </div>
               {!isEditingProfile && (
-                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
+                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} aria-label="Edit profile">
                   <Edit className="w-4 h-4 mr-2" />Edit
                 </Button>
               )}
@@ -451,7 +451,7 @@ const Settings: React.FC = () => {
             {/* Status Indicator */}
             <div className="mb-4">
               {user?.hasCanvasToken ? (
-                <div className="flex items-center text-sm text-green-600 dark:text-green-400"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
+                <div className="flex items-center text-sm text-green-700 dark:text-green-400"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
               ) : (
                 <div className="flex items-center text-sm text-gray-500"><div className="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>No token set</div>
               )}
@@ -481,7 +481,7 @@ const Settings: React.FC = () => {
                 </div>
                 
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
                     name="canvasApiToken"
                     type="text"
@@ -525,7 +525,7 @@ const Settings: React.FC = () => {
                 </div>
                 
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
                     name="canvasApiToken"
                     type="text"
@@ -553,16 +553,16 @@ const Settings: React.FC = () => {
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                   <div>
                     <span className="text-gray-500">••••••••••••••••••••••••••••••••</span>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       {profile.canvasTokenType === 'instructor' ? 'Instructor Token' : 'Student Token'} - stored securely
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)} aria-label="Edit Canvas API token">
                     <Edit className="w-4 h-4 mr-2" />Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:text-red-800 dark:hover:text-red-300">
+                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} aria-label="Clear Canvas API token" className="text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:text-red-800 dark:hover:text-red-300">
                     Clear
                   </Button>
                 </div>

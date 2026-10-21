@@ -33,7 +33,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
             <p className="truncate text-sm font-semibold text-gray-900">
               {user?.name || user?.email || 'User'}
             </p>
-            <p className="text-xs text-gray-400">{displayAsInstructor ? 'Instructor' : 'Student'}</p>
+            <p className="text-xs text-gray-500">{displayAsInstructor ? 'Instructor' : 'Student'}</p>
           </div>
 
           <div className="my-1 border-t border-gray-100" />

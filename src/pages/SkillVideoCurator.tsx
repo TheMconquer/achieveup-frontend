@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
@@ -10,13 +10,14 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
 import { getApiErrorMessage } from '../utils/apiError';
+import DialogPanel from '../components/common/DialogPanel';
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl">
+    <DialogPanel className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl" onClose={onClose} labelledBy="skill-video-help-title">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">How Skill Video Assignment Works</h2>
-        <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+        <h2 id="skill-video-help-title" className="text-lg font-semibold text-gray-900">How Skill Video Assignment Works</h2>
+        <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-600">
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -62,7 +63,7 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           </p>
         </div>
       </div>
-    </div>
+    </DialogPanel>
   </div>
 );
 
@@ -70,6 +71,17 @@ const SkillVideoCurator: React.FC = () => {
   const { isInstructor } = useAuth();
   const [searchParams] = useSearchParams();
   const [courseId, setCourseId] = useState<string>(searchParams.get('courseId') ?? '');
+  // Picking or changing a course swaps the whole view (and unmounts the control
+  // that was used), so move focus to the new view's heading.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const hasCourseChangedRef = useRef(false);
+  useEffect(() => {
+    if (!hasCourseChangedRef.current) {
+      hasCourseChangedRef.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [courseId]);
   const matrixIdParam = searchParams.get('matrixId') ?? undefined;
 
   const { courses, loading: coursesLoading } = useCourseList<CanvasCourse>(isInstructor, {
@@ -213,12 +225,12 @@ const SkillVideoCurator: React.FC = () => {
       <div className="flex w-full flex-col gap-6">
         <div className="mb-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Skill Video Assignment</h1>
+            <h1 ref={headingRef} tabIndex={-1} className="text-[28px] font-bold tracking-tight text-gray-900 focus:outline-none">Skill Video Assignment</h1>
             <button
               type="button"
               onClick={() => setShowInfoModal(true)}
               aria-label="How Skill Video Assignment works"
-              className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+              className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
             >
               <Info className="h-5 w-5" />
             </button>
@@ -246,7 +258,7 @@ const SkillVideoCurator: React.FC = () => {
                   onClick={() => setCourseId(course.id)}
                   className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40"
                 >
-                  <BookOpen className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <BookOpen className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   <div>
                     <div className="text-sm font-semibold text-gray-900">{course.name}</div>
                     <div className="text-xs text-gray-500">{course.code}</div>
@@ -277,12 +289,12 @@ const SkillVideoCurator: React.FC = () => {
           ← Change course
         </button>
         <div className="flex items-center gap-2">
-          <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Skill Video Assignment</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="text-[28px] font-bold tracking-tight text-gray-900 focus:outline-none">Skill Video Assignment</h1>
           <button
             type="button"
             onClick={() => setShowInfoModal(true)}
             aria-label="How Skill Video Assignment works"
-            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
           >
             <Info className="h-5 w-5" />
           </button>
@@ -299,8 +311,9 @@ const SkillVideoCurator: React.FC = () => {
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Skill Matrix</label>
+            <label htmlFor="curator-matrix" className="mb-1 block text-sm font-medium text-gray-700">Skill Matrix</label>
             <select
+              id="curator-matrix"
               value={matrixId ?? ''}
               onChange={(e) => setMatrixId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -313,8 +326,9 @@ const SkillVideoCurator: React.FC = () => {
             </select>
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Skill</label>
+            <label htmlFor="curator-skill" className="mb-1 block text-sm font-medium text-gray-700">Skill</label>
             <select
+              id="curator-skill"
               value={skillName}
               onChange={(e) => setSkillName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -355,7 +369,7 @@ const SkillVideoCurator: React.FC = () => {
                 className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
               >
                 {video.thumbnail && (
-                  <img src={video.thumbnail} alt={video.title} className="h-14 w-24 rounded-md object-cover" />
+                  <img src={video.thumbnail} alt="" className="h-14 w-24 rounded-md object-cover" />
                 )}
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="flex items-center gap-1.5 truncate">
@@ -366,6 +380,7 @@ const SkillVideoCurator: React.FC = () => {
                       className="truncate text-sm font-semibold text-gray-900 hover:underline"
                     >
                       {video.title}
+                      <span className="sr-only"> (opens in new tab)</span>
                     </a>
                     {video.source === 'manual' ? (
                       <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
@@ -387,7 +402,7 @@ const SkillVideoCurator: React.FC = () => {
                     )}
                   </span>
                   <span className="truncate text-xs text-gray-500">{video.channel}</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500">
                     {video.upvotes ?? 0} found helpful · {video.downvotes ?? 0} did not
                   </span>
                 </div>
@@ -397,7 +412,8 @@ const SkillVideoCurator: React.FC = () => {
                     onClick={() => handleVerify(video)}
                     disabled={verifyingId === video._id}
                     title="Mark as instructor verified"
-                    className="flex-shrink-0 text-gray-400 hover:text-green-600 dark:hover:text-green-400 disabled:opacity-50"
+                    aria-label={`Mark as instructor verified: ${video.title}`}
+                    className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-green-600 dark:hover:text-green-400 disabled:opacity-50"
                   >
                     {verifyingId === video._id ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
@@ -412,7 +428,8 @@ const SkillVideoCurator: React.FC = () => {
                     onClick={() => handleFindMoment(video)}
                     disabled={findingMomentId === video._id}
                     title="Find relevant moment in this video"
-                    className="flex-shrink-0 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
+                    aria-label={`Find relevant moment: ${video.title}`}
+                    className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
                   >
                     {findingMomentId === video._id ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
@@ -425,7 +442,8 @@ const SkillVideoCurator: React.FC = () => {
                   type="button"
                   onClick={() => handleRemove(video._id)}
                   title="Remove"
-                  className="flex-shrink-0 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                  aria-label={`Remove ${video.title}`}
+                  className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

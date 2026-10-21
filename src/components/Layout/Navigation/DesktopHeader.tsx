@@ -39,7 +39,8 @@ const DesktopHeader: React.FC<DesktopHeaderProps> = ({
         {canSwitchToStudentView && (
           <Link
             to={viewingAsStudent ? '/instructor-dashboard' : '/student-dashboard'}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
+            aria-label={viewingAsStudent ? 'Back to Instructor' : 'View as Student'}
+            className="flex items-center gap-2 rounded-md p-1 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
           >
             <ArrowLeftRight className="h-[18px] w-[18px]" />
 

@@ -135,7 +135,7 @@ describe('auth login flow (real AuthContext, real form)', () => {
       target: { value: 'taylor@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'Password123' } });
-    fireEvent.change(screen.getByLabelText(/confirm password/i), { target: { value: 'Password123' } });
+    fireEvent.change(screen.getByLabelText(/^confirm password$/i), { target: { value: 'Password123' } });
     fireEvent.change(screen.getByLabelText(/canvas api token/i), { target: { value: validToken } });
     fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 

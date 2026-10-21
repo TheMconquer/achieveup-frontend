@@ -87,14 +87,14 @@ describe('MobileHeader', () => {
     renderHeader();
     expect(screen.queryByText('Jane Instructor')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'J' }));
+    fireEvent.click(screen.getByRole('button', { name: /account menu/i }));
     expect(screen.getByText('Jane Instructor')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
   });
 
   test('clicking the backdrop closes the account menu', () => {
     const { container } = renderHeader();
-    fireEvent.click(screen.getByRole('button', { name: 'J' }));
+    fireEvent.click(screen.getByRole('button', { name: /account menu/i }));
     expect(screen.getByText('Jane Instructor')).toBeInTheDocument();
 
     const backdrop = container.querySelector('.fixed.inset-0.z-40');

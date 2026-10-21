@@ -9,3 +9,22 @@
   from = "/*"
   to = "/index.html"
   status = 200 
+# CRA fingerprints everything under /static, so it can be cached forever.
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Shared badge links open for anyone with the URL but stay out of search results.
+[[headers]]
+  for = "/badges/share/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

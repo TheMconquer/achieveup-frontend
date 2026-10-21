@@ -130,15 +130,15 @@ const StudentDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
         {/* Overall Mastery */}
-        <Card className="h-[220px] p-6">
+        <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-[15px] font-semibold text-gray-900">Overall Mastery</span>
 
               <Info
-                className="h-4 w-4 text-gray-400"
+                className="h-4 w-4 text-gray-500"
                 aria-label="Average mastery across every skill you've attempted"
               />
             </div>
@@ -146,24 +146,24 @@ const StudentDashboard: React.FC = () => {
             {/* BOTTOM SECTION */}
             <div className="mt-4 flex min-h-0 flex-1 items-center">
               {/* LEFT - mastery ring */}
-              <div className="flex flex-1 items-center justify-center pr-5">
+              <div className="flex flex-none flex-col items-center gap-1.5 pr-4">
                 <MasteryRing percent={overallMastery}>
-                  <span className="text-[28px] font-bold leading-none text-gray-900">
+                  <span className="text-[24px] font-bold leading-none text-gray-900">
                     {overallMastery}%
                   </span>
-
-                  <span className="mt-1 text-[11px] font-medium text-gray-600">
-                    {tierLabel[tierForScore(overallMastery)]}
-                  </span>
                 </MasteryRing>
+                {/* Below the ring rather than inside it, so longer tier names never clip. */}
+                <span className="text-[11px] font-medium text-gray-600">
+                  {tierLabel[tierForScore(overallMastery)]}
+                </span>
               </div>
 
               {/* divider */}
               <div className="h-[105px] w-px flex-shrink-0 bg-gray-200" />
 
               {/* right - description */}
-              <div className="flex flex-1 items-center pl-6">
-                <p className="max-w-[155px] text-[13px] leading-5 text-gray-600">
+              <div className="flex min-w-0 flex-1 items-center pl-4">
+                <p className="text-[13px] leading-5 text-gray-600">
                   {masteredCount > 0
                     ? "You're making great progress! Keep mastering new skills."
                     : "You haven't mastered a skill yet — keep going, it adds up fast."}
@@ -174,10 +174,10 @@ const StudentDashboard: React.FC = () => {
         </Card>
 
         {/* active Courses */}
-        <Card className="h-[220px] p-6">
+        <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
                 <BookOpen className="h-6 w-6" />
               </div>
 
@@ -190,17 +190,17 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Courses</div>
 
-            <Link to="/courses" className="mt-auto text-[13px] font-semibold text-au-gold">
+            <Link to="/courses" className="mt-auto text-[13px] font-semibold text-amber-700 dark:text-au-gold">
               View my courses →
             </Link>
           </div>
         </Card>
 
         {/* Badges Earned */}
-        <Card className="h-[220px] p-6">
+        <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
                 <Award className="h-6 w-6" />
               </div>
 
@@ -213,17 +213,17 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Badges</div>
 
-            <Link to="/badges" className="mt-auto text-[13px] font-semibold text-au-gold">
+            <Link to="/badges" className="mt-auto text-[13px] font-semibold text-amber-700 dark:text-au-gold">
               View all badges →
             </Link>
           </div>
         </Card>
 
         {/* Skills Earned */}
-        <Card className="h-[220px] p-6">
+        <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-au-gold">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
                 <Sparkles className="h-6 w-6" />
               </div>
 
@@ -236,7 +236,7 @@ const StudentDashboard: React.FC = () => {
 
             <div className="mt-2 text-[13px] text-gray-500">Skills</div>
 
-            <Link to="/skills" className="mt-auto text-[13px] font-semibold text-au-gold">
+            <Link to="/skills" className="mt-auto text-[13px] font-semibold text-amber-700 dark:text-au-gold">
               View all skills →
             </Link>
           </div>
@@ -248,7 +248,7 @@ const StudentDashboard: React.FC = () => {
           className="min-h-[300px]"
           title="Top Skills"
           headerActions={
-            <Link to="/skills" className="text-[13px] font-semibold text-au-gold">
+            <Link to="/skills" className="text-[13px] font-semibold text-amber-700 dark:text-au-gold">
               View all skills →
             </Link>
           }
@@ -260,7 +260,7 @@ const StudentDashboard: React.FC = () => {
           className="min-h-[300px]"
           title="Recent Badges"
           headerActions={
-            <Link to="/badges" className="text-[13px] font-semibold text-au-gold">
+            <Link to="/badges" className="text-[13px] font-semibold text-amber-700 dark:text-au-gold">
               View all badges →
             </Link>
           }
@@ -273,7 +273,7 @@ const StudentDashboard: React.FC = () => {
         className="min-h-[220px]"
         title="Course Overview"
         headerActions={
-          <Link to="/courses" className="text-[13px] font-semibold text-au-gold">
+          <Link to="/courses" className="text-[13px] font-semibold text-amber-700 dark:text-au-gold">
             View all courses →
           </Link>
         }

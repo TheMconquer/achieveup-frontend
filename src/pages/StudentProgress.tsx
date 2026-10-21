@@ -8,6 +8,7 @@ import { badgeAPI } from '../services/api';
 import { getApiErrorMessage } from '../utils/apiError';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { CanvasCourse } from '../types';
+import DialogPanel from '../components/common/DialogPanel';
 
 
 interface StudentProgressData {
@@ -119,7 +120,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
           <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" />
         </div>
       ) : loadError ? (
-        <p className="text-sm text-red-600">{loadError}</p>
+        <p className="text-sm text-red-700 dark:text-red-400">{loadError}</p>
       ) : (
         <RecentBadgesGrid badges={pagedBadges} />
       )}
@@ -140,7 +141,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
               onClick={() => copy(shareLink)}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-green-700 dark:text-green-400" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
@@ -298,9 +299,9 @@ const StudentProgress: React.FC = () => {
 
   const getRiskLevelColor = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
-      case 'medium': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40';
-      case 'high': return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
+      case 'low': return 'text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
+      case 'medium': return 'text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40';
+      case 'high': return 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -336,12 +337,13 @@ const StudentProgress: React.FC = () => {
       {/* Course Selection */}
       {courses.length > 0 && (
         <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
+          <label htmlFor="progress-course" className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
           <div className="flex items-center gap-4">
             <select
+              id="progress-course"
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
             >
               <option value="">Choose a course...</option>
               {courses.map(course => (
@@ -399,7 +401,7 @@ const StudentProgress: React.FC = () => {
                   }
                 }}
                 disabled={syncing}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Syncing...' : 'Sync Now'}
@@ -420,7 +422,7 @@ const StudentProgress: React.FC = () => {
       {courses.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-400 text-2xl">📚</span>
+            <span className="text-gray-500 text-2xl">📚</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Courses Found</h2>
           <p className="text-gray-600 mb-4">
@@ -428,7 +430,7 @@ const StudentProgress: React.FC = () => {
           </p>
           <a
             href="/settings"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600"
           >
             Configure Canvas Token
           </a>
@@ -450,7 +452,7 @@ const StudentProgress: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Avg Skills Mastered</p>
               <div className="mt-2 w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 dark:text-green-400 font-bold">
+                <span className="text-green-700 dark:text-green-400 font-bold">
                   {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
                 </span>
               </div>
@@ -469,7 +471,7 @@ const StudentProgress: React.FC = () => {
           {/* Student Progress Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Student Performance Overview</h3>
+              <h2 className="text-lg font-medium text-gray-900">Student Performance Overview</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -502,8 +504,9 @@ const StudentProgress: React.FC = () => {
                           onClick={() =>
                             setExpandedStudentId((current) => (current === student.id ? null : student.id))
                           }
-                          className="text-sm font-medium text-ucf-gold hover:text-yellow-600 dark:hover:text-yellow-400 hover:underline flex items-center"
+                          className="text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 hover:underline flex items-center"
                           title="View Student Badges"
+                          aria-expanded={expandedStudentId === student.id}
                         >
                           {expandedStudentId === student.id ? (
                             <ChevronDown className="w-3 h-3 mr-1" />
@@ -561,7 +564,8 @@ const StudentProgress: React.FC = () => {
                             setSelectedStudent(student);
                             setShowModal(true);
                           }}
-                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ucf-gold"
+                          aria-label={`Details for ${student.name}`}
+                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                         >
                           Details
                         </button>
@@ -585,7 +589,7 @@ const StudentProgress: React.FC = () => {
           {Object.keys(studentData.skillDistribution).length > 0 && (
             <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Skill Distribution</h3>
+                <h2 className="text-lg font-medium text-gray-900">Skill Distribution</h2>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -609,7 +613,7 @@ const StudentProgress: React.FC = () => {
       {selectedCourse && studentData && studentData.students.length === 0 && !error && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-400 text-2xl">📊</span>
+            <span className="text-gray-500 text-2xl">📊</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Student Progress Data Yet</h2>
           <p className="text-gray-600 mb-6">
@@ -652,7 +656,7 @@ const StudentProgress: React.FC = () => {
           <div className="space-x-4">
             <a
               href="/skill-assignment"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
               Assign Skills to Questions
             </a>
@@ -669,9 +673,9 @@ const StudentProgress: React.FC = () => {
       {/* Student Details Modal */}
       {showModal && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogPanel className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClose={() => { setShowModal(false); setSelectedStudent(null); }} labelledBy="student-detail-title">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 id="student-detail-title" className="text-xl font-semibold text-gray-900">
                 {selectedStudent.name} - Detailed View
               </h2>
               <button
@@ -679,7 +683,7 @@ const StudentProgress: React.FC = () => {
                   setShowModal(false);
                   setSelectedStudent(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500 hover:text-gray-600"
               >
                 <span className="sr-only">Close</span>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -730,8 +734,8 @@ const StudentProgress: React.FC = () => {
                         }`}>
                         Risk Level: {selectedStudent.riskLevel}
                       </p>
-                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-600 dark:text-green-400' :
-                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-700 dark:text-green-400' :
+                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
                         }`}>
                         {selectedStudent.riskLevel === 'low' ? 'Performing well across most skills' :
                           selectedStudent.riskLevel === 'medium' ? 'Some areas need attention' :
@@ -782,7 +786,7 @@ const StudentProgress: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-gray-400 text-2xl">📊</span>
+                      <span className="text-gray-500 text-2xl">📊</span>
                     </div>
                     <p className="text-gray-600">No detailed skill data available yet.</p>
                     <p className="text-sm text-gray-500 mt-2">
@@ -792,7 +796,7 @@ const StudentProgress: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

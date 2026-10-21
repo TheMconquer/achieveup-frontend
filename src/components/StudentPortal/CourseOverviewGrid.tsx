@@ -36,12 +36,12 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
             className="flex flex-col gap-3 rounded-2xl border border-gray-200 p-4 transition-colors hover:border-au-gold"
           >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light text-au-gold">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light text-amber-700 dark:text-au-gold">
                 <BookOpen className="h-3.5 w-3.5" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-gray-900">{course.name}</div>
-                <div className="truncate text-xs text-gray-400">{course.code}</div>
+                <div className="truncate text-xs text-gray-500">{course.code}</div>
               </div>
               <div className="flex-shrink-0 text-base font-bold text-gray-900">
                 {course.averageScore === null ? '—' : `${course.averageScore}%`}
@@ -49,7 +49,7 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
               <div
-                className={`h-full rounded-full ${course.averageScore === null ? 'bg-gray-200' : 'bg-au-gold'}`}
+                className={`h-full rounded-full ${course.averageScore === null ? 'bg-gray-200' : 'bg-amber-700 dark:bg-au-gold'}`}
                 style={{ width: `${course.averageScore ?? 0}%` }}
               />
             </div>

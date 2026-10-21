@@ -244,7 +244,7 @@ const InstructorDashboard: React.FC = () => {
           <div className="hidden md:flex items-center space-x-3">
             <Link
               to="/skill-matrix"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Get Started
@@ -320,7 +320,7 @@ const InstructorDashboard: React.FC = () => {
 
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg mx-auto mb-4">
-            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <Users className="w-6 h-6 text-green-700 dark:text-green-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{instructorStats.totalStudents}</div>
           <div className="text-sm text-gray-600">Total Students</div>
@@ -340,7 +340,7 @@ const InstructorDashboard: React.FC = () => {
 
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg mx-auto mb-4">
-            <Brain className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            <Brain className="w-6 h-6 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">AI</div>
           <div className="text-sm text-gray-600">Powered</div>
@@ -374,7 +374,7 @@ const InstructorDashboard: React.FC = () => {
                     <div
                       className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
                         step.status === 'current'
-                          ? 'bg-ucf-gold text-ucf-white'
+                          ? 'bg-ucf-gold text-ucf-black'
                           : step.status === 'completed'
                             ? 'bg-green-500 text-ucf-white'
                             : 'bg-gray-300 text-gray-600'
@@ -415,10 +415,10 @@ const InstructorDashboard: React.FC = () => {
                     {step.status === 'current' && (
                       <Link
                         to={step.href}
-                        className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-ucf-gold bg-yellow-100 dark:bg-yellow-900/40 hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition-colors"
+                        className="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-amber-800 dark:text-ucf-gold bg-yellow-100 dark:bg-yellow-900/40 hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition-colors"
                       >
-                        Start
-                        <ArrowRight className="w-4 h-4 ml-1" />
+                        Start<span className="sr-only">: {step.title}</span>
+                        <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
                       </Link>
                     )}
                   </div>
@@ -444,7 +444,7 @@ const InstructorDashboard: React.FC = () => {
         headerActions={
           <Link
             to="/skill-matrix"
-            className="text-sm text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
+            className="text-sm text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-300 font-medium"
           >
             Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
           </Link>
@@ -506,7 +506,8 @@ const InstructorDashboard: React.FC = () => {
                 </div>
                 <Link
                   to={`/skill-matrix?course=${course.id}`}
-                  className="text-xs text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
+                  aria-label={`Setup ${course.name}`}
+                  className="text-xs text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-300 font-medium"
                 >
                   Setup
                 </Link>
@@ -550,7 +551,7 @@ const InstructorDashboard: React.FC = () => {
             <div className="pt-3">
               <Link
                 to="/settings"
-                className="inline-flex items-center text-sm text-ucf-gold hover:text-yellow-700 dark:hover:text-yellow-300 font-medium"
+                className="inline-flex items-center text-sm text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-300 font-medium"
               >
                 Configure Canvas <ArrowRight className="w-4 h-4 ml-1" />
               </Link>

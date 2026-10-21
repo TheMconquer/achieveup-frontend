@@ -5,6 +5,7 @@ import Card from '../components/common/Card';
 import { Award, Share2, AlertCircle, Check, BookOpen } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { useNoIndex } from '../hooks/useNoIndex';
 
 interface BadgeData {
     badge_id: string;
@@ -19,6 +20,8 @@ interface BadgeData {
 
 const StudentPublicBadges: React.FC = () => {
     const { shareId } = useParams<{ shareId: string }>();
+    // Shared links work for anyone who has them, but shouldn't show up in search.
+    useNoIndex();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const nameFromQuery = queryParams.get('name');
@@ -80,37 +83,37 @@ const StudentPublicBadges: React.FC = () => {
         switch (level.toLowerCase()) {
             case 'expert': return 'bg-purple-600';
             case 'advanced': return 'bg-blue-600';
-            case 'intermediate': return 'bg-ucf-gold';
-            case 'beginner': return 'bg-green-600';
+            case 'intermediate': return 'bg-amber-700';
+            case 'beginner': return 'bg-green-700';
             default: return 'bg-ucf-grey';
         }
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+            <main className="flex justify-center items-center min-h-screen bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
-            </div>
+            </main>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
+            <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
                 <div className="max-w-md w-full bg-white rounded-lg shadow p-8 text-center border-t-4 border-red-500">
                     <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h2>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h1>
                     <p className="text-gray-600">{error}</p>
-                    <Link to="/login" className="mt-6 inline-block text-ucf-gold hover:text-yellow-600 dark:hover:text-yellow-400 font-medium">
+                    <Link to="/login" className="mt-6 inline-block text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 font-medium">
                         Return to Login
                     </Link>
                 </div>
-            </div>
+            </main>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <main className="min-h-screen bg-gray-50 pb-12">
             {/* Simple Public Header */}
             <nav className="bg-white shadow-sm mb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -175,7 +178,7 @@ const StudentPublicBadges: React.FC = () => {
                                 <div className="p-6">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <p className="text-sm font-semibold text-ucf-gold uppercase tracking-wider mb-1">
+                                            <p className="text-sm font-semibold text-amber-700 dark:text-ucf-gold uppercase tracking-wider mb-1">
                                                 {badge.badge_level} Level
                                             </p>
                                             <h3 className="text-xl font-bold text-gray-900 leading-tight">
@@ -206,7 +209,7 @@ const StudentPublicBadges: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </main>
     );
 };
 

@@ -52,7 +52,7 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-[#F7F6F2]">
+    <div className="bg-[#F7F6F2]">
       {/* desktop layout*/}
 
       <div className="hidden md:block">
@@ -103,7 +103,7 @@ const Navigation: React.FC = () => {
       {/* how it works Modal*/}
 
       {showHelpModal && <HowItWorksModal onClose={() => setShowHelpModal(false)} />}
-    </nav>
+    </div>
   );
 };
 

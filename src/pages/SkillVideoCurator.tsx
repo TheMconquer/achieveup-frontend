@@ -155,8 +155,8 @@ const SkillVideoCurator: React.FC = () => {
       setNewLink('');
       toast.success('Video added');
       loadVideos();
-    } catch {
-      toast.error('Failed to add video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to add video');
     } finally {
       setAdding(false);
     }

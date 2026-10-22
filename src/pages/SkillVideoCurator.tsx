@@ -167,8 +167,8 @@ const SkillVideoCurator: React.FC = () => {
       await skillVideoAPI.remove(videoId);
       setVideos((prev) => prev.filter((v) => v._id !== videoId));
       toast.success('Video removed');
-    } catch {
-      toast.error('Failed to remove video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to remove video');
     }
   };
 
@@ -213,8 +213,8 @@ const SkillVideoCurator: React.FC = () => {
           ? 'No new suggestions found.'
           : `Added ${res.data.videos.length} AI-recommended video(s) — visible to students now.`
       );
-    } catch {
-      toast.error('Failed to generate suggestions');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to generate suggestions');
     } finally {
       setSuggesting(false);
     }

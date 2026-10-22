@@ -120,8 +120,6 @@ export const skillVideoAPI = {
     api.post('/achieveup/skill-videos/get', { course_id: courseId, matrix_id: matrixId, skill_name: skillName }),
   add: (data: AddSkillVideoRequest): Promise<AxiosResponse<SkillVideo>> =>
     api.post('/achieveup/skill-videos', data),
-  update: (videoId: string, updates: Partial<Pick<SkillVideo, 'title' | 'link' | 'channel' | 'thumbnail' | 'status'>>): Promise<AxiosResponse<SkillVideo>> =>
-    api.put(`/achieveup/skill-videos/${videoId}`, updates),
   remove: (videoId: string): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.delete(`/achieveup/skill-videos/${videoId}`),
   // Generates AI-recommended videos for a skill — they publish immediately (visible to

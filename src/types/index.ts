@@ -146,7 +146,6 @@ export interface AddSkillVideoRequest {
   skill_name: string;
   link: string;
   title?: string;
-  source?: 'manual' | 'ai_suggested';
 }
 
 export interface SkillVideoVoteRequest {

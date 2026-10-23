@@ -23,10 +23,12 @@ function parseWebUrl(value: unknown): URL | null {
   }
 }
 
-// Returns the video link as an http(s) YouTube URL, or null for anything else
-// (a javascript: link, another site), so only YouTube links become clickable.
-// Links saved before the server cleaned them up may lack https://, so it's
-// added the same way the backend's normalize_youtube_link does.
+// Returns the video link as an http(s) URL on a YouTube domain, or null for
+// anything else (a javascript: link, another site), so only YouTube links
+// become clickable. It only checks the scheme and domain: the backend's
+// normalize_youtube_link is stricter and rebuilds new links from the video ID,
+// so this mainly guards links saved before it did. Like the backend, it adds
+// https:// to a link saved without it.
 export function youTubeUrl(link: unknown): string | null {
   if (typeof link !== 'string') return null;
   const trimmed = link.trim();

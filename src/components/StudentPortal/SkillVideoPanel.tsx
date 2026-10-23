@@ -4,6 +4,15 @@ import { skillVideoAPI } from '../../services/api';
 import { SkillVideo } from '../../types';
 import { isWebUrl, youTubeUrl, withTimestamp } from '../../utils/youtubeLinks';
 
+// Skips any video whose link isn't a YouTube link, so it never becomes a clickable link.
+// Applied at render time so every way the list is loaded goes through it.
+function playableVideos(videos: SkillVideo[]): SkillVideo[] {
+  return videos.flatMap((video) => {
+    const link = youTubeUrl(video.link);
+    return link ? [{ ...video, link }] : [];
+  });
+}
+
 export interface SkillVideoPanelProps {
   courseId: string;
   skillName: string;
@@ -22,12 +31,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
     skillVideoAPI
       .getForSkill(courseId, undefined, skillName)
       .then((res) => {
-        // Skip any video whose link isn't a YouTube link, so it never becomes a clickable link.
-        const playable = res.data.videos.flatMap((video) => {
-          const link = youTubeUrl(video.link);
-          return link ? [{ ...video, link }] : [];
-        });
-        if (!cancelled) setVideos(playable);
+        if (!cancelled) setVideos(res.data.videos);
       })
       .catch(() => {
         if (!cancelled) setLoadError(true);
@@ -93,7 +97,9 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
     );
   }
 
-  if (videos.length === 0) {
+  const playable = playableVideos(videos);
+
+  if (playable.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-gray-500">
         No videos yet for this skill.
@@ -103,7 +109,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   return (
     <div className="flex flex-col gap-3 py-3">
-      {videos.map((video) => (
+      {playable.map((video) => (
         <div
           key={video._id}
           className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"

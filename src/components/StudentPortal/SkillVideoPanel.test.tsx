@@ -1,16 +1,17 @@
 // These tests feed in javascript: links on purpose, to check they're never rendered.
 /* eslint-disable no-script-url */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SkillVideoPanel from './SkillVideoPanel';
 import { skillVideoAPI } from '../../services/api';
+import { SkillVideo } from '../../types';
 
 jest.mock('../../services/api', () => ({
   skillVideoAPI: { getForSkill: jest.fn(), vote: jest.fn() },
 }));
 
-const video = (overrides: object) => ({
+const video = (overrides: Partial<SkillVideo>): SkillVideo => ({
   _id: 'v-1',
   course_id: '100',
   matrix_id: 'm-1',
@@ -79,5 +80,31 @@ describe('SkillVideoPanel', () => {
     render(<SkillVideoPanel courseId="100" skillName="Loops" />);
 
     expect(await screen.findByText(/no videos yet for this skill/i)).toBeInTheDocument();
+  });
+
+  test('still hides bad links after a failed vote reloads the list', async () => {
+    (skillVideoAPI.getForSkill as jest.Mock)
+      .mockResolvedValueOnce({ data: { videos: [video({})] } })
+      .mockResolvedValueOnce({
+        data: {
+          videos: [
+            video({ upvotes: 7 }),
+            video({ _id: 'v-2', title: 'Bad link', link: 'javascript:alert(document.cookie)' }),
+          ],
+        },
+      });
+    (skillVideoAPI.vote as jest.Mock).mockRejectedValue(new Error('network'));
+    render(<SkillVideoPanel courseId="100" skillName="Loops" />);
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: /this helped: loops explained \(0\)/i })
+    );
+
+    // The reloaded list (with 7 upvotes) replaces the optimistic one.
+    expect(
+      await screen.findByRole('button', { name: /this helped: loops explained \(7\)/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Bad link')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 });

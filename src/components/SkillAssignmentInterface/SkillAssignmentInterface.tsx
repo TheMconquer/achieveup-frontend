@@ -69,9 +69,10 @@ interface HumanReviewStatus {
 
 function extractTextFromHTML(htmlString: string) {
   if (!htmlString) return '';
-  var div = document.createElement('div');
-  div.innerHTML = htmlString;
-  return div.textContent || div.innerText || '';
+  // DOMParser builds an inert document: unlike innerHTML on a live element,
+  // it never loads images or runs handlers like onerror in the question HTML.
+  const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+  return doc.body.textContent || '';
 }
 
 // The backend builds question_key (normalized text + answers) with the same

@@ -40,14 +40,19 @@ describe('SkillVideoPanel', () => {
 
     const link = await screen.findByRole('link', { name: /loops explained/i });
     expect(link).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'src',
+      'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
+    );
     expect(screen.queryByText('Bad link')).not.toBeInTheDocument();
     expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 
   test('adds https:// to an old link saved without it', async () => {
     (skillVideoAPI.getForSkill as jest.Mock).mockResolvedValue({
-      data: { videos: [video({ link: 'www.youtube.com/watch?v=dQw4w9WgXcQ', timestamp_seconds: 90 })] },
+      data: {
+        videos: [video({ link: 'www.youtube.com/watch?v=dQw4w9WgXcQ', timestamp_seconds: 90 })],
+      },
     });
     render(<SkillVideoPanel courseId="100" skillName="Loops" />);
 

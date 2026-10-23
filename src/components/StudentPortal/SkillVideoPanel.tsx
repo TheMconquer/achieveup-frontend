@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ThumbsUp, ThumbsDown, ExternalLink } from 'lucide-react';
 import { skillVideoAPI } from '../../services/api';
 import { SkillVideo } from '../../types';
-import { withTimestamp } from '../../utils/youtubeLinks';
+import { isWebUrl, youTubeUrl, withTimestamp } from '../../utils/youtubeLinks';
 
 export interface SkillVideoPanelProps {
   courseId: string;
@@ -22,7 +22,12 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
     skillVideoAPI
       .getForSkill(courseId, undefined, skillName)
       .then((res) => {
-        if (!cancelled) setVideos(res.data.videos);
+        // Skip any video whose link isn't a YouTube link, so it never becomes a clickable link.
+        const playable = res.data.videos.flatMap((video) => {
+          const link = youTubeUrl(video.link);
+          return link ? [{ ...video, link }] : [];
+        });
+        if (!cancelled) setVideos(playable);
       })
       .catch(() => {
         if (!cancelled) setLoadError(true);
@@ -103,7 +108,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
           key={video._id}
           className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
         >
-          {video.thumbnail && (
+          {isWebUrl(video.thumbnail) && (
             <img
               src={video.thumbnail}
               alt=""

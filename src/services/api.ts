@@ -247,7 +247,7 @@ export const authAPI = {
     api.put('/auth/profile', data),
   changePassword: (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<void>> =>
     api.put('/auth/password', data),
-  validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string; user_info?: object }>> =>
+  validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string }>> =>
     api.post('/auth/validate-canvas-token', data),
 };
 

@@ -16,6 +16,7 @@ import axios from 'axios';
 import { skillAssignmentAPI, canvasAPI, skillMatrixAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCourseList } from '../../hooks/useCourseList';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { CanvasCourse, SkillMatrix } from '../../types';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -226,6 +227,10 @@ const SkillAssignmentInterface: React.FC = () => {
           toast.error('Authentication failed. Please check your instructor token in Settings.');
         } else if (status === 403) {
           toast.error('Access denied. Instructor permissions required.');
+        } else if (status === 429) {
+          toast.error(
+            getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.'
+          );
         } else {
           toast.error(
             `Error Loading suggestion. Create Custom skill. AI service temporarily unavailable.`

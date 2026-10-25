@@ -294,6 +294,23 @@ describe('Sync Now', () => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Failed to sync data. Please try again.');
     });
   });
+
+  test('a rate-limited sync (429) shows the server\'s message instead of the generic failure', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockRejectedValue(
+      { isAxiosError: true, response: { status: 429, data: { message: 'Too many requests. Please wait a moment and try again.' } } }
+    );
+    renderPage();
+
+    await screen.findByText('Jordan Miller');
+
+    fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Too many requests. Please wait a moment and try again.');
+    });
+  });
 });
 
 describe('instructor badge view', () => {

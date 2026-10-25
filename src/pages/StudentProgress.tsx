@@ -393,6 +393,8 @@ const StudentProgress: React.FC = () => {
 
                     if (axios.isAxiosError(error) && error.code === 'ERR_NETWORK') {
                       toast.error('Connection timeout. The sync is likely still running in the background—please check back in a minute.');
+                    } else if (axios.isAxiosError(error) && error.response?.status === 429) {
+                      toast.error(getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.');
                     } else {
                       toast.error('Failed to sync data. Please try again.');
                     }

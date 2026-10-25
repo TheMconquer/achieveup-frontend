@@ -377,6 +377,39 @@ describe('SkillMatrixCreator Component', () => {
     });
   });
 
+  test('shows the server\'s message when skill suggestions are rate-limited (429)', async () => {
+    mockGetSkillSuggestions.mockRejectedValue(
+      { isAxiosError: true, response: { status: 429, data: { message: 'Too many requests. Please wait a moment and try again.' } } }
+    );
+
+    render(<SkillMatrixCreator />);
+
+    await selectCourse('Introduction to Web Development');
+    await clickGetSuggestions();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
+        'Too many requests. Please wait a moment and try again.'
+      );
+    });
+    expect(await screen.findByText('Step 3: Review and Customize Skills')).toBeInTheDocument();
+  });
+
+  test('falls back to the standard rate-limit text when a 429 has no message', async () => {
+    mockGetSkillSuggestions.mockRejectedValue({ isAxiosError: true, response: { status: 429 } });
+
+    render(<SkillMatrixCreator />);
+
+    await selectCourse('Introduction to Web Development');
+    await clickGetSuggestions();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
+        'Too many requests. Please wait a moment and try again.'
+      );
+    });
+  });
+
   test('handles matrix creation failure', async () => {
     mockCreateMatrix.mockRejectedValue(new Error('Database error'));
 

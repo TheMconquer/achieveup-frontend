@@ -167,7 +167,7 @@ describe('SkillMatrixCreator Component', () => {
     });
     mockGetAllByCourse.mockResolvedValue({ data: [] });
     mockGetImportStatus.mockResolvedValue({
-      data: { target_course_id: '', source_course_id: '', matrices_imported: false, assignments_imported: false },
+      data: { target_course_id: '', source_course_id: '', matrices_imported: false },
     });
     mockGetCourseDescription.mockResolvedValue({ data: { course_id: '', description: '', updated_at: null } });
     mockUpdateCourseDescription.mockResolvedValue({ data: { course_id: '', description: '', updated_at: null } });
@@ -731,10 +731,10 @@ describe('SkillMatrixCreator Component', () => {
       // reflects the import that just happened, same as a real backend would.
       mockGetImportStatus
         .mockResolvedValueOnce({
-          data: { target_course_id: '', source_course_id: '', matrices_imported: false, assignments_imported: false },
+          data: { target_course_id: '', source_course_id: '', matrices_imported: false },
         })
         .mockResolvedValue({
-          data: { target_course_id: '', source_course_id: '', matrices_imported: true, assignments_imported: false },
+          data: { target_course_id: '', source_course_id: '', matrices_imported: true },
         });
 
       render(<SkillMatrixCreator />);

@@ -187,12 +187,6 @@ describe('courseDescriptionAPI', () => {
 
 describe('skillAssignmentAPI', () => {
   test('each method hits the right endpoint with the right payload', () => {
-    skillAssignmentAPI.importAssignmentsFromCourse('courseA', 'courseB');
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/skills/import', {
-      source_course_id: 'courseA',
-      target_course_id: 'courseB',
-    });
-
     const assignData = { course_id: 'c1', question_skills: {} } as any;
     skillAssignmentAPI.assign(assignData);
     expect(mockAxiosInstance.post).toHaveBeenCalledWith('/achieveup/skills/assign', assignData);
@@ -208,9 +202,6 @@ describe('skillAssignmentAPI', () => {
       '/achieveup/ai/analyze-questions',
       analyzeQuestionsData
     );
-
-    skillAssignmentAPI.getImportStatus('c1');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/achieveup/import-status/c1');
   });
 
   describe('getAssignments', () => {

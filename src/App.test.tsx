@@ -66,6 +66,11 @@ const visit = (path: string) => {
   window.history.pushState({}, '', path);
 };
 
+// Route pages are lazy-loaded, so the first visit to each one in a file also
+// loads its code inside the wait. On a cold or slow disk that can take longer
+// than waitFor's 1s default, so those waits get more time.
+const LAZY_PAGE_WAIT = { timeout: 3000 };
+
 // react-scripts' Jest config runs with `resetMocks: true`, which wipes every
 // mock's implementation (not just its call history) before each test - so
 // every mock used here needs its resolved value re-armed per test, not just
@@ -142,7 +147,7 @@ describe('Role-based routing', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Transform your assessments/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/instructor-dashboard');
   });
 
@@ -153,7 +158,7 @@ describe('Role-based routing', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Here's an overview of your learning progress/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/student-dashboard');
   });
 
@@ -164,7 +169,7 @@ describe('Role-based routing', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Here's an overview of your learning progress/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/student-dashboard');
   });
 
@@ -175,7 +180,7 @@ describe('Role-based routing', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Transform your assessments/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/instructor-dashboard');
   });
 });

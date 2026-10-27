@@ -80,7 +80,7 @@ export const skillMatrixAPI = {
     api.delete(`/achieveup/matrix/delete/${matrixId}`),
   getSkillSuggestions: (data: { courseId: string; courseName: string; courseCode: string; courseDescription?: string }): Promise<AxiosResponse<unknown[]>> =>
     api.post('/achieveup/ai/suggest-skills', data),
-  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
+  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; }>> =>
     api.get(`/achieveup/import-status/${courseId}`),
 };
 
@@ -93,8 +93,6 @@ export const courseDescriptionAPI = {
 
 // Skill Assignment
 export const skillAssignmentAPI = {
-  importAssignmentsFromCourse: (sourceCourseId: string, targetCourseId: string): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[]; }>> =>
-    api.post('/achieveup/skills/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   assign: (data: SkillAssignmentRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/skills/assign', data),
   analyzeQuestions: (data: {
@@ -110,8 +108,6 @@ export const skillAssignmentAPI = {
     questionTexts.forEach(text => params.append('question_id', text));
     return api.get(`/achieveup/skills/assignments?${params.toString()}`);
   },
-  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
-    api.get(`/achieveup/import-status/${courseId}`),
 };
 
 // Skill Video Recommendations

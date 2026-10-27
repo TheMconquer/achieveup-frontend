@@ -23,11 +23,9 @@ jest.mock('../../services/api', () => ({
     analyzeQuestions: jest.fn(),
     assign: jest.fn(),
     getAssignments: jest.fn(),
-    importAssignmentsFromCourse: jest.fn(),
   },
   skillMatrixAPI: {
     getAllByCourse: jest.fn(),
-    getImportStatus: jest.fn(),
   },
 }));
 
@@ -80,10 +78,6 @@ const mockInstructorAuth = () => {
 
 const noMatrices = () =>
   jest.mocked(skillMatrixAPI.getAllByCourse).mockResolvedValue({ data: [] } as any);
-const noImportStatus = () =>
-  jest.mocked(skillMatrixAPI.getImportStatus).mockResolvedValue({
-    data: { assignments_imported: true, matrices_imported: true, target_course_id: '', source_course_id: '' },
-  } as any);
 const noAssignments = () =>
   jest.mocked(skillAssignmentAPI.getAssignments).mockResolvedValue({
     data: { question_skills: {} },
@@ -93,7 +87,6 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockInstructorAuth();
   noMatrices();
-  noImportStatus();
   noAssignments();
 });
 
@@ -972,77 +965,5 @@ describe('saving assignments', () => {
     await waitFor(() => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Failed to assign skills. Please try again.');
     });
-  });
-});
-
-describe('past-course import (findPastCourse matching)', () => {
-  beforeEach(() => {
-    // The import box only shows when assignments haven't been imported yet
-    // for the target course - the shared default mock says they have.
-    jest.mocked(skillMatrixAPI.getImportStatus).mockResolvedValue({
-      data: { assignments_imported: false, matrices_imported: false, target_course_id: '', source_course_id: '' },
-    } as any);
-  });
-
-  test('offers to import from a same-base, same-section course with a lower term', async () => {
-    jest.mocked(canvasAPI.getInstructorCourses).mockResolvedValue({
-      data: [
-        course('c-current', 'Current', 'COP3530-A 0002', 3),
-        course('c-older', 'Older Match', 'COP3530-A 0002', 1),
-        course('c-newer-match', 'Newer Match', 'COP3530-A 0002', 2),
-        course('c-diff-base', 'Different Base', 'COP4020-A 0002', 1),
-        course('c-diff-section', 'Different Section', 'COP3530-A 0003', 1),
-      ],
-    } as any);
-    jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({ data: [] } as any);
-
-    render(<SkillAssignmentInterface />);
-    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
-    await selectCourse('c-current');
-
-    // Among the two valid matches (term 1 and term 2), the most recent (term 2) wins.
-    await waitFor(() => expect(screen.getByText('Similar Course Found')).toBeInTheDocument());
-    expect(screen.getByText('Import Assignments From Newer Match')).toBeInTheDocument();
-  });
-
-  test('clicking import calls the API with (source, target) and refreshes questions', async () => {
-    jest.mocked(canvasAPI.getInstructorCourses).mockResolvedValue({
-      data: [course('c-current', 'Current', 'COP3530-A 0002', 2), course('c-older', 'Older', 'COP3530-A 0002', 1)],
-    } as any);
-    jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({
-      data: [quiz('q1', 'Quiz One', 'c-current')],
-    } as any);
-    jest.mocked(canvasAPI.getInstructorQuestions).mockResolvedValue({ data: [] } as any);
-    jest.mocked(skillAssignmentAPI.importAssignmentsFromCourse).mockResolvedValue({
-      data: { message: 'ok', imported_count: 3, matrices: [] },
-    } as any);
-
-    render(<SkillAssignmentInterface />);
-    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
-    await selectCourse('c-current');
-    await waitFor(() => expect(screen.getByText('Similar Course Found')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText('Import Assignments From Older'));
-
-    await waitFor(() => {
-      expect(jest.mocked(toast.success)).toHaveBeenCalledWith(
-        'Imported 3 skill assignment(s) from past course'
-      );
-    });
-    expect(skillAssignmentAPI.importAssignmentsFromCourse).toHaveBeenCalledWith('c-older', 'c-current');
-  });
-
-  test('with no matching past course, the import box does not appear', async () => {
-    jest.mocked(canvasAPI.getInstructorCourses).mockResolvedValue({
-      data: [course('c-current', 'Current', 'COP3530-A 0002', 1)],
-    } as any);
-    jest.mocked(canvasAPI.getInstructorQuizzes).mockResolvedValue({ data: [] } as any);
-
-    render(<SkillAssignmentInterface />);
-    await waitFor(() => expect(selectByLabel('Course')).toBeInTheDocument());
-    await selectCourse('c-current');
-
-    await waitFor(() => expect(canvasAPI.getInstructorQuizzes).toHaveBeenCalled());
-    expect(screen.queryByText('Similar Course Found')).not.toBeInTheDocument();
   });
 });

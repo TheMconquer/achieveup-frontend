@@ -337,3 +337,17 @@ export interface InstructorSkillMatrixRequest {
     [questionId: string]: string[];
   };
 }
+
+// Latest Canvas sync of a course. 'idle' means it has never synced.
+export interface CourseSyncStatus {
+  course_id: string;
+  status: 'idle' | 'running' | 'done' | 'failed';
+  source?: 'manual' | 'scheduled' | null;
+  started_at?: string | null;
+  // Refreshed by each quiz finishing and by a heartbeat every minute.
+  updated_at?: string | null;
+  finished_at?: string | null;
+  quizzes_done?: number;
+  quizzes_total?: number;
+  error?: string | null;
+}

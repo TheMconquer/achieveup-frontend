@@ -4,6 +4,8 @@ import { canvasInstructorAPI, instructorAPI } from '../services/api';
 import { CanvasCourse } from '../types';
 import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
+import CoursesLoadError from '../components/common/CoursesLoadError';
+import { isCanvasUnavailable } from '../utils/apiError';
 import {
   Home,
   Target,
@@ -56,14 +58,22 @@ const InstructorDashboard: React.FC = () => {
     averageProgress: 0,
   });
   const [skillMatricesCount, setSkillMatricesCount] = useState<number>(0);
+  // Why the course list failed to load, if it did: a Canvas outage, or
+  // anything else (e.g. a token problem).
+  const [coursesError, setCoursesError] = useState<'canvas-unavailable' | 'failed' | null>(null);
 
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
+      setCoursesError(null);
 
       // Load instructor-specific data
       try {
         const coursesResponse = await canvasInstructorAPI.getInstructorCourses();
+        // An error body instead of a list means Canvas didn't answer.
+        if (!Array.isArray(coursesResponse.data)) {
+          throw Object.assign(new Error('Unexpected courses response'), { canvasUnavailable: true });
+        }
         setCourses(coursesResponse.data);
 
         // Try to get skill matrices count from all courses
@@ -112,8 +122,11 @@ const InstructorDashboard: React.FC = () => {
       } catch (error) {
         // If Canvas API fails, still provide useful interface
         console.error('Error loading courses:', error);
+        // Without a token, failing is expected; the setup prompt covers it.
         if (user?.hasCanvasToken) {
-          toast.error('Could not load courses from Canvas. Please try refreshing.');
+          const unavailable =
+            isCanvasUnavailable(error) || (error as { canvasUnavailable?: boolean }).canvasUnavailable === true;
+          setCoursesError(unavailable ? 'canvas-unavailable' : 'failed');
         }
 
         setCourses([]);
@@ -260,7 +273,12 @@ const InstructorDashboard: React.FC = () => {
               Instructor Dashboard
             </div>
           </div>
-          {user?.hasCanvasToken ? (
+          {user?.hasCanvasToken && coursesError ? (
+            <div className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300">
+              <AlertTriangle className="w-3 h-3 mr-1 inline" />
+              {coursesError === 'canvas-unavailable' ? 'Canvas Unavailable' : 'Canvas Error'}
+            </div>
+          ) : user?.hasCanvasToken ? (
             <div className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
               <CheckCircle className="w-3 h-3 mr-1 inline" />
               Canvas Connected
@@ -281,6 +299,15 @@ const InstructorDashboard: React.FC = () => {
             </div>
           )}
         </div>
+
+        {coursesError && (
+          <div className="mt-4">
+            <CoursesLoadError
+              canvasUnavailable={coursesError === 'canvas-unavailable'}
+              onRetry={loadDashboardData}
+            />
+          </div>
+        )}
 
         {/* Canvas Token Warning for Users Without Token */}
         {!user?.hasCanvasToken && (
@@ -313,7 +340,8 @@ const InstructorDashboard: React.FC = () => {
           <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg mx-auto mb-4">
             <Home className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
+          {/* A dash, not 0, when the count is unknown because loading failed. */}
+          <div className="text-2xl font-bold text-gray-900">{coursesError ? '—' : courses.length}</div>
           <div className="text-sm text-gray-600">Active Courses</div>
           <div className="text-xs text-gray-500 mt-1">From Canvas LMS</div>
         </Card>

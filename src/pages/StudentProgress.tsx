@@ -5,10 +5,12 @@ import { toast } from 'react-hot-toast';
 import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';
 import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
 import { badgeAPI } from '../services/api';
-import { getApiErrorMessage } from '../utils/apiError';
+import { getApiErrorMessage, isCanvasUnavailable, CANVAS_UNAVAILABLE_MESSAGE } from '../utils/apiError';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
-import { CanvasCourse } from '../types';
+import { CanvasCourse, CourseSyncStatus } from '../types';
 import DialogPanel from '../components/common/DialogPanel';
+import SyncOverlay from '../components/common/SyncOverlay';
+import { useCourseSync, SyncOutcome } from '../hooks/useCourseSync';
 
 
 interface StudentProgressData {
@@ -198,7 +200,7 @@ const StudentProgress: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [selectedStudent, setSelectedStudent] = useState<StudentProgressEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const [startingSync, setStartingSync] = useState(false);
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // Load courses on component mount
@@ -218,6 +220,12 @@ const StudentProgress: React.FC = () => {
       setLoading(true);
       const { canvasInstructorAPI } = await import('../services/api');
       const response = await canvasInstructorAPI.getInstructorCourses();
+      // Anything but a list (e.g. an error body) means Canvas didn't answer.
+      if (!Array.isArray(response.data)) {
+        console.error('Unexpected courses response:', response.data);
+        setError(CANVAS_UNAVAILABLE_MESSAGE);
+        return;
+      }
       setCourses(response.data);
 
       // Auto-select first course if available
@@ -226,15 +234,21 @@ const StudentProgress: React.FC = () => {
       }
     } catch (err: unknown) {
       console.error('Error loading courses:', err);
-      setError('Failed to load courses. Please check your Canvas integration.');
+      setError(
+        isCanvasUnavailable(err)
+          ? CANVAS_UNAVAILABLE_MESSAGE
+          : getApiErrorMessage(err) || 'Failed to load courses. Please check your Canvas integration.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const loadStudentData = async (courseId: string) => {
+  // quiet: refresh in place instead of swapping the whole page for a spinner
+  // (used after a sync, where the overlay already showed the wait).
+  const loadStudentData = async (courseId: string, { quiet = false } = {}) => {
     try {
-      setLoading(true);
+      if (!quiet) setLoading(true);
       setError('');
 
       const { instructorAPI } = await import('../services/api');
@@ -297,6 +311,39 @@ const StudentProgress: React.FC = () => {
     }
   };
 
+  const handleSyncFinished = (outcome: SyncOutcome, status: CourseSyncStatus | null) => {
+    if (outcome === 'done') {
+      toast.success('Sync complete. Scores are up to date.');
+    } else if (outcome === 'failed') {
+      toast.error(status?.error || 'The sync failed. Please try again.');
+    } else {
+      toast.error('The sync is taking longer than expected. Check back in a minute for the latest scores.');
+    }
+    if (selectedCourse) loadStudentData(selectedCourse, { quiet: true });
+  };
+
+  const { status: syncStatus, running: syncRunning, startSync } = useCourseSync(selectedCourse, handleSyncFinished);
+  const syncBusy = startingSync || syncRunning;
+
+  const handleSyncNow = async () => {
+    setStartingSync(true);
+    try {
+      await startSync();
+    } catch (error: unknown) {
+      console.error('Force sync error:', error);
+
+      if (axios.isAxiosError(error) && error.code === 'ERR_NETWORK') {
+        toast.error('Connection timeout. The sync is likely still running in the background—please check back in a minute.');
+      } else if (axios.isAxiosError(error) && error.response?.status === 429) {
+        toast.error(getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.');
+      } else {
+        toast.error('Failed to sync data. Please try again.');
+      }
+    } finally {
+      setStartingSync(false);
+    }
+  };
+
   const getRiskLevelColor = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
       case 'low': return 'text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
@@ -356,57 +403,13 @@ const StudentProgress: React.FC = () => {
             {/* Sync Now Button */}
             {selectedCourse && (
               <button
-                onClick={async () => {
-                  setSyncing(true);
-                  try {
-                    const { instructorAPI } = await import('../services/api');
-                    const { toast } = await import('react-hot-toast');
-                    const result = await instructorAPI.forceSyncCourse(selectedCourse);
-
-                    if (result.status === 202) {
-                      toast.success(
-                        "Sync started in background. Data will update automatically every 15 seconds for the next minute."
-                      );
-
-                      // Polling logic: Refresh data every 15 seconds for 1 minute
-                      let polls = 0;
-                      const interval = setInterval(async () => {
-                        polls++;
-                        if (polls >= 4) clearInterval(interval);
-                        await loadStudentData(selectedCourse);
-                      }, 15000);
-
-                      // Initial quick refresh
-                      setTimeout(() => {
-                        loadStudentData(selectedCourse);
-                      }, 3000);
-                    }
-                    else {
-                      toast.success(
-                        `Sync complete! ${result.data.details.progress_synced} students updated.`
-                      );
-                      await loadStudentData(selectedCourse);
-                    }
-                  } catch (error: unknown) {
-                    const { toast } = await import('react-hot-toast');
-                    console.error('Force sync error:', error);
-
-                    if (axios.isAxiosError(error) && error.code === 'ERR_NETWORK') {
-                      toast.error('Connection timeout. The sync is likely still running in the background—please check back in a minute.');
-                    } else if (axios.isAxiosError(error) && error.response?.status === 429) {
-                      toast.error(getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.');
-                    } else {
-                      toast.error('Failed to sync data. Please try again.');
-                    }
-                  } finally {
-                    setSyncing(false);
-                  }
-                }}
-                disabled={syncing}
+                type="button"
+                onClick={handleSyncNow}
+                disabled={syncBusy}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncing...' : 'Sync Now'}
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncBusy ? 'motion-safe:animate-spin' : ''}`} aria-hidden="true" />
+                {syncBusy ? 'Syncing...' : 'Sync Now'}
               </button>
             )}
           </div>
@@ -420,8 +423,8 @@ const StudentProgress: React.FC = () => {
         </div>
       )}
 
-      {/* No Courses */}
-      {courses.length === 0 && !loading && (
+      {/* No Courses (not shown when loading them failed; the error says why) */}
+      {courses.length === 0 && !loading && !error && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-gray-500 text-2xl">📚</span>
@@ -437,6 +440,13 @@ const StudentProgress: React.FC = () => {
             Configure Canvas Token
           </a>
         </div>
+      )}
+
+      {/* Course data. Blurred under the overlay while a sync rebuilds the
+          scores, so a half-finished sync is never shown. */}
+      <div className={`relative ${syncRunning ? 'min-h-[24rem]' : ''}`} aria-busy={syncRunning}>
+      {syncRunning && (
+        <SyncOverlay quizzesDone={syncStatus?.quizzes_done} quizzesTotal={syncStatus?.quizzes_total} />
       )}
 
       {/* Student Data Display */}
@@ -671,6 +681,8 @@ const StudentProgress: React.FC = () => {
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Student Details Modal */}
       {showModal && selectedStudent && (

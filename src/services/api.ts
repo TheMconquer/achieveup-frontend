@@ -24,7 +24,8 @@ import {
   QuestionSkillAssignment,
   SkillVideo,
   AddSkillVideoRequest,
-  SkillVideoVoteRequest
+  SkillVideoVoteRequest,
+  CourseSyncStatus
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -307,17 +308,18 @@ export const instructorAPI = {
   }>> =>
     api.get(`/achieveup/instructor/courses/${courseId}/student-analytics`),
 
-  // Force a data sync for a specific course (triggers Canvas → mastery → progress)
+  // Start a background data sync for a course (Canvas → mastery → progress).
+  // Returns 202 once started, or 409 if a sync of the course is already
+  // running; poll getSyncStatus to learn when it finishes.
   forceSyncCourse: (courseId: string): Promise<AxiosResponse<{
     message: string;
-    details: {
-      total_quizzes: number;
-      total_synced: number;
-      progress_synced: number;
-      total_errors: number;
-    };
+    sync_status: CourseSyncStatus;
   }>> =>
     api.post(`/achieveup/instructor/course/${courseId}/force-sync`),
+
+  // Status of the course's latest sync (manual or scheduled).
+  getSyncStatus: (courseId: string): Promise<AxiosResponse<CourseSyncStatus>> =>
+    api.get(`/achieveup/instructor/course/${courseId}/sync-status`),
 };
 
 // Enhanced Canvas API for instructor functionality

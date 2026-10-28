@@ -8,9 +8,29 @@ import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
+import { withTimestamp, formatTimestamp, isWebUrl, youTubeUrl } from '../utils/youtubeLinks';
 import { getApiErrorMessage } from '../utils/apiError';
 import DialogPanel from '../components/common/DialogPanel';
+
+// The video's title, linked only when its link is a YouTube link. Anything else
+// shows as plain text, so it can't run in the browser but can still be removed.
+export const VideoTitle: React.FC<{ video: SkillVideo }> = ({ video }) => {
+  const link = youTubeUrl(video.link);
+  if (!link) {
+    return <span className="truncate text-sm font-semibold text-gray-900">{video.title}</span>;
+  }
+  return (
+    <a
+      href={withTimestamp(link, video.timestamp_seconds)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="truncate text-sm font-semibold text-gray-900 hover:underline"
+    >
+      {video.title}
+      <span className="sr-only"> (opens in new tab)</span>
+    </a>
+  );
+};
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -155,8 +175,8 @@ const SkillVideoCurator: React.FC = () => {
       setNewLink('');
       toast.success('Video added');
       loadVideos();
-    } catch {
-      toast.error('Failed to add video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to add video');
     } finally {
       setAdding(false);
     }
@@ -167,8 +187,8 @@ const SkillVideoCurator: React.FC = () => {
       await skillVideoAPI.remove(videoId);
       setVideos((prev) => prev.filter((v) => v._id !== videoId));
       toast.success('Video removed');
-    } catch {
-      toast.error('Failed to remove video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to remove video');
     }
   };
 
@@ -213,8 +233,8 @@ const SkillVideoCurator: React.FC = () => {
           ? 'No new suggestions found.'
           : `Added ${res.data.videos.length} AI-recommended video(s) — visible to students now.`
       );
-    } catch {
-      toast.error('Failed to generate suggestions');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Failed to generate suggestions');
     } finally {
       setSuggesting(false);
     }
@@ -368,20 +388,12 @@ const SkillVideoCurator: React.FC = () => {
                 key={video._id}
                 className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
               >
-                {video.thumbnail && (
+                {isWebUrl(video.thumbnail) && (
                   <img src={video.thumbnail} alt="" className="h-14 w-24 rounded-md object-cover" />
                 )}
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="flex items-center gap-1.5 truncate">
-                    <a
-                      href={withTimestamp(video.link, video.timestamp_seconds)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate text-sm font-semibold text-gray-900 hover:underline"
-                    >
-                      {video.title}
-                      <span className="sr-only"> (opens in new tab)</span>
-                    </a>
+                    <VideoTitle video={video} />
                     {video.source === 'manual' ? (
                       <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                         Instructor Recommended

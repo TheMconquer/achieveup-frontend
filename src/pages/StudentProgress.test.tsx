@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 
 jest.mock('../services/api', () => ({
   canvasInstructorAPI: { getInstructorCourses: jest.fn() },
-  instructorAPI: { getCourseStudentAnalytics: jest.fn(), forceSyncCourse: jest.fn() },
+  instructorAPI: { getCourseStudentAnalytics: jest.fn(), forceSyncCourse: jest.fn(), getSyncStatus: jest.fn() },
   badgeAPI: { getStudentEarnedBadges: jest.fn(), generateBadgeShareLink: jest.fn() },
 }));
 
@@ -49,8 +49,12 @@ const renderPage = () =>
     </MemoryRouter>
   );
 
+const syncStatus = (status: string, extra: any = {}) =>
+  ({ data: { course_id: 'c1', status, ...extra } }) as any;
+
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(syncStatus('idle'));
 });
 
 test('shows a loading spinner before courses resolve', () => {
@@ -75,6 +79,47 @@ test('a courses-load failure shows the Canvas-integration error message', async 
   await waitFor(() =>
     expect(screen.getByText('Failed to load courses. Please check your Canvas integration.')).toBeInTheDocument()
   );
+});
+
+const CANVAS_DOWN = "Couldn't reach Canvas to load your courses. Canvas may be down; please try again in a few minutes.";
+
+test('a Canvas outage (502 from the backend) shows the Canvas-unavailable banner, not "No Courses Found"', async () => {
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue({
+    isAxiosError: true,
+    response: { status: 502, data: { error: 'Failed to fetch instructor courses: 503', statusCode: 502 } },
+  });
+  renderPage();
+
+  await waitFor(() => expect(screen.getByText(CANVAS_DOWN)).toBeInTheDocument());
+  expect(screen.queryByText('No Courses Found')).not.toBeInTheDocument();
+});
+
+test('no response at all (network error) also shows the Canvas-unavailable banner', async () => {
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue({ isAxiosError: true, code: 'ERR_NETWORK' });
+  renderPage();
+
+  await waitFor(() => expect(screen.getByText(CANVAS_DOWN)).toBeInTheDocument());
+});
+
+test('an error body returned with 200 shows the Canvas-unavailable banner instead of a blank page', async () => {
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockResolvedValue({
+    data: { error: 'Failed to fetch instructor courses: 503', statusCode: 503 },
+  } as any);
+  renderPage();
+
+  await waitFor(() => expect(screen.getByText(CANVAS_DOWN)).toBeInTheDocument());
+  expect(screen.queryByText('No Courses Found')).not.toBeInTheDocument();
+  expect(instructorAPI.getCourseStudentAnalytics).not.toHaveBeenCalled();
+});
+
+test("a 4xx courses error shows the backend's own message", async () => {
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue({
+    isAxiosError: true,
+    response: { status: 400, data: { message: 'No Canvas API token found for user' } },
+  });
+  renderPage();
+
+  await waitFor(() => expect(screen.getByText('No Canvas API token found for user')).toBeInTheDocument());
 });
 
 test('auto-selects the first course and loads its student data', async () => {
@@ -189,74 +234,167 @@ test('closing the Details modal via its close button removes it', async () => {
 });
 
 describe('Sync Now', () => {
-  test('an immediate (non-202) sync result shows the completion toast and refreshes data once', async () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const advance = async (ms: number) => {
+    await act(async () => {
+      jest.advanceTimersByTime(ms);
+    });
+  };
+
+  test('blurs the data while the sync runs, then refreshes once when the backend says done', async () => {
+    jest.useFakeTimers();
     oneCourse();
     jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
-    jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue({
-      status: 200,
-      data: { message: 'ok', details: { total_quizzes: 1, total_synced: 1, progress_synced: 3, total_errors: 0 } },
-    } as any);
+    jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue(
+      { status: 202, data: { message: 'started', sync_status: syncStatus('running').data } } as any
+    );
     renderPage();
-
-    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+    await screen.findByText('Jordan Miller');
     const callsBeforeSync = jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length;
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
     });
+    expect(screen.getByTestId('sync-overlay')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /syncing/i })).toBeDisabled();
 
-    await waitFor(() => {
-      expect(jest.mocked(toast.success)).toHaveBeenCalledWith('Sync complete! 3 students updated.');
-    });
-    // Asserting an exact call count here is fragile (picks up incidental
-    // extra invocations unrelated to this behavior) - what actually matters
-    // is that the non-202 branch refreshes data at all, distinct from the
-    // 202 branch's polling refreshes covered separately below.
-    expect(
-      jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length
-    ).toBeGreaterThan(callsBeforeSync);
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(
+      syncStatus('running', { quizzes_done: 2, quizzes_total: 8 })
+    );
+    await advance(2500);
+    expect(screen.getByText('2 of 8 quizzes synced…')).toBeInTheDocument();
+    // Data isn't reloaded while the sync runs, so partial scores never show.
+    expect(jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length).toBe(callsBeforeSync);
+
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(syncStatus('done'));
+    await advance(2500);
+    expect(screen.queryByTestId('sync-overlay')).not.toBeInTheDocument();
+    expect(jest.mocked(toast.success)).toHaveBeenCalledWith('Sync complete. Scores are up to date.');
+    expect(jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length).toBe(callsBeforeSync + 1);
+
+    // Checking stops once the sync is done.
+    const statusChecks = jest.mocked(instructorAPI.getSyncStatus).mock.calls.length;
+    await advance(30000);
+    expect(jest.mocked(instructorAPI.getSyncStatus).mock.calls.length).toBe(statusChecks);
   });
 
-  test('a 202 (background) sync result polls up to 4 times over 60s, then stops', async () => {
+  test('a failed sync shows the backend error and removes the overlay', async () => {
     jest.useFakeTimers();
     oneCourse();
     jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
     jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue({ status: 202, data: {} } as any);
     renderPage();
+    await screen.findByText('Jordan Miller');
 
-    await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
-    const callsBeforeSync = jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length;
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
+    });
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(
+      syncStatus('failed', { error: 'Canvas is down' })
+    );
+    await advance(2500);
 
-    fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
-    await waitFor(() => {
-      expect(jest.mocked(toast.success)).toHaveBeenCalledWith(
-        'Sync started in background. Data will update automatically every 15 seconds for the next minute.'
-      );
+    expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Canvas is down');
+    expect(screen.queryByTestId('sync-overlay')).not.toBeInTheDocument();
+  });
+
+  test('a sync already running (409) is watched instead of reported as an error', async () => {
+    jest.useFakeTimers();
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockRejectedValue(
+      { isAxiosError: true, response: { status: 409, data: { message: 'A sync for this course is already running.' } } }
+    );
+    renderPage();
+    await screen.findByText('Jordan Miller');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
     });
 
-    // Initial quick refresh at 3s, then polls at 15s/30s/45s/60s (4 polls).
-    for (let elapsed = 0; elapsed < 65000; elapsed += 5000) {
-      await act(async () => {
-        jest.advanceTimersByTime(5000);
-      });
+    expect(screen.getByTestId('sync-overlay')).toBeInTheDocument();
+    expect(jest.mocked(toast.error)).not.toHaveBeenCalled();
+  });
+
+  test('a sync already running when the page opens shows the overlay', async () => {
+    jest.useFakeTimers();
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(syncStatus('running', { source: 'scheduled' }));
+    renderPage();
+
+    expect(await screen.findByTestId('sync-overlay')).toBeInTheDocument();
+    expect(screen.getByText('Fetching quizzes from Canvas…')).toBeInTheDocument();
+  });
+
+  test('a long sync that keeps reporting progress keeps the overlay up', async () => {
+    jest.useFakeTimers();
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue({ status: 202, data: {} } as any);
+    renderPage();
+    await screen.findByText('Jordan Miller');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
+    });
+    // Ten minutes of a sync whose heartbeat changes every minute.
+    for (let elapsed = 0; elapsed <= 10 * 60 * 1000; elapsed += 2500) {
+      const minute = Math.floor(elapsed / 60000);
+      jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(
+        syncStatus('running', { updated_at: `2026-10-27T12:${String(minute).padStart(2, '0')}:00Z` })
+      );
+      await advance(2500);
     }
 
-    // The exact count picks up incidental extra invocations that aren't the
-    // behavior under test - what actually matters (and is the doc's real
-    // concern) is that polling stops after the window, not the precise
-    // number of refreshes along the way.
-    expect(
-      jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length
-    ).toBeGreaterThan(callsBeforeSync);
+    expect(screen.getByTestId('sync-overlay')).toBeInTheDocument();
+    expect(jest.mocked(toast.error)).not.toHaveBeenCalled();
+  });
 
-    const callsAfter65s = jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length;
+  test('gives up when the status stops changing', async () => {
+    jest.useFakeTimers();
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue({ status: 202, data: {} } as any);
+    renderPage();
+    await screen.findByText('Jordan Miller');
+
     await act(async () => {
-      jest.advanceTimersByTime(30000);
+      fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
     });
-    // No further calls - the interval was cleared, not left running.
-    expect(jest.mocked(instructorAPI.getCourseStudentAnalytics).mock.calls.length).toBe(callsAfter65s);
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(
+      syncStatus('running', { updated_at: '2026-10-27T12:00:00Z' })
+    );
+    for (let elapsed = 0; elapsed <= 6 * 60 * 1000; elapsed += 2500) {
+      await advance(2500);
+    }
 
-    jest.useRealTimers();
+    expect(screen.queryByTestId('sync-overlay')).not.toBeInTheDocument();
+    expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
+      'The sync is taking longer than expected. Check back in a minute for the latest scores.'
+    );
+  });
+
+  test('leaving the page stops checking the sync status', async () => {
+    jest.useFakeTimers();
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockResolvedValue({ status: 202, data: {} } as any);
+    const { unmount } = renderPage();
+    await screen.findByText('Jordan Miller');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
+    });
+    jest.mocked(instructorAPI.getSyncStatus).mockResolvedValue(syncStatus('running'));
+    const statusChecks = jest.mocked(instructorAPI.getSyncStatus).mock.calls.length;
+    unmount();
+    await advance(30000);
+
+    expect(jest.mocked(instructorAPI.getSyncStatus).mock.calls.length).toBe(statusChecks);
   });
 
   test('a network error during sync shows a specific "check back later" message', async () => {
@@ -292,6 +430,23 @@ describe('Sync Now', () => {
 
     await waitFor(() => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Failed to sync data. Please try again.');
+    });
+  });
+
+  test('a rate-limited sync (429) shows the server\'s message instead of the generic failure', async () => {
+    oneCourse();
+    jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+    jest.mocked(instructorAPI.forceSyncCourse).mockRejectedValue(
+      { isAxiosError: true, response: { status: 429, data: { message: 'Too many requests. Please wait a moment and try again.' } } }
+    );
+    renderPage();
+
+    await screen.findByText('Jordan Miller');
+
+    fireEvent.click(screen.getByRole('button', { name: /sync now/i }));
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Too many requests. Please wait a moment and try again.');
     });
   });
 });

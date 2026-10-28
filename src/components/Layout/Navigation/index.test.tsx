@@ -62,6 +62,7 @@ const renderAt = (path: string) => {
 describe('Navigation (index)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    sessionStorage.clear();
   });
 
   describe('role/route-based derivation', () => {
@@ -136,6 +137,34 @@ describe('Navigation (index)', () => {
       expect(screen.queryByRole('link', { name: /skill matrix/i })).not.toBeInTheDocument();
       const link = screen.getByRole('link', { name: /back to instructor/i });
       expect(link).toHaveAttribute('href', '/instructor-dashboard');
+    });
+
+    test('instructor with student access stays in the student view on /settings after coming from a student route', () => {
+      mockAuth({
+        user: { ...instructorUser, has_student_access: true },
+        isInstructor: true,
+        isStudent: false,
+      });
+      const { unmount } = renderAt('/student-dashboard');
+      unmount();
+      renderAt('/settings');
+
+      expect(screen.getAllByText('Back to Instructor').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Badges').length).toBeGreaterThan(0);
+    });
+
+    test('instructor with student access is back in the instructor view on /settings after visiting an instructor route', () => {
+      mockAuth({
+        user: { ...instructorUser, has_student_access: true },
+        isInstructor: true,
+        isStudent: false,
+      });
+      renderAt('/student-dashboard').unmount();
+      renderAt('/instructor-dashboard').unmount();
+      renderAt('/settings');
+
+      expect(screen.getAllByText('View as Student').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Skill Matrix').length).toBeGreaterThan(0);
     });
 
     test('instructor WITHOUT student access still sees instructor items even directly on /student-dashboard (no route guard here, just display logic)', () => {

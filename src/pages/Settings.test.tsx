@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
 import Settings from './Settings';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI, canvasAPI, badgeAPI } from '../services/api';
@@ -74,19 +75,29 @@ const mockAuth = (
     refreshUser,
     isAuthenticated: true,
     backendAvailable: true,
-    isInstructor: true,
-    isStudent: false,
+    isInstructor: user.role === 'instructor',
+    isStudent: user.role === 'student',
   });
 };
 
+// Settings is a shared route, so which view it shows for a dual-role account
+// depends on the view they came from (remembered per session).
+const renderSettings = () =>
+  render(
+    <MemoryRouter initialEntries={['/settings']}>
+      <Settings />
+    </MemoryRouter>
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
+  sessionStorage.clear();
 });
 
 describe('profile section', () => {
   test('starts read-only, showing the current user', () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     expect(screen.getByText('Jane Instructor')).toBeInTheDocument();
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
@@ -95,7 +106,7 @@ describe('profile section', () => {
 
   test('Edit reveals a form pre-filled with the current values', () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
 
@@ -107,7 +118,7 @@ describe('profile section', () => {
     const refreshUser = jest.fn().mockResolvedValue(undefined);
     mockAuth(withoutToken, refreshUser);
     jest.mocked(authAPI.updateProfile).mockResolvedValue({ data: { user: withoutToken } } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
     fireEvent.change(screen.getByLabelText('Full Name *'), { target: { value: 'Jane Renamed' } });
@@ -130,7 +141,7 @@ describe('profile section', () => {
 
   test('rejects an empty name/email without calling the API', async () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(screen.getAllByRole('button', { name: /edit/i })[0]);
     fireEvent.change(screen.getByLabelText('Full Name *'), { target: { value: '' } });
@@ -149,7 +160,7 @@ describe('profile section', () => {
 describe('Canvas API token section - no token set', () => {
   test('shows the "no token set" state with an instructor-only, non-editable token type', () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     expect(screen.getByText('No token set')).toBeInTheDocument();
     expect(screen.getByText('Instructor Token (Required)')).toBeInTheDocument();
@@ -161,7 +172,7 @@ describe('Canvas API token section - no token set', () => {
     mockAuth(withoutToken, refreshUser);
     jest.mocked(authAPI.validateCanvasToken).mockResolvedValue({ data: { valid: true } } as any);
     jest.mocked(authAPI.updateProfile).mockResolvedValue({ data: { user: withToken } } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.change(screen.getByPlaceholderText(/paste your canvas api token/i), {
       target: { value: 'valid-token' },
@@ -190,7 +201,7 @@ describe('Canvas API token section - no token set', () => {
     jest.mocked(authAPI.validateCanvasToken).mockResolvedValue({
       data: { valid: false, message: 'Token rejected by Canvas' },
     } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.change(screen.getByPlaceholderText(/paste your canvas api token/i), {
       target: { value: 'bad-token' },
@@ -211,7 +222,7 @@ const tokenCard = () => within(screen.getByText('Canvas API Token').closest('div
 describe('Canvas API token section - token already set', () => {
   test('shows the masked token with Edit/Clear actions and a Test Connection button', () => {
     mockAuth(withToken);
-    render(<Settings />);
+    renderSettings();
 
     expect(screen.getByText('Token is set')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /test connection/i })).toBeInTheDocument();
@@ -225,7 +236,7 @@ describe('Canvas API token section - token already set', () => {
     jest.mocked(canvasAPI.testConnection).mockResolvedValue({
       data: { connected: true },
     } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(screen.getByRole('button', { name: /test connection/i }));
 
@@ -238,7 +249,7 @@ describe('Canvas API token section - token already set', () => {
     jest.mocked(canvasAPI.testConnection).mockResolvedValue({
       data: { connected: false, message: 'Token expired' },
     } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(screen.getByRole('button', { name: /test connection/i }));
 
@@ -249,7 +260,7 @@ describe('Canvas API token section - token already set', () => {
   test('Clear is gated behind window.confirm - cancelling leaves the token untouched', () => {
     mockAuth(withToken);
     window.confirm = jest.fn().mockReturnValue(false);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(tokenCard().getByRole('button', { name: /clear/i }));
 
@@ -261,7 +272,7 @@ describe('Canvas API token section - token already set', () => {
     mockAuth(withToken, refreshUser);
     window.confirm = jest.fn().mockReturnValue(true);
     jest.mocked(authAPI.updateProfile).mockResolvedValue({ data: { user: withoutToken } } as any);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(tokenCard().getByRole('button', { name: /clear/i }));
 
@@ -278,7 +289,7 @@ describe('Canvas API token section - token already set', () => {
 
   test('Edit reveals the token input again', () => {
     mockAuth(withToken);
-    render(<Settings />);
+    renderSettings();
 
     fireEvent.click(tokenCard().getByRole('button', { name: 'Edit Canvas API token' }));
 
@@ -296,7 +307,7 @@ describe('password change', () => {
   test('a valid change calls changePassword and clears the fields', async () => {
     mockAuth(withoutToken);
     jest.mocked(authAPI.changePassword).mockResolvedValue({ data: undefined } as any);
-    render(<Settings />);
+    renderSettings();
 
     fillPasswordForm('oldpass', 'NewPass123', 'NewPass123');
     fireEvent.click(screen.getByRole('button', { name: /change password/i }));
@@ -313,7 +324,7 @@ describe('password change', () => {
 
   test('a mismatched confirmation is rejected without calling the API', async () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     fillPasswordForm('oldpass', 'NewPass123', 'Different123');
     fireEvent.click(screen.getByRole('button', { name: /change password/i }));
@@ -326,7 +337,7 @@ describe('password change', () => {
 
   test('a weak new password (but matching confirmation) is rejected with the complexity message', async () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     fillPasswordForm('oldpass', 'weak', 'weak');
     fireEvent.click(screen.getByRole('button', { name: /change password/i }));
@@ -339,7 +350,7 @@ describe('password change', () => {
 
   test('mismatch is checked before complexity: a weak AND mismatched pair shows the mismatch error, not the complexity one', async () => {
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     fillPasswordForm('oldpass', 'weak', 'notweak');
     fireEvent.click(screen.getByRole('button', { name: /change password/i }));
@@ -355,7 +366,7 @@ describe('badge sharing settings', () => {
   test('a failed status check shows an error instead of guessing the toggle state', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockRejectedValue(new Error('network error'));
     mockAuth(studentUser);
-    render(<Settings />);
+    renderSettings();
 
     await waitFor(() => expect(screen.getByText(/could not load your badge sharing settings/i)).toBeInTheDocument());
     expect(screen.queryByRole('button', { name: /turn (on|off) badge sharing/i })).not.toBeInTheDocument();
@@ -364,25 +375,35 @@ describe('badge sharing settings', () => {
   test('does not render for an instructor with no student enrollment', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
     mockAuth(withoutToken);
-    render(<Settings />);
+    renderSettings();
 
     expect(screen.queryByText('Badge Sharing')).not.toBeInTheDocument();
     expect(badgeAPI.getBadgeShareStatus).not.toHaveBeenCalled();
   });
 
-  test('renders for a dual-role instructor who also has student portal access', async () => {
+  test('renders for a dual-role instructor who came to Settings from the student view', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
     mockAuth(dualRoleInstructor);
-    render(<Settings />);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'student');
+    renderSettings();
 
     await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: /turn off badge sharing/i })).toBeInTheDocument();
   });
 
+  test('does not render for a dual-role instructor in the instructor view', () => {
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'instructor');
+    renderSettings();
+
+    expect(screen.queryByText('Badge Sharing')).not.toBeInTheDocument();
+    expect(badgeAPI.getBadgeShareStatus).not.toHaveBeenCalled();
+  });
+
   test('shows a turn-off control for a student who is currently shareable', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/x', opted_out: false } } as any);
     mockAuth(studentUser);
-    render(<Settings />);
+    renderSettings();
 
     await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: /turn off badge sharing/i })).toBeInTheDocument();
@@ -391,7 +412,7 @@ describe('badge sharing settings', () => {
   test('shows a turn-on control for a student who has opted out', async () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: true } } as any);
     mockAuth(studentUser);
-    render(<Settings />);
+    renderSettings();
 
     await waitFor(() => expect(screen.getByRole('button', { name: /turn on badge sharing/i })).toBeInTheDocument());
   });
@@ -400,12 +421,59 @@ describe('badge sharing settings', () => {
     jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: true, share_link: 'https://achieveup.ucf.edu/badges/share/x', opted_out: false } } as any);
     jest.mocked(badgeAPI.optOutOfBadgeSharing).mockResolvedValue({ data: { message: 'Badge sharing turned off', opted_out: true } } as any);
     mockAuth(studentUser);
-    render(<Settings />);
+    renderSettings();
 
     const toggle = await screen.findByRole('button', { name: /turn off badge sharing/i });
     fireEvent.click(toggle);
 
     await waitFor(() => expect(badgeAPI.optOutOfBadgeSharing).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole('button', { name: /turn on badge sharing/i })).toBeInTheDocument();
+  });
+});
+
+describe('role-specific content', () => {
+  test('a student never sees instructor-only token copy or instructor feature lists', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth({ ...studentUser, hasCanvasToken: false });
+    renderSettings();
+
+    expect(screen.getByText('Student Token')).toBeInTheDocument();
+    expect(screen.queryByText('Instructor Token (Required)')).not.toBeInTheDocument();
+    expect(screen.queryByText(/instructor token benefits/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create skill matrices/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+  });
+
+  test('a stored "instructor" view mode cannot give a plain student the instructor settings', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth({ ...studentUser, hasCanvasToken: false });
+    sessionStorage.setItem(`achieveup:view-mode:${studentUser.id}`, 'instructor');
+    renderSettings();
+
+    expect(screen.queryByText(/instructor token benefits/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create skill matrices/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+  });
+
+  test('a student\'s new token is validated as a student token', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    jest.mocked(authAPI.validateCanvasToken).mockResolvedValue({ data: { valid: false, message: 'nope' } } as any);
+    mockAuth({ ...studentUser, hasCanvasToken: false });
+    renderSettings();
+
+    fireEvent.change(screen.getByPlaceholderText('Paste your Canvas API token'), { target: { value: 'x'.repeat(64) } });
+    fireEvent.click(screen.getByRole('button', { name: /set token/i }));
+
+    await waitFor(() =>
+      expect(authAPI.validateCanvasToken).toHaveBeenCalledWith({ canvasApiToken: 'x'.repeat(64), canvasTokenType: 'student' })
+    );
+  });
+
+  test('an instructor sees the instructor token copy and benefits', () => {
+    mockAuth(withoutToken);
+    renderSettings();
+
+    expect(screen.getByText('Instructor Token (Required)')).toBeInTheDocument();
+    expect(screen.getByText(/instructor token benefits/i)).toBeInTheDocument();
   });
 });

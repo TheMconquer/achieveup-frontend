@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useCourseList } from '../../../hooks/useCourseList';
+import { useViewMode } from '../../../hooks/useViewMode';
 import { getNavigationItems } from './navigationItems';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopHeader from './DesktopHeader';
@@ -13,29 +14,13 @@ const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
-  const { user, logout, isInstructor } = useAuth();
+  const { user, logout } = useAuth();
 
   const location = useLocation();
 
-  // Instructor accounts with student access can switch between views
-  const canSwitchToStudentView = isInstructor && !!user?.has_student_access;
-
-  // Determine which dashboard is currently being viewed — checked against
-  // every student-only route, not just the dashboard itself, so a dual-role
-  // account doesn't get bounced back to the instructor nav just by visiting
-  // /courses.
-  const studentOnlyPathPrefixes = [
-    '/student-dashboard',
-    '/courses',
-    '/skills',
-    '/badges',
-    '/my-skill-videos',
-  ];
-  const viewingAsStudent =
-    canSwitchToStudentView &&
-    studentOnlyPathPrefixes.some((prefix) => location.pathname.startsWith(prefix));
-
-  const displayAsInstructor = isInstructor && !viewingAsStudent;
+  // Instructor accounts with student access can switch between views; shared
+  // routes like /settings keep whichever view they were last in.
+  const { canSwitchToStudentView, viewingAsStudent, displayAsInstructor } = useViewMode();
 
   const navigationItems = getNavigationItems(displayAsInstructor);
 

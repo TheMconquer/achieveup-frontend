@@ -349,16 +349,32 @@ describe('SkillMatrixCreator Component', () => {
     expect(createButton).toBeDisabled();
   });
 
-  test('handles API error for course loading', async () => {
-    mockGetInstructorCourses.mockRejectedValue(new Error('Network error'));
+  test('a Canvas outage shows the Canvas-unavailable message, not "No Courses Found"', async () => {
+    mockGetInstructorCourses.mockRejectedValue({ isAxiosError: true, response: { status: 502 } });
 
     render(<SkillMatrixCreator />);
 
-    await waitFor(() => {
-      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
-        'Failed to load courses. Please check your Canvas integration.'
-      );
-    });
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't reach Canvas to load your courses");
+    expect(screen.queryByText('No Courses Found')).not.toBeInTheDocument();
+  });
+
+  test('a non-outage course failure points to the token in Settings', async () => {
+    mockGetInstructorCourses.mockRejectedValue({ isAxiosError: true, response: { status: 400 } });
+
+    render(<SkillMatrixCreator />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check your Canvas token in Settings');
+  });
+
+  test('"Try again" reloads the courses', async () => {
+    mockGetInstructorCourses.mockRejectedValueOnce({ isAxiosError: true, response: { status: 502 } });
+
+    render(<SkillMatrixCreator />);
+    await screen.findByRole('alert');
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(await screen.findByText('Introduction to Web Development')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   test('handles API error for skill suggestions', async () => {
@@ -374,6 +390,39 @@ describe('SkillMatrixCreator Component', () => {
         expect.stringContaining('Failed to get skill suggestions: AI service unavailable')
       );
       expect(screen.getByText('Step 3: Review and Customize Skills')).toBeInTheDocument();
+    });
+  });
+
+  test('shows the server\'s message when skill suggestions are rate-limited (429)', async () => {
+    mockGetSkillSuggestions.mockRejectedValue(
+      { isAxiosError: true, response: { status: 429, data: { message: 'Too many requests. Please wait a moment and try again.' } } }
+    );
+
+    render(<SkillMatrixCreator />);
+
+    await selectCourse('Introduction to Web Development');
+    await clickGetSuggestions();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
+        'Too many requests. Please wait a moment and try again.'
+      );
+    });
+    expect(await screen.findByText('Step 3: Review and Customize Skills')).toBeInTheDocument();
+  });
+
+  test('falls back to the standard rate-limit text when a 429 has no message', async () => {
+    mockGetSkillSuggestions.mockRejectedValue({ isAxiosError: true, response: { status: 429 } });
+
+    render(<SkillMatrixCreator />);
+
+    await selectCourse('Introduction to Web Development');
+    await clickGetSuggestions();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
+        'Too many requests. Please wait a moment and try again.'
+      );
     });
   });
 

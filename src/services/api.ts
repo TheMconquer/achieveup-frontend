@@ -140,12 +140,17 @@ export const skillVideoAPI = {
 };
 
 // YouTube Channel Preferences
+export interface CourseChannel {
+  channel_id: string;
+  name: string;
+}
+
 export const courseChannelsAPI = {
-  get: (courseId: string): Promise<AxiosResponse<{ channels: string[] }>> =>
+  get: (courseId: string): Promise<AxiosResponse<{ channels: CourseChannel[] }>> =>
     api.get(`/achieveup/instructor/courses/${courseId}/channels`),
 
-  update: (courseId: string, channels: string[]): Promise<AxiosResponse<{ success: boolean; channels: string[] }>> =>
-    api.put(`/achieveup/instructor/courses/${courseId}/channels`, { channels }),
+  update: (courseId: string, channels: CourseChannel[]): Promise<AxiosResponse<{ success: boolean; channels: CourseChannel[] }>> =>
+    api.put(`/achieveup/instructor/courses/${courseId}/channels`, { channels: channels.map(c => c.channel_id) }),
 };
 
 // Badge Management

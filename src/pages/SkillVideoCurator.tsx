@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
-import { skillMatrixAPI, skillVideoAPI } from '../services/api';
+import { skillMatrixAPI, skillVideoAPI, courseChannelsAPI, CourseChannel } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
@@ -100,6 +100,17 @@ const SkillVideoCurator: React.FC = () => {
   const [findingMomentId, setFindingMomentId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  // Channel management state
+  const [channels, setChannels] = useState<CourseChannel[]>([]);
+  const [newChannel, setNewChannel] = useState<string>('');
+  const [savingChannels, setSavingChannels] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!courseId) return;
+    courseChannelsAPI
+      .get(courseId)
+      .then((res) => setChannels(res.data.channels || []))
+  }, [courseId]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -200,6 +211,75 @@ const SkillVideoCurator: React.FC = () => {
     } finally {
       setVerifyingId(null);
     }
+  };
+  
+  // Channel management handlers
+  const handleAddChannelPreference = async () => {
+    // Prevent execution if already saving or input is empty
+    if (savingChannels) return;
+    const trimmed = newChannel.trim();
+    if (!trimmed) return;
+
+    // Case-insensitive duplicate check
+    const isDuplicate = channels.some(
+      (ch) => ch.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error('Channel already added');
+      return;
+    }
+    
+    // PREVENT RUNTIME ERROR
+    const previousChannels = [...channels];
+    const updated: CourseChannel[] = [
+    ...channels,
+    { channel_id: trimmed, name: trimmed }];
+
+    setChannels(updated);
+    setNewChannel('');
+    try {
+      setSavingChannels(true);
+      const res = await courseChannelsAPI.update(courseId, [...channels, { channel_id: trimmed, name: trimmed }]);
+      setChannels(res.data.channels || []);
+      setNewChannel('');
+      toast.success('Preferred channels updated');
+    } catch (err: any) {
+    // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
+      setChannels(previousChannels);
+        const errorMessage =
+          err.response?.data?.error || err.response?.data?.message || 'Failed to update preferred channels. Please check the channel handle.';
+        toast.error(errorMessage);
+    }finally {
+      setSavingChannels(false);
+    }
+  };
+
+  const handleRemoveChannelPreference = async (channelToRemove: string) => {
+    // Prevent execution if already saving or input is empty
+    if (savingChannels) return;
+    
+    const previousChannels = [...channels];
+
+    // const updated = channels.filter((c) => c.channel_id !== channelToRemove);
+    const updated = channels.filter(
+    (c) => c.channel_id !== channelToRemove && c.name !== channelToRemove
+  );
+    setChannels(updated);
+
+    try {
+      setSavingChannels(true);
+      const res = await courseChannelsAPI.update(courseId, updated);
+      setChannels(res.data.channels || []);
+      toast.success('Channel preference removed');
+    } catch (err: any) {
+    // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
+        setChannels(previousChannels);
+        const errorMessage =
+          err.response?.data?.error || err.response?.data?.message || 'Failed to update preferred channels. Please check the channel handle.';
+        toast.error(errorMessage);
+      } finally {
+          setSavingChannels(false);
+  }
   };
 
   const handleGetSuggestions = async () => {
@@ -307,6 +387,61 @@ const SkillVideoCurator: React.FC = () => {
       </div>
 
       {showInfoModal && <SkillVideoInfoModal onClose={() => setShowInfoModal(false)} />}
+      <Card
+        title="Preferred YouTube Channels"
+        subtitle="AI will prioritize these channel handles when fetching suggestions. AI suggestions for every skill in this course will search these channels first."
+      >
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {channels.length === 0 ? (
+              <span className="text-sm text-gray-400 italic">No channel preferences set (AI will search all of YouTube)</span>
+            ) : (
+            channels.map((channel) => (
+              <span
+                key={channel.channel_id}
+                className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200"
+              >
+                {channel.name}
+                <button
+                  type="button"
+                  disabled={savingChannels}
+                  onClick={() => handleRemoveChannelPreference(channel.channel_id)}
+                  title={`Remove ${channel.name}`}
+                  aria-label={`Remove ${channel.name}`}
+                  className="text-blue-500 hover:text-red-600 focus:outline-none disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <input
+            type="text"
+            disabled={savingChannels}
+            placeholder="e.g. @3Blue1Brown or @freecodecamp"
+            value={newChannel}
+            onChange={(e) => setNewChannel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { 
+                e.preventDefault();
+                if (!savingChannels) handleAddChannelPreference();
+              }}}
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
+          />
+          <Button 
+            onClick={handleAddChannelPreference} 
+            loading={savingChannels} 
+            size="sm" 
+            variant="outline"
+          >
+            Add Channel
+          </Button>
+        </div>
+      </div>
+    </Card>
 
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -363,7 +498,14 @@ const SkillVideoCurator: React.FC = () => {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {videos.map((video) => (
+            {/* Sort videos by source and instructor verification */}
+            {[...videos]
+              .sort((a, b) => {
+                const rankA = a.source === 'manual' ? 0 : (a.instructor_verified ? 1 : 2);
+                const rankB = b.source === 'manual' ? 0 : (b.instructor_verified ? 1 : 2);
+                return rankA - rankB;
+              })
+            .map((video) => (
               <div
                 key={video._id}
                 className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
@@ -422,8 +564,7 @@ const SkillVideoCurator: React.FC = () => {
                     )}
                   </button>
                 )}
-                {video.source === 'manual' && (
-                  <button
+                {(<button
                     type="button"
                     onClick={() => handleFindMoment(video)}
                     disabled={findingMomentId === video._id}

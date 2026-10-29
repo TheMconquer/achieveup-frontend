@@ -98,7 +98,14 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   return (
     <div className="flex flex-col gap-3 py-3">
-      {videos.map((video) => (
+      {/* Sort videos by source and instructor verification */}
+      {[...videos]
+        .sort((a, b) => {
+          const rankA = a.source === 'manual' ? 0 : (a.instructor_verified ? 1 : 2);
+          const rankB = b.source === 'manual' ? 0 : (b.instructor_verified ? 1 : 2);
+          return rankA - rankB;
+        })
+        .map((video) => (
         <div
           key={video._id}
           className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"

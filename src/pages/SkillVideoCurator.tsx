@@ -93,10 +93,27 @@ const SkillVideoCurator: React.FC = () => {
   const [channels, setChannels] = useState<CourseChannel[]>([]);
   const [newChannel, setNewChannel] = useState<string>('');
   const [savingChannels, setSavingChannels] = useState<boolean>(false);
+  const [loadingChannels, setLoadingChannels] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!courseId) return;
-    courseChannelsAPI.get(courseId).then((res) => setChannels(res.data.channels || []));
+    if (!courseId) {
+      setChannels([]);
+      return;
+    }
+    setChannels([]);
+    setLoadingChannels(true);
+    courseChannelsAPI
+      .get(courseId)
+      .then((res) => {
+        setChannels(res.data.channels || []);
+      })
+      .catch(() => {
+        toast.error('Could not load course channel preferences.');
+        setChannels([]);
+      })
+      .finally(() => {
+        setLoadingChannels(false);
+      });
   }, [courseId]);
 
   useEffect(() => {
@@ -207,6 +224,12 @@ const SkillVideoCurator: React.FC = () => {
     const trimmed = newChannel.trim();
     if (!trimmed) return;
 
+    // Max 3 channels check
+    if (channels.length >= 3) {
+      toast.error('Maximum of 3 preferred channels allowed.');
+      return;
+    }
+
     // Case-insensitive duplicate check
     const isDuplicate = channels.some((ch) => ch.name.toLowerCase() === trimmed.toLowerCase());
     if (isDuplicate) {
@@ -214,12 +237,8 @@ const SkillVideoCurator: React.FC = () => {
       return;
     }
 
-    // PREVENT RUNTIME ERROR
+    // Load Saved Channels
     const previousChannels = [...channels];
-    const updated: CourseChannel[] = [...channels, { channel_id: trimmed, name: trimmed }];
-
-    setChannels(updated);
-    setNewChannel('');
     try {
       setSavingChannels(true);
       const res = await courseChannelsAPI.update(courseId, [
@@ -412,18 +431,28 @@ const SkillVideoCurator: React.FC = () => {
               ))
             )}
           </div>
-
+          {channels.length >= 3 && (
+            <span className="text-xs font-medium text-amber-600">3 channel limit reached!</span>
+          )}
           <div className="flex gap-2 pt-2">
             <input
               type="text"
-              disabled={savingChannels}
-              placeholder="e.g. @3Blue1Brown or @freecodecamp"
+              disabled={savingChannels || loadingChannels || channels.length >= 3}
+              placeholder={
+                loadingChannels
+                  ? 'Loading channels...'
+                  : channels.length >= 3
+                    ? 'Maximum 3 channels reached'
+                    : 'e.g. @3Blue1Brown or @freecodecamp'
+              }
               value={newChannel}
               onChange={(e) => setNewChannel(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (!savingChannels) handleAddChannelPreference();
+                  if (!savingChannels && !loadingChannels && channels.length < 3) {
+                    handleAddChannelPreference();
+                  }
                 }
               }}
               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
@@ -431,6 +460,7 @@ const SkillVideoCurator: React.FC = () => {
             <Button
               onClick={handleAddChannelPreference}
               loading={savingChannels}
+              disabled={savingChannels || loadingChannels || channels.length >= 3}
               size="sm"
               variant="outline"
             >

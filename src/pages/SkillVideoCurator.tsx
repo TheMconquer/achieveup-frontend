@@ -229,22 +229,32 @@ const SkillVideoCurator: React.FC = () => {
       toast.error('Maximum of 3 preferred channels allowed.');
       return;
     }
-
-    // Case-insensitive duplicate check
-    const isDuplicate = channels.some((ch) => ch.name.toLowerCase() === trimmed.toLowerCase());
-    if (isDuplicate) {
+    const cleanTrimmed = trimmed.toLowerCase().replace(/^@/, '');
+    const isLocalDuplicate = channels.some(
+      (ch) =>
+        ch.name.toLowerCase().replace(/^@/, '') === cleanTrimmed ||
+        ch.channel_id.toLowerCase() === cleanTrimmed
+    );
+    if (isLocalDuplicate) {
       toast.error('Channel already added');
       return;
     }
-
     // Load Saved Channels
     const previousChannels = [...channels];
     try {
       setSavingChannels(true);
+      const previousCount = channels.length;
       const res = await courseChannelsAPI.update(courseId, [
         ...channels,
         { channel_id: trimmed, name: trimmed },
       ]);
+      // Check if the channel was actually added
+      const updatedChannels = res.data.channels || [];
+      if (updatedChannels.length === previousCount) {
+        toast.error('This channel is already in your preferences.');
+        return;
+      }
+
       setChannels(res.data.channels || []);
       setNewChannel('');
       toast.success('Preferred channels updated');

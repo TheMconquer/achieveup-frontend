@@ -61,15 +61,13 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
       })
     );
 
-    skillVideoAPI
-      .vote({ video_id: video._id, vote_type: nextVote })
-      .catch(() => {
-        // Revert on failure by re-fetching
-        skillVideoAPI
-          .getForSkill(courseId, undefined, skillName)
-          .then((res) => setVideos(res.data.videos))
-          .catch(() => {});
-      });
+    skillVideoAPI.vote({ video_id: video._id, vote_type: nextVote }).catch(() => {
+      // Revert on failure by re-fetching
+      skillVideoAPI
+        .getForSkill(courseId, undefined, skillName)
+        .then((res) => setVideos(res.data.videos))
+        .catch(() => {});
+    });
   };
 
   if (loading) {
@@ -89,11 +87,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
   }
 
   if (videos.length === 0) {
-    return (
-      <p className="py-4 text-center text-sm text-gray-500">
-        No videos yet for this skill.
-      </p>
-    );
+    return <p className="py-4 text-center text-sm text-gray-500">No videos yet for this skill.</p>;
   }
 
   return (
@@ -101,69 +95,73 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
       {/* Sort videos by source and instructor verification */}
       {[...videos]
         .sort((a, b) => {
-          const rankA = a.source === 'manual' ? 0 : (a.instructor_verified ? 1 : 2);
-          const rankB = b.source === 'manual' ? 0 : (b.instructor_verified ? 1 : 2);
+          const rankA = a.source === 'manual' ? 0 : a.instructor_verified ? 1 : 2;
+          const rankB = b.source === 'manual' ? 0 : b.instructor_verified ? 1 : 2;
           return rankA - rankB;
         })
         .map((video) => (
-        <div
-          key={video._id}
-          className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
-        >
-          {video.thumbnail && (
-            <img
-              src={video.thumbnail}
-              alt={video.title}
-              className="h-14 w-24 flex-shrink-0 rounded-md object-cover"
-            />
-          )}
-          <a
-            href={withTimestamp(video.link, video.timestamp_seconds)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-w-0 flex-1 flex-col gap-0.5"
+          <div
+            key={video._id}
+            className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
           >
-            <span className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
-              {video.title}
-              <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-400" />
-              {video.source === 'manual' ? (
-                <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                  Instructor Recommended
-                </span>
-              ) : video.instructor_verified ? (
-                <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
-                  Instructor Verified
-                </span>
-              ) : null}
-            </span>
-            <span className="truncate text-xs text-gray-500">{video.channel}</span>
-          </a>
-          <div className="flex flex-shrink-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleVote(video, 'upvote')}
-              title="This helped"
-              className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'upvote' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-              }`}
+            {video.thumbnail && (
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="h-14 w-24 flex-shrink-0 rounded-md object-cover"
+              />
+            )}
+            <a
+              href={withTimestamp(video.link, video.timestamp_seconds)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-w-0 flex-1 flex-col gap-0.5"
             >
-              <ThumbsUp className="h-4 w-4" />
-              {video.upvotes ?? 0}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleVote(video, 'downvote')}
-              title="This didn't help"
-              className={`flex items-center gap-1 text-sm ${
-                video.student_vote === 'downvote' ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              <ThumbsDown className="h-4 w-4" />
-              {video.downvotes ?? 0}
-            </button>
+              <span className="flex items-center gap-1.5 truncate text-sm font-semibold text-gray-900">
+                {video.title}
+                <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-400" />
+                {video.source === 'manual' ? (
+                  <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                    Instructor Recommended
+                  </span>
+                ) : video.instructor_verified ? (
+                  <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                    Instructor Verified
+                  </span>
+                ) : null}
+              </span>
+              <span className="truncate text-xs text-gray-500">{video.channel}</span>
+            </a>
+            <div className="flex flex-shrink-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleVote(video, 'upvote')}
+                title="This helped"
+                className={`flex items-center gap-1 text-sm ${
+                  video.student_vote === 'upvote'
+                    ? 'text-blue-600'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <ThumbsUp className="h-4 w-4" />
+                {video.upvotes ?? 0}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVote(video, 'downvote')}
+                title="This didn't help"
+                className={`flex items-center gap-1 text-sm ${
+                  video.student_vote === 'downvote'
+                    ? 'text-red-600'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <ThumbsDown className="h-4 w-4" />
+                {video.downvotes ?? 0}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 };

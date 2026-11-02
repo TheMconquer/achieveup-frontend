@@ -21,8 +21,8 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       </div>
       <div className="space-y-4 p-6 text-sm text-gray-700">
         <p>
-          This page lets you curate the YouTube videos students see when they're weak in a
-          specific skill. Pick a course and a skill, then:
+          This page lets you curate the YouTube videos students see when they're weak in a specific
+          skill. Pick a course and a skill, then:
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
@@ -48,16 +48,18 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             .
           </li>
           <li>
-            For a video you added yourself, click the clock icon to automatically find the
-            most relevant moment in it, so the link students see jumps straight to that point.
+            For a video you added yourself, click the clock icon to automatically find the most
+            relevant moment in it, so the link students see jumps straight to that point.
           </li>
-          <li>Students can upvote or downvote each video to tell you whether it actually helped.</li>
+          <li>
+            Students can upvote or downvote each video to tell you whether it actually helped.
+          </li>
         </ul>
         <div className="rounded-lg bg-gray-50 p-3">
           <p>
             <strong>Another way to get here:</strong> every skill matrix on the{' '}
-            <strong>Skill Matrix</strong> page has a "Manage Videos" link that drops you
-            straight into that course and skill — no need to pick them again.
+            <strong>Skill Matrix</strong> page has a "Manage Videos" link that drops you straight
+            into that course and skill — no need to pick them again.
           </p>
         </div>
       </div>
@@ -94,9 +96,7 @@ const SkillVideoCurator: React.FC = () => {
 
   useEffect(() => {
     if (!courseId) return;
-    courseChannelsAPI
-      .get(courseId)
-      .then((res) => setChannels(res.data.channels || []))
+    courseChannelsAPI.get(courseId).then((res) => setChannels(res.data.channels || []));
   }, [courseId]);
 
   useEffect(() => {
@@ -199,7 +199,7 @@ const SkillVideoCurator: React.FC = () => {
       setVerifyingId(null);
     }
   };
-  
+
   // Channel management handlers
   const handleAddChannelPreference = async () => {
     // Prevent execution if already saving or input is empty
@@ -208,35 +208,36 @@ const SkillVideoCurator: React.FC = () => {
     if (!trimmed) return;
 
     // Case-insensitive duplicate check
-    const isDuplicate = channels.some(
-      (ch) => ch.name.toLowerCase() === trimmed.toLowerCase()
-    );
+    const isDuplicate = channels.some((ch) => ch.name.toLowerCase() === trimmed.toLowerCase());
     if (isDuplicate) {
       toast.error('Channel already added');
       return;
     }
-    
+
     // PREVENT RUNTIME ERROR
     const previousChannels = [...channels];
-    const updated: CourseChannel[] = [
-    ...channels,
-    { channel_id: trimmed, name: trimmed }];
+    const updated: CourseChannel[] = [...channels, { channel_id: trimmed, name: trimmed }];
 
     setChannels(updated);
     setNewChannel('');
     try {
       setSavingChannels(true);
-      const res = await courseChannelsAPI.update(courseId, [...channels, { channel_id: trimmed, name: trimmed }]);
+      const res = await courseChannelsAPI.update(courseId, [
+        ...channels,
+        { channel_id: trimmed, name: trimmed },
+      ]);
       setChannels(res.data.channels || []);
       setNewChannel('');
       toast.success('Preferred channels updated');
     } catch (err: any) {
-    // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
+      // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
       setChannels(previousChannels);
-        const errorMessage =
-          err.response?.data?.error || err.response?.data?.message || 'Failed to update preferred channels. Please check the channel handle.';
-        toast.error(errorMessage);
-    }finally {
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Failed to update preferred channels. Please check the channel handle.';
+      toast.error(errorMessage);
+    } finally {
       setSavingChannels(false);
     }
   };
@@ -244,13 +245,13 @@ const SkillVideoCurator: React.FC = () => {
   const handleRemoveChannelPreference = async (channelToRemove: string) => {
     // Prevent execution if already saving or input is empty
     if (savingChannels) return;
-    
+
     const previousChannels = [...channels];
 
     // const updated = channels.filter((c) => c.channel_id !== channelToRemove);
     const updated = channels.filter(
-    (c) => c.channel_id !== channelToRemove && c.name !== channelToRemove
-  );
+      (c) => c.channel_id !== channelToRemove && c.name !== channelToRemove
+    );
     setChannels(updated);
 
     try {
@@ -259,14 +260,16 @@ const SkillVideoCurator: React.FC = () => {
       setChannels(res.data.channels || []);
       toast.success('Channel preference removed');
     } catch (err: any) {
-    // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
-        setChannels(previousChannels);
-        const errorMessage =
-          err.response?.data?.error || err.response?.data?.message || 'Failed to update preferred channels. Please check the channel handle.';
-        toast.error(errorMessage);
-      } finally {
-          setSavingChannels(false);
-  }
+      // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
+      setChannels(previousChannels);
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Failed to update preferred channels. Please check the channel handle.';
+      toast.error(errorMessage);
+    } finally {
+      setSavingChannels(false);
+    }
   };
 
   const handleGetSuggestions = async () => {
@@ -292,7 +295,9 @@ const SkillVideoCurator: React.FC = () => {
       <div className="flex w-full flex-col gap-6">
         <div className="mb-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Skill Video Assignment</h1>
+            <h1 className="text-[28px] font-bold tracking-tight text-gray-900">
+              Skill Video Assignment
+            </h1>
             <button
               type="button"
               onClick={() => setShowInfoModal(true)}
@@ -356,7 +361,9 @@ const SkillVideoCurator: React.FC = () => {
           ← Change course
         </button>
         <div className="flex items-center gap-2">
-          <h1 className="text-[28px] font-bold tracking-tight text-gray-900">Skill Video Assignment</h1>
+          <h1 className="text-[28px] font-bold tracking-tight text-gray-900">
+            Skill Video Assignment
+          </h1>
           <button
             type="button"
             onClick={() => setShowInfoModal(true)}
@@ -367,9 +374,9 @@ const SkillVideoCurator: React.FC = () => {
           </button>
         </div>
         <p className="mt-1.5 text-sm text-gray-600">
-          Videos students see when they're weak in a skill — added by you or suggested by AI.
-          Both are visible to students right away; anything you add yourself is tagged
-          "Instructor Recommended" so students know it's been personally vetted.
+          Videos students see when they're weak in a skill — added by you or suggested by AI. Both
+          are visible to students right away; anything you add yourself is tagged "Instructor
+          Recommended" so students know it's been personally vetted.
         </p>
       </div>
 
@@ -381,54 +388,57 @@ const SkillVideoCurator: React.FC = () => {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             {channels.length === 0 ? (
-              <span className="text-sm text-gray-400 italic">No channel preferences set (AI will search all of YouTube)</span>
-            ) : (
-            channels.map((channel) => (
-              <span
-                key={channel.channel_id}
-                className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200"
-              >
-                {channel.name}
-                <button
-                  type="button"
-                  disabled={savingChannels}
-                  onClick={() => handleRemoveChannelPreference(channel.channel_id)}
-                  title={`Remove ${channel.name}`}
-                  aria-label={`Remove ${channel.name}`}
-                  className="text-blue-500 hover:text-red-600 focus:outline-none disabled:opacity-50"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+              <span className="text-sm text-gray-400 italic">
+                No channel preferences set (AI will search all of YouTube)
               </span>
-            ))
-          )}
-        </div>
+            ) : (
+              channels.map((channel) => (
+                <span
+                  key={channel.channel_id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200"
+                >
+                  {channel.name}
+                  <button
+                    type="button"
+                    disabled={savingChannels}
+                    onClick={() => handleRemoveChannelPreference(channel.channel_id)}
+                    title={`Remove ${channel.name}`}
+                    aria-label={`Remove ${channel.name}`}
+                    className="text-blue-500 hover:text-red-600 focus:outline-none disabled:opacity-50"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
 
-        <div className="flex gap-2 pt-2">
-          <input
-            type="text"
-            disabled={savingChannels}
-            placeholder="e.g. @3Blue1Brown or @freecodecamp"
-            value={newChannel}
-            onChange={(e) => setNewChannel(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { 
-                e.preventDefault();
-                if (!savingChannels) handleAddChannelPreference();
-              }}}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
-          />
-          <Button 
-            onClick={handleAddChannelPreference} 
-            loading={savingChannels} 
-            size="sm" 
-            variant="outline"
-          >
-            Add Channel
-          </Button>
+          <div className="flex gap-2 pt-2">
+            <input
+              type="text"
+              disabled={savingChannels}
+              placeholder="e.g. @3Blue1Brown or @freecodecamp"
+              value={newChannel}
+              onChange={(e) => setNewChannel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (!savingChannels) handleAddChannelPreference();
+                }
+              }}
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
+            />
+            <Button
+              onClick={handleAddChannelPreference}
+              loading={savingChannels}
+              size="sm"
+              variant="outline"
+            >
+              Add Channel
+            </Button>
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
 
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -486,91 +496,96 @@ const SkillVideoCurator: React.FC = () => {
             {/* Sort videos by source and instructor verification */}
             {[...videos]
               .sort((a, b) => {
-                const rankA = a.source === 'manual' ? 0 : (a.instructor_verified ? 1 : 2);
-                const rankB = b.source === 'manual' ? 0 : (b.instructor_verified ? 1 : 2);
+                const rankA = a.source === 'manual' ? 0 : a.instructor_verified ? 1 : 2;
+                const rankB = b.source === 'manual' ? 0 : b.instructor_verified ? 1 : 2;
                 return rankA - rankB;
               })
-            .map((video) => (
-              <div
-                key={video._id}
-                className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
-              >
-                {video.thumbnail && (
-                  <img src={video.thumbnail} alt={video.title} className="h-14 w-24 rounded-md object-cover" />
-                )}
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="flex items-center gap-1.5 truncate">
-                    <a
-                      href={withTimestamp(video.link, video.timestamp_seconds)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate text-sm font-semibold text-gray-900 hover:underline"
+              .map((video) => (
+                <div
+                  key={video._id}
+                  className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
+                >
+                  {video.thumbnail && (
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="h-14 w-24 rounded-md object-cover"
+                    />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <a
+                        href={withTimestamp(video.link, video.timestamp_seconds)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-sm font-semibold text-gray-900 hover:underline"
+                      >
+                        {video.title}
+                      </a>
+                      {video.source === 'manual' ? (
+                        <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                          Instructor Recommended
+                        </span>
+                      ) : video.instructor_verified ? (
+                        <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                          Instructor Verified
+                        </span>
+                      ) : (
+                        <span className="flex-shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                          AI Suggested
+                        </span>
+                      )}
+                      {video.timestamp_seconds != null && (
+                        <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                          Jumps to {formatTimestamp(video.timestamp_seconds)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="truncate text-xs text-gray-500">{video.channel}</span>
+                    <span className="text-xs text-gray-400">
+                      {video.upvotes ?? 0} found helpful · {video.downvotes ?? 0} did not
+                    </span>
+                  </div>
+                  {video.source === 'ai_suggested' && !video.instructor_verified && (
+                    <button
+                      type="button"
+                      onClick={() => handleVerify(video)}
+                      disabled={verifyingId === video._id}
+                      title="Mark as instructor verified"
+                      className="flex-shrink-0 text-gray-400 hover:text-green-600 disabled:opacity-50"
                     >
-                      {video.title}
-                    </a>
-                    {video.source === 'manual' ? (
-                      <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                        Instructor Recommended
-                      </span>
-                    ) : video.instructor_verified ? (
-                      <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
-                        Instructor Verified
-                      </span>
-                    ) : (
-                      <span className="flex-shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                        AI Suggested
-                      </span>
-                    )}
-                    {video.timestamp_seconds != null && (
-                      <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                        Jumps to {formatTimestamp(video.timestamp_seconds)}
-                      </span>
-                    )}
-                  </span>
-                  <span className="truncate text-xs text-gray-500">{video.channel}</span>
-                  <span className="text-xs text-gray-400">
-                    {video.upvotes ?? 0} found helpful · {video.downvotes ?? 0} did not
-                  </span>
-                </div>
-                {video.source === 'ai_suggested' && !video.instructor_verified && (
+                      {verifyingId === video._id ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                  {
+                    <button
+                      type="button"
+                      onClick={() => handleFindMoment(video)}
+                      disabled={findingMomentId === video._id}
+                      title="Find relevant moment in this video"
+                      className="flex-shrink-0 text-gray-400 hover:text-blue-600 disabled:opacity-50"
+                    >
+                      {findingMomentId === video._id ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
+                      ) : (
+                        <Clock className="h-4 w-4" />
+                      )}
+                    </button>
+                  }
                   <button
                     type="button"
-                    onClick={() => handleVerify(video)}
-                    disabled={verifyingId === video._id}
-                    title="Mark as instructor verified"
-                    className="flex-shrink-0 text-gray-400 hover:text-green-600 disabled:opacity-50"
+                    onClick={() => handleRemove(video._id)}
+                    title="Remove"
+                    className="flex-shrink-0 text-gray-400 hover:text-red-600"
                   >
-                    {verifyingId === video._id ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
+                    <Trash2 className="h-4 w-4" />
                   </button>
-                )}
-                {(<button
-                    type="button"
-                    onClick={() => handleFindMoment(video)}
-                    disabled={findingMomentId === video._id}
-                    title="Find relevant moment in this video"
-                    className="flex-shrink-0 text-gray-400 hover:text-blue-600 disabled:opacity-50"
-                  >
-                    {findingMomentId === video._id ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
-                    ) : (
-                      <Clock className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(video._id)}
-                  title="Remove"
-                  className="flex-shrink-0 text-gray-400 hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                </div>
+              ))}
           </div>
         )}
 

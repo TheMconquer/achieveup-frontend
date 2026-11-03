@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { CheckCircle, AlertTriangle, RefreshCw, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Share2, Copy, Check } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import BadgesDashboard from '../components/BadgesDashboard/BadgesDashboard';
+import RecentBadgesGrid, { RecentBadgeSummary } from '../components/StudentPortal/RecentBadgesGrid';
+import { badgeAPI } from '../services/api';
+import { getApiErrorMessage } from '../utils/apiError';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { CanvasCourse } from '../types';
+import DialogPanel from '../components/common/DialogPanel';
 
 
 interface StudentProgressData {
@@ -41,6 +46,149 @@ interface RawStudentAnalytics {
   averageScores: Record<string, number>;
 }
 
+// Kept small since this panel sits inside an expanded table row.
+const BADGES_PER_PAGE = 5;
+
+// Inline, authenticated view of one student's badges plus a way to generate
+// a public share link for them — e.g. to send to a student locked out of
+// their own account. Keeps its own fetch/share state so expanding one row
+// doesn't need the parent table to track more than "which id is open".
+const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: string }> = ({
+  studentId,
+  courseId,
+}) => {
+  const [badges, setBadges] = useState<RecentBadgeSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const { copied, copy } = useCopyToClipboard();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+    setPage(1);
+    badgeAPI
+      .getStudentEarnedBadges(studentId, courseId)
+      .then((res) => {
+        if (cancelled) return;
+        setBadges(
+          res.data.badges.map((badge) => ({
+            id: badge.badge_id,
+            skillName: badge.skill_name,
+            courseName: badge.course_name || 'Course',
+            level: badge.badge_level,
+            earnedAt: badge.earned_at,
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error('Error loading student badges:', err);
+        if (!cancelled) setLoadError(getApiErrorMessage(err) || "Could not load this student's badges.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId, courseId]);
+
+  const handleGetShareLink = async () => {
+    setShareLoading(true);
+    try {
+      const response = await badgeAPI.generateBadgeShareLink(studentId, courseId);
+      setShareLink(response.data.share_link);
+    } catch (err: unknown) {
+      console.error('Error creating badge share link:', err);
+      toast.error(getApiErrorMessage(err) || 'Could not create a share link for this student.');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(badges.length / BADGES_PER_PAGE));
+  const pagedBadges = badges.slice((page - 1) * BADGES_PER_PAGE, page * BADGES_PER_PAGE);
+  const showPagination = !loading && !loadError && totalPages > 1;
+
+  return (
+    <div className="bg-gray-50 p-4 space-y-4">
+      {loading ? (
+        <div className="flex justify-center py-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" />
+        </div>
+      ) : loadError ? (
+        <p className="text-sm text-red-700 dark:text-red-400">{loadError}</p>
+      ) : (
+        <RecentBadgesGrid badges={pagedBadges} />
+      )}
+
+      <div className="flex flex-col gap-3 border-t border-gray-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+        {shareLink ? (
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              readOnly
+              value={shareLink}
+              onFocus={(e) => e.target.select()}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
+              aria-label="Public badge share link for this student"
+            />
+            <button
+              type="button"
+              onClick={() => copy(shareLink)}
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-700 dark:text-green-400" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleGetShareLink}
+            disabled={shareLoading}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Share2 className="h-4 w-4" />
+            Get Share Link
+          </button>
+        )}
+
+        {showPagination && (
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </button>
+
+            <span className="text-xs text-gray-500">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Student Progress Component
 const StudentProgress: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -51,6 +199,7 @@ const StudentProgress: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentProgressEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
   // Load courses on component mount
   useEffect(() => {
@@ -150,9 +299,9 @@ const StudentProgress: React.FC = () => {
 
   const getRiskLevelColor = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return 'text-green-600 bg-green-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'high': return 'text-red-600 bg-red-100';
+      case 'low': return 'text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
+      case 'medium': return 'text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40';
+      case 'high': return 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -188,12 +337,13 @@ const StudentProgress: React.FC = () => {
       {/* Course Selection */}
       {courses.length > 0 && (
         <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
+          <label htmlFor="progress-course" className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
           <div className="flex items-center gap-4">
             <select
+              id="progress-course"
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ucf-gold"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
             >
               <option value="">Choose a course...</option>
               {courses.map(course => (
@@ -251,7 +401,7 @@ const StudentProgress: React.FC = () => {
                   }
                 }}
                 disabled={syncing}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 disabled:opacity-50 transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Syncing...' : 'Sync Now'}
@@ -263,8 +413,8 @@ const StudentProgress: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{error}</p>
+        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 
@@ -272,7 +422,7 @@ const StudentProgress: React.FC = () => {
       {courses.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-400 text-2xl">📚</span>
+            <span className="text-gray-500 text-2xl">📚</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Courses Found</h2>
           <p className="text-gray-600 mb-4">
@@ -280,7 +430,7 @@ const StudentProgress: React.FC = () => {
           </p>
           <a
             href="/settings"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600"
           >
             Configure Canvas Token
           </a>
@@ -294,15 +444,15 @@ const StudentProgress: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Total Students</p>
-              <div className="mt-2 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 font-bold">{studentData.students.length}</span>
+              <div className="mt-2 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">{studentData.students.length}</span>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Avg Skills Mastered</p>
-              <div className="mt-2 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 font-bold">
+              <div className="mt-2 w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-green-700 dark:text-green-400 font-bold">
                   {Math.round(studentData.students.reduce((acc, s) => acc + s.skillsMastered, 0) / studentData.students.length)}
                 </span>
               </div>
@@ -310,8 +460,8 @@ const StudentProgress: React.FC = () => {
 
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Skills Tracked</p>
-              <div className="mt-2 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 font-bold">
+              <div className="mt-2 w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                <span className="text-purple-600 dark:text-purple-400 font-bold">
                   {Object.keys(studentData.skillDistribution).length}
                 </span>
               </div>
@@ -321,7 +471,7 @@ const StudentProgress: React.FC = () => {
           {/* Student Progress Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Student Performance Overview</h3>
+              <h2 className="text-lg font-medium text-gray-900">Student Performance Overview</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -346,18 +496,25 @@ const StudentProgress: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {studentData.students.map((student) => (
-                    <tr key={student.id} className="hover:bg-gray-50">
+                    <React.Fragment key={student.id}>
+                    <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          to={`/badges/${student.id}?name=${encodeURIComponent(student.name)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-ucf-gold hover:text-yellow-600 hover:underline flex items-center"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedStudentId((current) => (current === student.id ? null : student.id))
+                          }
+                          className="text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 hover:underline flex items-center"
                           title="View Student Badges"
+                          aria-expanded={expandedStudentId === student.id}
                         >
+                          {expandedStudentId === student.id ? (
+                            <ChevronDown className="w-3 h-3 mr-1" />
+                          ) : (
+                            <ChevronRight className="w-3 h-3 mr-1" />
+                          )}
                           {student.name}
-                          <ArrowUpRight className="w-3 h-3 ml-1" />
-                        </Link>
+                        </button>
                         <div className="text-sm text-gray-500">{student.id}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -368,8 +525,8 @@ const StudentProgress: React.FC = () => {
                                 <span className="text-sm text-gray-900 font-medium">{skill.skill}</span>
                                 <div className="flex items-center space-x-2">
                                   <span className="text-xs text-gray-600">{skill.score}%</span>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${skill.level === 'advanced' ? 'bg-green-100 text-green-800' :
-                                    skill.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${skill.level === 'advanced' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                                    skill.level === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
                                       'bg-gray-100 text-gray-800'
                                     }`}>
                                     {skill.level}
@@ -407,12 +564,21 @@ const StudentProgress: React.FC = () => {
                             setSelectedStudent(student);
                             setShowModal(true);
                           }}
-                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ucf-gold"
+                          aria-label={`Details for ${student.name}`}
+                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                         >
                           Details
                         </button>
                       </td>
                     </tr>
+                    {expandedStudentId === student.id && (
+                      <tr>
+                        <td colSpan={5} className="p-0">
+                          <InstructorStudentBadgesPanel studentId={student.id} courseId={selectedCourse} />
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -423,7 +589,7 @@ const StudentProgress: React.FC = () => {
           {Object.keys(studentData.skillDistribution).length > 0 && (
             <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Skill Distribution</h3>
+                <h2 className="text-lg font-medium text-gray-900">Skill Distribution</h2>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -447,41 +613,41 @@ const StudentProgress: React.FC = () => {
       {selectedCourse && studentData && studentData.students.length === 0 && !error && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-400 text-2xl">📊</span>
+            <span className="text-gray-500 text-2xl">📊</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Student Progress Data Yet</h2>
           <p className="text-gray-600 mb-6">
             Student progress tracking requires completing the skill mapping workflow first and waiting for student submissions.
           </p>
 
-          <div className="max-w-md mx-auto bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-blue-900 mb-4">Complete Setup Steps:</h3>
+          <div className="max-w-md mx-auto bg-blue-50 dark:bg-blue-900/40 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-4">Complete Setup Steps:</h3>
             <div className="space-y-4 text-left">
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">1</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">1</span>
                 </div>
                 <div>
-                  <p className="text-blue-800 font-medium">Create skill matrix</p>
-                  <p className="text-blue-600 text-sm">Define skills for this course</p>
+                  <p className="text-blue-800 dark:text-blue-300 font-medium">Create skill matrix</p>
+                  <p className="text-blue-600 dark:text-blue-400 text-sm">Define skills for this course</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">2</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">2</span>
                 </div>
                 <div>
-                  <p className="font-medium text-blue-800">Assign skills to quiz questions</p>
-                  <p className="text-sm text-blue-600">Map quiz questions to specific skills</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Assign skills to quiz questions</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Map quiz questions to specific skills</p>
                 </div>
               </div>
               <div className="flex items-start">
-                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-xs font-bold text-blue-800">3</span>
+                <div className="w-6 h-6 bg-blue-200 dark:bg-blue-800/60 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300">3</span>
                 </div>
                 <div>
-                  <p className="font-medium text-blue-800">Students complete assessments</p>
-                  <p className="text-sm text-blue-600">Progress data will appear automatically</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Students complete assessments</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Progress data will appear automatically</p>
                 </div>
               </div>
             </div>
@@ -490,7 +656,7 @@ const StudentProgress: React.FC = () => {
           <div className="space-x-4">
             <a
               href="/skill-assignment"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-ucf-gold hover:bg-yellow-600 transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
               Assign Skills to Questions
             </a>
@@ -507,9 +673,9 @@ const StudentProgress: React.FC = () => {
       {/* Student Details Modal */}
       {showModal && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogPanel className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClose={() => { setShowModal(false); setSelectedStudent(null); }} labelledBy="student-detail-title">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 id="student-detail-title" className="text-xl font-semibold text-gray-900">
                 {selectedStudent.name} - Detailed View
               </h2>
               <button
@@ -517,7 +683,7 @@ const StudentProgress: React.FC = () => {
                   setShowModal(false);
                   setSelectedStudent(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500 hover:text-gray-600"
               >
                 <span className="sr-only">Close</span>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -529,47 +695,47 @@ const StudentProgress: React.FC = () => {
             <div className="p-6">
               {/* Student Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-lg">{selectedStudent.skillsMastered}</span>
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">{selectedStudent.skillsMastered}</span>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-blue-900">Skills Mastered</p>
-                      <p className="text-xs text-blue-600">Advanced or Intermediate level</p>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Skills Mastered</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400">Advanced or Intermediate level</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-purple-50 rounded-lg p-4">
+                <div className="bg-purple-50 dark:bg-purple-900/40 rounded-lg p-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <span className="text-purple-600 font-bold text-lg">{selectedStudent.badgesEarned}</span>
+                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+                      <span className="text-purple-600 dark:text-purple-400 font-bold text-lg">{selectedStudent.badgesEarned}</span>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-purple-900">Badges Earned</p>
-                      <p className="text-xs text-purple-600">Achievement recognition</p>
+                      <p className="text-sm font-medium text-purple-900 dark:text-purple-200">Badges Earned</p>
+                      <p className="text-xs text-purple-600 dark:text-purple-400">Achievement recognition</p>
                     </div>
                   </div>
                 </div>
 
-                <div className={`rounded-lg p-4 ${selectedStudent.riskLevel === 'low' ? 'bg-green-50' :
-                  selectedStudent.riskLevel === 'medium' ? 'bg-yellow-50' : 'bg-red-50'
+                <div className={`rounded-lg p-4 ${selectedStudent.riskLevel === 'low' ? 'bg-green-50 dark:bg-green-900/40' :
+                  selectedStudent.riskLevel === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/40' : 'bg-red-50 dark:bg-red-900/40'
                   }`}>
                   <div className="flex items-center">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedStudent.riskLevel === 'low' ? 'bg-green-100' :
-                      selectedStudent.riskLevel === 'medium' ? 'bg-yellow-100' : 'bg-red-100'
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedStudent.riskLevel === 'low' ? 'bg-green-100 dark:bg-green-900/40' :
+                      selectedStudent.riskLevel === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/40' : 'bg-red-100 dark:bg-red-900/40'
                       }`}>
                       {getRiskIcon(selectedStudent.riskLevel)}
                     </div>
                     <div className="ml-3">
-                      <p className={`text-sm font-medium ${selectedStudent.riskLevel === 'low' ? 'text-green-900' :
-                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-900' : 'text-red-900'
+                      <p className={`text-sm font-medium ${selectedStudent.riskLevel === 'low' ? 'text-green-900 dark:text-green-200' :
+                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-900 dark:text-yellow-200' : 'text-red-900 dark:text-red-200'
                         }`}>
                         Risk Level: {selectedStudent.riskLevel}
                       </p>
-                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-600' :
-                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                      <p className={`text-xs ${selectedStudent.riskLevel === 'low' ? 'text-green-700 dark:text-green-400' :
+                        selectedStudent.riskLevel === 'medium' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
                         }`}>
                         {selectedStudent.riskLevel === 'low' ? 'Performing well across most skills' :
                           selectedStudent.riskLevel === 'medium' ? 'Some areas need attention' :
@@ -591,8 +757,8 @@ const StudentProgress: React.FC = () => {
                           <h4 className="text-md font-medium text-gray-900">{skillName}</h4>
                           <div className="flex items-center space-x-3">
                             <span className="text-lg font-semibold text-gray-900">{skillData.score}%</span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${skillData.level === 'advanced' ? 'bg-green-100 text-green-800' :
-                              skillData.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${skillData.level === 'advanced' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
+                              skillData.level === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300' :
                                 'bg-gray-100 text-gray-800'
                               }`}>
                               {skillData.level}
@@ -620,7 +786,7 @@ const StudentProgress: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-gray-400 text-2xl">📊</span>
+                      <span className="text-gray-500 text-2xl">📊</span>
                     </div>
                     <p className="text-gray-600">No detailed skill data available yet.</p>
                     <p className="text-sm text-gray-500 mt-2">
@@ -630,7 +796,7 @@ const StudentProgress: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

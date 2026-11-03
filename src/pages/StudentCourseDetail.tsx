@@ -95,7 +95,7 @@ const StudentCourseDetail: React.FC = () => {
             ? "This course wasn't found in your Canvas enrollments."
             : 'Please try refreshing the page.'}
         </p>
-        <Link to="/courses" className="text-sm font-semibold text-au-gold">
+        <Link to="/courses" className="text-sm font-semibold text-amber-700 dark:text-au-gold">
           ← Back to My Courses
         </Link>
       </Card>
@@ -128,7 +128,7 @@ const StudentCourseDetail: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <span className="text-[15px] font-semibold text-gray-900">Course Mastery</span>
               <Info
-                className="h-4 w-4 text-gray-400"
+                className="h-4 w-4 text-gray-500"
                 aria-label="Average mastery across skills attempted in this course"
               />
             </div>

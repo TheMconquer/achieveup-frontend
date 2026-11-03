@@ -4,11 +4,78 @@ import { validatePassword } from '../utils/passwordPolicy';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff } from 'lucide-react';
+import { User, Lock, Key, Info, Save, Edit, Wifi, WifiOff, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { authAPI, canvasAPI } from '../services/api';
+import { authAPI, canvasAPI, badgeAPI } from '../services/api';
 import { User as UserType } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
+
+// A separate component (not nested inside Settings) so its own loading/opted-out
+// state survives re-renders of the rest of the settings form.
+const BadgeSharingSettings: React.FC = () => {
+  const [optedOut, setOptedOut] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    badgeAPI
+      .getBadgeShareStatus()
+      .then((res) => setOptedOut(res.data.opted_out))
+      .catch((err) => {
+        console.error('Error loading badge sharing status:', err);
+        setLoadError(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleToggle = async () => {
+    setSaving(true);
+    try {
+      if (optedOut) {
+        await badgeAPI.optInToBadgeSharing();
+        setOptedOut(false);
+        toast.success('Badge sharing turned on.');
+      } else {
+        await badgeAPI.optOutOfBadgeSharing();
+        setOptedOut(true);
+        toast.success('Badge sharing turned off.');
+      }
+    } catch (err: unknown) {
+      console.error('Error updating badge sharing preference:', err);
+      toast.error(getApiErrorMessage(err) || 'Could not update your badge sharing preference.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center mb-4">
+        <Share2 className="w-6 h-6 text-primary-600 mr-2" />
+        <h2 className="text-xl font-semibold text-gray-900">Badge Sharing</h2>
+      </div>
+      {loadError ? (
+        <p className="text-red-700 dark:text-red-400">
+          Could not load your badge sharing settings. Please refresh the page to try again.
+        </p>
+      ) : (
+        <>
+          <p className="text-gray-600 mb-4">
+            {optedOut
+              ? 'Your badges are private. No one, including your instructors, can generate a public link to them.'
+              : 'Your badges can be shared via a public link — by you, or by an instructor who teaches you (useful if you ever lose access to your account).'}
+          </p>
+          <Button variant="outline" onClick={handleToggle} loading={saving} disabled={saving}>
+            {optedOut ? 'Turn On Badge Sharing' : 'Turn Off Badge Sharing'}
+          </Button>
+        </>
+      )}
+    </Card>
+  );
+};
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -203,10 +270,10 @@ const Settings: React.FC = () => {
 
   // Canvas token instructions
   const CanvasTokenInstructions = () => (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+    <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
       <div className="flex items-start">
-        <Info className="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-        <div className="text-sm text-blue-800">
+        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+        <div className="text-sm text-blue-800 dark:text-blue-300">
           <p className="font-medium mb-2">
             How to get your Canvas API {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} Token:
           </p>
@@ -220,9 +287,9 @@ const Settings: React.FC = () => {
           </ol>
           
           {profile.canvasTokenType === 'instructor' && (
-            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-              <p className="text-xs font-medium text-yellow-800 mb-1">Instructor Token Benefits:</p>
-              <ul className="text-xs text-yellow-700 space-y-1">
+            <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded">
+              <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">Instructor Token Benefits:</p>
+              <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
                 <li>• Access to all courses you teach</li>
                 <li>• View and manage quiz questions</li>
                 <li>• Monitor student progress across courses</li>
@@ -235,11 +302,11 @@ const Settings: React.FC = () => {
           <div className="mt-3 p-2 bg-white rounded border">
             <p className="text-xs font-medium text-gray-700 mb-1">Current Status:</p>
             {user?.hasCanvasToken ? (
-              <p className="text-xs text-green-600">
+              <p className="text-xs text-green-700 dark:text-green-400">
                 ✅ {user.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} token is set and ready to use
               </p>
             ) : (
-              <p className="text-xs text-orange-600">
+              <p className="text-xs text-orange-700 dark:text-orange-400">
                 ⚠️ No token set - {profile.canvasTokenType === 'instructor' ? 'instructor features' : 'courses'} won't load until you add one
               </p>
             )}
@@ -261,23 +328,23 @@ const Settings: React.FC = () => {
       
       {/* Canvas Integration Importance Notice */}
       {!user?.hasCanvasToken && (
-        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <Info className="h-6 w-6 text-blue-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-blue-900 mb-2">
+              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-2">
                 Canvas Integration Required
               </h3>
-              <p className="text-blue-800 mb-4">
+              <p className="text-blue-800 dark:text-blue-300 mb-4">
                 To use AchieveUp features like course access, skill matrix creation, and student progress tracking, 
                 you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses 
                 and provide AI-powered skill tracking.
               </p>
-              <div className="bg-blue-100 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">What you can do with Canvas integration:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="bg-blue-100 dark:bg-blue-900/40 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">What you can do with Canvas integration:</h4>
+                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                   <li>• Access your Canvas courses and quizzes</li>
                   <li>• Create skill matrices for your courses</li>
                   <li>• Assign skills to quiz questions with AI assistance</li>
@@ -300,7 +367,7 @@ const Settings: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
               </div>
               {!isEditingProfile && (
-                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
+                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} aria-label="Edit profile">
                   <Edit className="w-4 h-4 mr-2" />Edit
                 </Button>
               )}
@@ -349,7 +416,7 @@ const Settings: React.FC = () => {
                   disabled={testingConnection}
                 >
                   {connectionStatus?.connected ? (
-                    <Wifi className="w-4 h-4 mr-2 text-green-500" />
+                    <Wifi className="w-4 h-4 mr-2 text-green-500 dark:text-green-400" />
                   ) : (
                     <WifiOff className="w-4 h-4 mr-2 text-gray-500" />
                   )}
@@ -362,8 +429,8 @@ const Settings: React.FC = () => {
             {connectionStatus && (
               <div className={`mb-4 p-3 rounded-lg border ${
                 connectionStatus.connected 
-                  ? 'bg-green-50 border-green-200 text-green-800' 
-                  : 'bg-red-50 border-red-200 text-red-800'
+                  ? 'bg-green-50 dark:bg-green-900/40 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300' 
+                  : 'bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
               }`}>
                 <div className="flex items-center">
                   {connectionStatus.connected ? (
@@ -384,7 +451,7 @@ const Settings: React.FC = () => {
             {/* Status Indicator */}
             <div className="mb-4">
               {user?.hasCanvasToken ? (
-                <div className="flex items-center text-sm text-green-600"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
+                <div className="flex items-center text-sm text-green-700 dark:text-green-400"><div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>Token is set</div>
               ) : (
                 <div className="flex items-center text-sm text-gray-500"><div className="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>No token set</div>
               )}
@@ -397,7 +464,7 @@ const Settings: React.FC = () => {
                 {/* Token Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
                     <div className="flex items-center">
                       <input
                         type="radio"
@@ -407,14 +474,14 @@ const Settings: React.FC = () => {
                         readOnly
                         className="mr-2"
                       />
-                      <span className="text-sm font-medium text-blue-800">Instructor Token (Required)</span>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">This application is for instructors only</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
                   </div>
                 </div>
                 
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
                     name="canvasApiToken"
                     type="text"
@@ -441,7 +508,7 @@ const Settings: React.FC = () => {
                 {/* Token Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
                     <div className="flex items-center">
                       <input
                         type="radio"
@@ -451,14 +518,14 @@ const Settings: React.FC = () => {
                         readOnly
                         className="mr-2"
                       />
-                      <span className="text-sm font-medium text-blue-800">Instructor Token (Required)</span>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">This application is for instructors only</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
                   </div>
                 </div>
                 
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
                     name="canvasApiToken"
                     type="text"
@@ -486,16 +553,16 @@ const Settings: React.FC = () => {
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
                   <div>
                     <span className="text-gray-500">••••••••••••••••••••••••••••••••</span>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       {profile.canvasTokenType === 'instructor' ? 'Instructor Token' : 'Student Token'} - stored securely
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)} aria-label="Edit Canvas API token">
                     <Edit className="w-4 h-4 mr-2" />Edit
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} className="text-red-600 border-red-200 hover:text-red-800">
+                  <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} aria-label="Clear Canvas API token" className="text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:text-red-800 dark:hover:text-red-300">
                     Clear
                   </Button>
                 </div>
@@ -503,6 +570,14 @@ const Settings: React.FC = () => {
             )}
             <CanvasTokenInstructions />
           </Card>
+
+          {/* Same "does this account reach the student portal" check RequireRole
+              uses for /badges — a dual-role instructor with a student
+              enrollment (has_student_access) can share badges there, so they
+              need the opt-out control here too, not just plain students. */}
+          {(user?.role === 'student' || (user?.role === 'instructor' && !!user?.has_student_access)) && (
+            <BadgeSharingSettings />
+          )}
         </div>
         {/* Right column: Password Reset - spans entire right side */}
         <div className="lg:row-span-2">

@@ -16,12 +16,12 @@ const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-ucf-gold',
+    primary: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
     secondary: 'bg-ucf-grey hover:bg-gray-600 text-ucf-white focus:ring-gray-500',
     success: 'bg-success hover:bg-green-600 text-ucf-white focus:ring-green-500',
-    warning: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-ucf-gold',
+    warning: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
     danger: 'bg-danger hover:bg-red-600 text-ucf-white focus:ring-red-500',
-    outline: 'border-2 border-ucf-gold text-ucf-gold hover:bg-ucf-gold hover:text-ucf-black focus:ring-ucf-gold',
+    outline: 'border-2 border-ucf-gold text-amber-700 dark:text-ucf-gold hover:bg-ucf-gold hover:text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
   };
   
   const sizes = {

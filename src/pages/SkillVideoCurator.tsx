@@ -1,33 +1,41 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
-import { skillMatrixAPI, skillVideoAPI, courseChannelsAPI, CourseChannel } from '../services/api';
+import {
+  skillMatrixAPI,
+  skillVideoAPI,
+  courseChannelsAPI,
+  CourseChannel,
+  MAX_COURSE_CHANNELS,
+} from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
+import { getApiErrorMessage } from '../utils/apiError';
+import DialogPanel from '../components/common/DialogPanel';
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl">
+    <DialogPanel className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl" onClose={onClose} labelledBy="skill-video-help-title">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">How Skill Video Assignment Works</h2>
-        <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+        <h2 id="skill-video-help-title" className="text-lg font-semibold text-gray-900">How Skill Video Assignment Works</h2>
+        <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-600">
           <X className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-4 p-6 text-sm text-gray-700">
         <p>
-          This page lets you curate the YouTube videos students see when they're weak in a specific
-          skill. Pick a course and a skill, then:
+          This page lets you curate the YouTube videos students see when they're weak in a
+          specific skill. Pick a course and a skill, then:
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong>Add a video yourself</strong> by pasting a link — it's tagged{' '}
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+            <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
               Instructor Recommended
             </span>{' '}
             so students know it's been personally vetted.
@@ -35,42 +43,53 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <li>
             <strong>Click "Get AI Suggestions"</strong> to have AI find and publish videos
             automatically — these are tagged{' '}
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+            <span className="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
               AI Suggested
             </span>{' '}
             and go live for students right away, no separate approval step needed.
           </li>
           <li>
             Reviewed an AI suggestion and like it? Click its checkmark to mark it{' '}
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+            <span className="rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
               Instructor Verified
             </span>
             .
           </li>
           <li>
-            For a video you added yourself, click the clock icon to automatically find the most
-            relevant moment in it, so the link students see jumps straight to that point.
+            Click a video's clock icon to automatically find the most relevant moment in it, so
+            the link students see jumps straight to that point.
           </li>
-          <li>
-            Students can upvote or downvote each video to tell you whether it actually helped.
-          </li>
+          <li>Students can upvote or downvote each video to tell you whether it actually helped.</li>
         </ul>
         <div className="rounded-lg bg-gray-50 p-3">
           <p>
             <strong>Another way to get here:</strong> every skill matrix on the{' '}
-            <strong>Skill Matrix</strong> page has a "Manage Videos" link that drops you straight
-            into that course and skill — no need to pick them again.
+            <strong>Skill Matrix</strong> page has a "Manage Videos" link that drops you
+            straight into that course and skill — no need to pick them again.
           </p>
         </div>
       </div>
-    </div>
+    </DialogPanel>
   </div>
 );
+
+const DUPLICATE_CHANNEL_MESSAGE = 'That channel is already linked to this course.';
 
 const SkillVideoCurator: React.FC = () => {
   const { isInstructor } = useAuth();
   const [searchParams] = useSearchParams();
   const [courseId, setCourseId] = useState<string>(searchParams.get('courseId') ?? '');
+  // Picking or changing a course swaps the whole view (and unmounts the control
+  // that was used), so move focus to the new view's heading.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const hasCourseChangedRef = useRef(false);
+  useEffect(() => {
+    if (!hasCourseChangedRef.current) {
+      hasCourseChangedRef.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [courseId]);
   const matrixIdParam = searchParams.get('matrixId') ?? undefined;
 
   const { courses, loading: coursesLoading } = useCourseList<CanvasCourse>(isInstructor, {
@@ -89,32 +108,37 @@ const SkillVideoCurator: React.FC = () => {
   const [findingMomentId, setFindingMomentId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  // Channel management state
+  // The add box stays locked until the saved channels have loaded. Saving
+  // replaces the whole list, so saving before then would wipe it.
   const [channels, setChannels] = useState<CourseChannel[]>([]);
-  const [newChannel, setNewChannel] = useState<string>('');
-  const [savingChannels, setSavingChannels] = useState<boolean>(false);
-  const [loadingChannels, setLoadingChannels] = useState<boolean>(false);
+  const [channelsStatus, setChannelsStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [channelsReloadKey, setChannelsReloadKey] = useState(0);
+  const [newChannel, setNewChannel] = useState('');
+  const [savingChannels, setSavingChannels] = useState(false);
+  // Lets a channel request that finishes after the course changed be ignored.
+  const channelsCourseRef = useRef(courseId);
 
   useEffect(() => {
-    if (!courseId) {
-      setChannels([]);
-      return;
-    }
+    channelsCourseRef.current = courseId;
     setChannels([]);
-    setLoadingChannels(true);
+    setNewChannel('');
+    setChannelsStatus('loading');
+    if (!courseId) return;
+    let stale = false;
     courseChannelsAPI
       .get(courseId)
       .then((res) => {
-        setChannels(res.data.channels || []);
+        if (stale) return;
+        setChannels(res.data.channels);
+        setChannelsStatus('loaded');
       })
       .catch(() => {
-        toast.error('Could not load course channel preferences.');
-        setChannels([]);
-      })
-      .finally(() => {
-        setLoadingChannels(false);
+        if (!stale) setChannelsStatus('error');
       });
-  }, [courseId]);
+    return () => {
+      stale = true;
+    };
+  }, [courseId, channelsReloadKey]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -197,8 +221,8 @@ const SkillVideoCurator: React.FC = () => {
           ? `Found it — jumps to ${formatTimestamp(res.data.timestamp_seconds)}`
           : 'Moment found'
       );
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not find a relevant moment');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Could not find a relevant moment');
     } finally {
       setFindingMomentId(null);
     }
@@ -210,92 +234,65 @@ const SkillVideoCurator: React.FC = () => {
       const res = await skillVideoAPI.verify(video._id);
       setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
       toast.success('Marked as instructor verified');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not verify this video');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error) || 'Could not verify this video');
     } finally {
       setVerifyingId(null);
     }
   };
 
-  // Channel management handlers
-  const handleAddChannelPreference = async () => {
-    // Prevent execution if already saving or input is empty
-    if (savingChannels) return;
-    const trimmed = newChannel.trim();
-    if (!trimmed) return;
+  const handleAddChannel = async () => {
+    const entry = newChannel.trim();
+    if (!entry || savingChannels || channelsStatus !== 'loaded') return;
+    if (channels.length >= MAX_COURSE_CHANNELS) return;
 
-    // Max 3 channels check
-    if (channels.length >= 3) {
-      toast.error('Maximum of 3 preferred channels allowed.');
-      return;
-    }
-    const cleanTrimmed = trimmed.toLowerCase().replace(/^@/, '');
-    const isLocalDuplicate = channels.some(
-      (ch) =>
-        ch.name.toLowerCase().replace(/^@/, '') === cleanTrimmed ||
-        ch.channel_id.toLowerCase() === cleanTrimmed
+    // The page only knows each channel's ID and display name, so this catches
+    // the obvious repeats; the backend catches the rest (see below).
+    const key = entry.replace(/^@/, '').toLowerCase();
+    const alreadyLinked = channels.some(
+      (c) => c.channel_id.toLowerCase() === key || c.name.replace(/^@/, '').toLowerCase() === key
     );
-    if (isLocalDuplicate) {
-      toast.error('Channel already added');
+    if (alreadyLinked) {
+      toast.error(DUPLICATE_CHANNEL_MESSAGE);
       return;
     }
-    // Load Saved Channels
-    const previousChannels = [...channels];
-    try {
-      setSavingChannels(true);
-      const previousCount = channels.length;
-      const res = await courseChannelsAPI.update(courseId, [
-        ...channels,
-        { channel_id: trimmed, name: trimmed },
-      ]);
-      // Check if the channel was actually added
-      const updatedChannels = res.data.channels || [];
-      if (updatedChannels.length === previousCount) {
-        toast.error('This channel is already in your preferences.');
-        return;
-      }
 
-      setChannels(res.data.channels || []);
-      setNewChannel('');
-      toast.success('Preferred channels updated');
-    } catch (err: any) {
-      // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
-      setChannels(previousChannels);
-      const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        'Failed to update preferred channels. Please check the channel handle.';
-      toast.error(errorMessage);
+    const forCourse = courseId;
+    setSavingChannels(true);
+    try {
+      const res = await courseChannelsAPI.update(forCourse, [...channels.map((c) => c.channel_id), entry]);
+      if (channelsCourseRef.current !== forCourse) return;
+      // The backend drops an entry that resolves to a channel already saved.
+      if (res.data.channels.length === channels.length) {
+        toast.error(DUPLICATE_CHANNEL_MESSAGE);
+      } else {
+        toast.success('Channel added');
+        setNewChannel('');
+      }
+      setChannels(res.data.channels);
+    } catch (error: unknown) {
+      if (channelsCourseRef.current === forCourse) {
+        toast.error(getApiErrorMessage(error) || 'Could not add that channel. Please try again.');
+      }
     } finally {
       setSavingChannels(false);
     }
   };
 
-  const handleRemoveChannelPreference = async (channelToRemove: string) => {
-    // Prevent execution if already saving or input is empty
+  const handleRemoveChannel = async (channel: CourseChannel) => {
     if (savingChannels) return;
-
-    const previousChannels = [...channels];
-
-    // const updated = channels.filter((c) => c.channel_id !== channelToRemove);
-    const updated = channels.filter(
-      (c) => c.channel_id !== channelToRemove && c.name !== channelToRemove
-    );
-    setChannels(updated);
-
+    const forCourse = courseId;
+    setSavingChannels(true);
     try {
-      setSavingChannels(true);
-      const res = await courseChannelsAPI.update(courseId, updated);
-      setChannels(res.data.channels || []);
-      toast.success('Channel preference removed');
-    } catch (err: any) {
-      // Rollback to previous state on failure (e.g. 400 bad request / channel not found)
-      setChannels(previousChannels);
-      const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        'Failed to update preferred channels. Please check the channel handle.';
-      toast.error(errorMessage);
+      const remaining = channels.filter((c) => c.channel_id !== channel.channel_id);
+      const res = await courseChannelsAPI.update(forCourse, remaining.map((c) => c.channel_id));
+      if (channelsCourseRef.current !== forCourse) return;
+      setChannels(res.data.channels);
+      toast.success(`Removed ${channel.name}`);
+    } catch (error: unknown) {
+      if (channelsCourseRef.current === forCourse) {
+        toast.error(getApiErrorMessage(error) || 'Could not remove that channel. Please try again.');
+      }
     } finally {
       setSavingChannels(false);
     }
@@ -324,14 +321,12 @@ const SkillVideoCurator: React.FC = () => {
       <div className="flex w-full flex-col gap-6">
         <div className="mb-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-[28px] font-bold tracking-tight text-gray-900">
-              Skill Video Assignment
-            </h1>
+            <h1 ref={headingRef} tabIndex={-1} className="text-[28px] font-bold tracking-tight text-gray-900 focus:outline-none">Skill Video Assignment</h1>
             <button
               type="button"
               onClick={() => setShowInfoModal(true)}
               aria-label="How Skill Video Assignment works"
-              className="text-gray-400 hover:text-blue-600"
+              className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
             >
               <Info className="h-5 w-5" />
             </button>
@@ -357,9 +352,9 @@ const SkillVideoCurator: React.FC = () => {
                   key={course.id}
                   type="button"
                   onClick={() => setCourseId(course.id)}
-                  className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-blue-400 hover:bg-blue-50"
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40"
                 >
-                  <BookOpen className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <BookOpen className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   <div>
                     <div className="text-sm font-semibold text-gray-900">{course.name}</div>
                     <div className="text-xs text-gray-500">{course.code}</div>
@@ -385,106 +380,113 @@ const SkillVideoCurator: React.FC = () => {
             setMatrices([]);
             setVideos([]);
           }}
-          className="mb-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+          className="mb-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
         >
           ← Change course
         </button>
         <div className="flex items-center gap-2">
-          <h1 className="text-[28px] font-bold tracking-tight text-gray-900">
-            Skill Video Assignment
-          </h1>
+          <h1 ref={headingRef} tabIndex={-1} className="text-[28px] font-bold tracking-tight text-gray-900 focus:outline-none">Skill Video Assignment</h1>
           <button
             type="button"
             onClick={() => setShowInfoModal(true)}
             aria-label="How Skill Video Assignment works"
-            className="text-gray-400 hover:text-blue-600"
+            className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
           >
             <Info className="h-5 w-5" />
           </button>
         </div>
         <p className="mt-1.5 text-sm text-gray-600">
-          Videos students see when they're weak in a skill — added by you or suggested by AI. Both
-          are visible to students right away; anything you add yourself is tagged "Instructor
-          Recommended" so students know it's been personally vetted.
+          Videos students see when they're weak in a skill — added by you or suggested by AI.
+          Both are visible to students right away; anything you add yourself is tagged
+          "Instructor Recommended" so students know it's been personally vetted.
         </p>
       </div>
 
       {showInfoModal && <SkillVideoInfoModal onClose={() => setShowInfoModal(false)} />}
+
       <Card
         title="Preferred YouTube Channels"
-        subtitle="AI will prioritize these channel handles when fetching suggestions. AI suggestions for every skill in this course will search these channels first."
+        subtitle={`AI suggestions for every skill in this course search these channels first. You can link up to ${MAX_COURSE_CHANNELS}.`}
       >
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            {channels.length === 0 ? (
-              <span className="text-sm text-gray-400 italic">
-                No channel preferences set (AI will search all of YouTube)
-              </span>
-            ) : (
-              channels.map((channel) => (
-                <span
-                  key={channel.channel_id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200"
-                >
-                  {channel.name}
-                  <button
-                    type="button"
-                    disabled={savingChannels}
-                    onClick={() => handleRemoveChannelPreference(channel.channel_id)}
-                    title={`Remove ${channel.name}`}
-                    aria-label={`Remove ${channel.name}`}
-                    className="text-blue-500 hover:text-red-600 focus:outline-none disabled:opacity-50"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </span>
-              ))
-            )}
+        {channelsStatus === 'loading' ? (
+          <div className="flex justify-center py-4">
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
           </div>
-          {channels.length >= 3 && (
-            <span className="text-xs font-medium text-amber-600">3 channel limit reached!</span>
-          )}
-          <div className="flex gap-2 pt-2">
-            <input
-              type="text"
-              disabled={savingChannels || loadingChannels || channels.length >= 3}
-              placeholder={
-                loadingChannels
-                  ? 'Loading channels...'
-                  : channels.length >= 3
-                    ? 'Maximum 3 channels reached'
-                    : 'e.g. @3Blue1Brown or @freecodecamp'
-              }
-              value={newChannel}
-              onChange={(e) => setNewChannel(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (!savingChannels && !loadingChannels && channels.length < 3) {
-                    handleAddChannelPreference();
-                  }
-                }
-              }}
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100"
-            />
-            <Button
-              onClick={handleAddChannelPreference}
-              loading={savingChannels}
-              disabled={savingChannels || loadingChannels || channels.length >= 3}
-              size="sm"
-              variant="outline"
-            >
-              Add Channel
+        ) : channelsStatus === 'error' ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-red-600 dark:text-red-400">
+              Couldn't load this course's saved channels.
+            </p>
+            <Button onClick={() => setChannelsReloadKey((k) => k + 1)} size="sm" variant="outline">
+              Try again
             </Button>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {channels.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No channels linked yet, so AI searches all of YouTube.
+              </p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {channels.map((channel) => (
+                  <li
+                    key={channel.channel_id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/40 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300"
+                  >
+                    {channel.name}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveChannel(channel)}
+                      disabled={savingChannels}
+                      aria-label={`Remove ${channel.name}`}
+                      className="rounded-full hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {channels.length >= MAX_COURSE_CHANNELS ? (
+              <p className="text-sm text-gray-600">
+                You've linked the maximum of {MAX_COURSE_CHANNELS} channels. Remove one to add another.
+              </p>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddChannel();
+                }}
+                className="flex flex-col gap-2 sm:flex-row sm:items-end"
+              >
+                <div className="flex-1">
+                  <label htmlFor="curator-channel" className="mb-1 block text-sm font-medium text-gray-700">Add a channel</label>
+                  <input
+                    id="curator-channel"
+                    type="text"
+                    placeholder="e.g. @3Blue1Brown or a channel ID"
+                    value={newChannel}
+                    onChange={(e) => setNewChannel(e.target.value)}
+                    disabled={savingChannels}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
+                  />
+                </div>
+                <Button type="submit" loading={savingChannels} disabled={!newChannel.trim()} size="sm" variant="outline">
+                  Add Channel
+                </Button>
+              </form>
+            )}
+          </div>
+        )}
       </Card>
 
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Skill Matrix</label>
+            <label htmlFor="curator-matrix" className="mb-1 block text-sm font-medium text-gray-700">Skill Matrix</label>
             <select
+              id="curator-matrix"
               value={matrixId ?? ''}
               onChange={(e) => setMatrixId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -497,8 +499,9 @@ const SkillVideoCurator: React.FC = () => {
             </select>
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Skill</label>
+            <label htmlFor="curator-skill" className="mb-1 block text-sm font-medium text-gray-700">Skill</label>
             <select
+              id="curator-skill"
               value={skillName}
               onChange={(e) => setSkillName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -533,99 +536,90 @@ const SkillVideoCurator: React.FC = () => {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {/* Sort videos by source and instructor verification */}
-            {[...videos]
-              .sort((a, b) => {
-                const rankA = a.source === 'manual' ? 0 : a.instructor_verified ? 1 : 2;
-                const rankB = b.source === 'manual' ? 0 : b.instructor_verified ? 1 : 2;
-                return rankA - rankB;
-              })
-              .map((video) => (
-                <div
-                  key={video._id}
-                  className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
-                >
-                  {video.thumbnail && (
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="h-14 w-24 rounded-md object-cover"
-                    />
-                  )}
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <a
-                        href={withTimestamp(video.link, video.timestamp_seconds)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-sm font-semibold text-gray-900 hover:underline"
-                      >
-                        {video.title}
-                      </a>
-                      {video.source === 'manual' ? (
-                        <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                          Instructor Recommended
-                        </span>
-                      ) : video.instructor_verified ? (
-                        <span className="flex-shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
-                          Instructor Verified
-                        </span>
-                      ) : (
-                        <span className="flex-shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                          AI Suggested
-                        </span>
-                      )}
-                      {video.timestamp_seconds != null && (
-                        <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                          Jumps to {formatTimestamp(video.timestamp_seconds)}
-                        </span>
-                      )}
-                    </span>
-                    <span className="truncate text-xs text-gray-500">{video.channel}</span>
-                    <span className="text-xs text-gray-400">
-                      {video.upvotes ?? 0} found helpful · {video.downvotes ?? 0} did not
-                    </span>
-                  </div>
-                  {video.source === 'ai_suggested' && !video.instructor_verified && (
-                    <button
-                      type="button"
-                      onClick={() => handleVerify(video)}
-                      disabled={verifyingId === video._id}
-                      title="Mark as instructor verified"
-                      className="flex-shrink-0 text-gray-400 hover:text-green-600 disabled:opacity-50"
+            {videos.map((video) => (
+              <div
+                key={video._id}
+                className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
+              >
+                {video.thumbnail && (
+                  <img src={video.thumbnail} alt="" className="h-14 w-24 rounded-md object-cover" />
+                )}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <a
+                      href={withTimestamp(video.link, video.timestamp_seconds)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-sm font-semibold text-gray-900 hover:underline"
                     >
-                      {verifyingId === video._id ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                    </button>
-                  )}
-                  {
-                    <button
-                      type="button"
-                      onClick={() => handleFindMoment(video)}
-                      disabled={findingMomentId === video._id}
-                      title="Find relevant moment in this video"
-                      className="flex-shrink-0 text-gray-400 hover:text-blue-600 disabled:opacity-50"
-                    >
-                      {findingMomentId === video._id ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
-                      ) : (
-                        <Clock className="h-4 w-4" />
-                      )}
-                    </button>
-                  }
+                      {video.title}
+                      <span className="sr-only"> (opens in new tab)</span>
+                    </a>
+                    {video.source === 'manual' ? (
+                      <span className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                        Instructor Recommended
+                      </span>
+                    ) : video.instructor_verified ? (
+                      <span className="flex-shrink-0 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
+                        Instructor Verified
+                      </span>
+                    ) : (
+                      <span className="flex-shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
+                        AI Suggested
+                      </span>
+                    )}
+                    {video.timestamp_seconds != null && (
+                      <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                        Jumps to {formatTimestamp(video.timestamp_seconds)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="truncate text-xs text-gray-500">{video.channel}</span>
+                  <span className="text-xs text-gray-500">
+                    {video.upvotes ?? 0} found helpful · {video.downvotes ?? 0} did not
+                  </span>
+                </div>
+                {video.source === 'ai_suggested' && !video.instructor_verified && (
                   <button
                     type="button"
-                    onClick={() => handleRemove(video._id)}
-                    title="Remove"
-                    className="flex-shrink-0 text-gray-400 hover:text-red-600"
+                    onClick={() => handleVerify(video)}
+                    disabled={verifyingId === video._id}
+                    title="Mark as instructor verified"
+                    aria-label={`Mark as instructor verified: ${video.title}`}
+                    className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-green-600 dark:hover:text-green-400 disabled:opacity-50"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {verifyingId === video._id ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
                   </button>
-                </div>
-              ))}
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleFindMoment(video)}
+                  disabled={findingMomentId === video._id}
+                  title="Find relevant moment in this video"
+                  aria-label={`Find relevant moment: ${video.title}`}
+                  className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
+                >
+                  {findingMomentId === video._id ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(video._id)}
+                  title="Remove"
+                  aria-label={`Remove ${video.title}`}
+                  className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

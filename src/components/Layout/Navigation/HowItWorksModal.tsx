@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import DialogPanel from '../../common/DialogPanel';
 
 interface HowItWorksModalProps {
   onClose: () => void;
@@ -8,13 +9,23 @@ interface HowItWorksModalProps {
 const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl">
+      <DialogPanel
+        className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl"
+        onClose={onClose}
+        labelledBy="how-it-works-title"
+      >
         {/* Modal Header */}
 
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">How AchieveUp Works</h2>
+          <h2 id="how-it-works-title" className="text-xl font-semibold text-gray-900">
+            How AchieveUp Works
+          </h2>
 
-          <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-gray-500 hover:text-gray-600"
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -30,8 +41,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
 
               <p className="leading-relaxed text-gray-600">
                 AchieveUp transforms traditional assessment into a comprehensive skill tracking
-                system. Instead of just seeing grades, you get detailed insights into what
-                specific skills each student has mastered and where they need support.
+                system. Instead of just seeing grades, you get detailed insights into what specific
+                skills each student has mastered and where they need support.
               </p>
             </div>
 
@@ -44,8 +55,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                 {/* Step 1 */}
 
                 <div className="flex items-start">
-                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-                    <span className="font-bold text-blue-600">1</span>
+                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40">
+                    <span className="font-bold text-blue-600 dark:text-blue-400">1</span>
                   </div>
 
                   <div>
@@ -54,15 +65,14 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     </h4>
 
                     <p className="mb-3 text-gray-600">
-                      Start by creating a Skill Matrix that defines what specific skills
-                      students should learn in your course.
+                      Start by creating a Skill Matrix that defines what specific skills students
+                      should learn in your course.
                     </p>
 
-                    <div className="rounded-lg bg-blue-50 p-3">
-                      <p className="text-sm text-blue-800">
-                        <strong>AI-Powered:</strong> Our system can automatically suggest
-                        relevant skills based on your course name and description, saving you
-                        time.
+                    <div className="rounded-lg bg-blue-50 dark:bg-blue-900/40 p-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-300">
+                        <strong>AI-Powered:</strong> Our system can automatically suggest relevant
+                        skills based on your course name and description, saving you time.
                       </p>
                     </div>
                   </div>
@@ -71,8 +81,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                 {/* Step 2 */}
 
                 <div className="flex items-start">
-                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <span className="font-bold text-green-600">2</span>
+                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+                    <span className="font-bold text-green-700 dark:text-green-400">2</span>
                   </div>
 
                   <div>
@@ -84,8 +94,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                       Next, you map your existing Canvas quiz questions to specific skills.
                     </p>
 
-                    <div className="rounded-lg bg-green-50 p-3">
-                      <p className="text-sm text-green-800">
+                    <div className="rounded-lg bg-green-50 dark:bg-green-900/40 p-3">
+                      <p className="text-sm text-green-800 dark:text-green-300">
                         <strong>Smart Assignment:</strong> Our AI analyzes your questions and
                         suggests which skills they're testing.
                       </p>
@@ -96,8 +106,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                 {/* Step 3 */}
 
                 <div className="flex items-start">
-                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-purple-100">
-                    <span className="font-bold text-purple-600">3</span>
+                  <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40">
+                    <span className="font-bold text-purple-600 dark:text-purple-400">3</span>
                   </div>
 
                   <div>
@@ -110,10 +120,10 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                       their responses and calculates their mastery level for each skill.
                     </p>
 
-                    <div className="rounded-lg bg-purple-50 p-3">
-                      <p className="text-sm text-purple-800">
-                        <strong>Automatic Tracking:</strong> Progress updates happen in
-                        real-time as students complete assessments.
+                    <div className="rounded-lg bg-purple-50 dark:bg-purple-900/40 p-3">
+                      <p className="text-sm text-purple-800 dark:text-purple-300">
+                        <strong>Automatic Tracking:</strong> Progress updates happen in real-time as
+                        students complete assessments.
                       </p>
                     </div>
                   </div>
@@ -144,7 +154,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center">
-                      <span className="mr-2 rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
+                      <span className="mr-2 rounded-full bg-yellow-100 dark:bg-yellow-900/40 px-2 py-1 text-xs text-yellow-800 dark:text-yellow-300">
                         Intermediate
                       </span>
 
@@ -152,7 +162,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center">
-                      <span className="mr-2 rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">
+                      <span className="mr-2 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-1 text-xs text-green-800 dark:text-green-300">
                         Advanced
                       </span>
 
@@ -168,7 +178,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center">
-                      <span className="mr-2 rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">
+                      <span className="mr-2 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-1 text-xs text-green-800 dark:text-green-300">
                         Low Risk
                       </span>
 
@@ -176,7 +186,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center">
-                      <span className="mr-2 rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
+                      <span className="mr-2 rounded-full bg-yellow-100 dark:bg-yellow-900/40 px-2 py-1 text-xs text-yellow-800 dark:text-yellow-300">
                         Medium Risk
                       </span>
 
@@ -184,7 +194,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center">
-                      <span className="mr-2 rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">
+                      <span className="mr-2 rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-1 text-xs text-red-800 dark:text-red-300">
                         High Risk
                       </span>
 
@@ -198,9 +208,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
             {/* Benefits */}
 
             <div>
-              <h3 className="mb-4 text-lg font-medium text-gray-900">
-                Benefits for Instructors
-              </h3>
+              <h3 className="mb-4 text-lg font-medium text-gray-900">Benefits for Instructors</h3>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {[
@@ -237,8 +245,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
               <h3 className="mb-4 text-lg font-medium text-gray-900">Ready to Get Started?</h3>
 
               <p className="mb-4 text-gray-700">
-                The best way to understand AchieveUp is to try it! Start by creating a skill
-                matrix for one of your courses, then assign skills to a few quiz questions.
+                The best way to understand AchieveUp is to try it! Start by creating a skill matrix
+                for one of your courses, then assign skills to a few quiz questions.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -247,7 +255,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
                     onClose();
                     window.location.href = '/skill-matrix';
                   }}
-                  className="rounded-md bg-au-gold px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600"
+                  className="rounded-md bg-au-gold px-4 py-2 text-sm font-medium text-ucf-black hover:bg-yellow-600"
                 >
                   Create Skill Matrix
                 </button>
@@ -265,7 +273,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
             </div>
           </div>
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 };

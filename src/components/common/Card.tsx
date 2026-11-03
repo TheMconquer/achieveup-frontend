@@ -8,12 +8,13 @@ const Card: React.FC<CardProps> = ({
   subtitle,
   className = '',
   headerActions,
+  titleAs: Heading = 'h2',
   ...props 
 }) => {
   return (
     <div 
       className={clsx(
-        'bg-ucf-white rounded-lg shadow-md overflow-hidden',
+        'bg-white rounded-lg shadow-md overflow-hidden',
         className
       )}
       {...props}
@@ -23,9 +24,9 @@ const Card: React.FC<CardProps> = ({
           <div className="flex items-center justify-between">
             <div>
               {title && (
-                <h3 className="text-lg font-semibold text-gray-900">
+                <Heading className="text-lg font-semibold text-gray-900">
                   {title}
-                </h3>
+                </Heading>
               )}
               {subtitle && (
                 <p className="text-sm text-gray-500 mt-1">

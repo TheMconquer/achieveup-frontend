@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { badgeAPI } from '../services/api';
 import Card from '../components/common/Card';
-import { Award, Share2, AlertCircle, Check } from 'lucide-react';
+import { Award, Share2, AlertCircle, Check, BookOpen } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
+import { useNoIndex } from '../hooks/useNoIndex';
 
 interface BadgeData {
     badge_id: string;
@@ -13,11 +15,13 @@ interface BadgeData {
     progress_percentage: number;
     earned_at: string;
     course_id: string;
-    course_name?: string;
+    course_name?: string | null;
 }
 
 const StudentPublicBadges: React.FC = () => {
-    const { studentId } = useParams<{ studentId: string }>();
+    const { shareId } = useParams<{ shareId: string }>();
+    // Shared links work for anyone who has them, but shouldn't show up in search.
+    useNoIndex();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const nameFromQuery = queryParams.get('name');
@@ -25,7 +29,7 @@ const StudentPublicBadges: React.FC = () => {
     const [badges, setBadges] = useState<BadgeData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [copied, setCopied] = useState(false);
+    const { copied, copy: copyLink } = useCopyToClipboard();
     const [studentName, setStudentName] = useState<string | null>(nameFromQuery);
 
     useEffect(() => {
@@ -44,12 +48,12 @@ const StudentPublicBadges: React.FC = () => {
 
     useEffect(() => {
         const loadBadges = async () => {
-            if (!studentId) return;
+            if (!shareId) return;
             try {
                 setLoading(true);
-                const response = await badgeAPI.getPublicStudentBadges(studentId);
+                const response = await badgeAPI.getPublicBadgesByShare(shareId);
                 setBadges(response.data.badges || []);
-                
+
                 // If we don't have a name from the query, use the one from the API
                 if (!nameFromQuery && response.data.student_name) {
                     setStudentName(response.data.student_name);
@@ -58,25 +62,16 @@ const StudentPublicBadges: React.FC = () => {
             } catch (err: unknown) {
                 console.error('Error loading public badges:', err);
                 const message = getApiErrorMessage(err);
-                setError(message || 'Failed to load badges. The student ID might be invalid.');
+                setError(message || 'This share link is invalid or no longer active.');
             } finally {
                 setLoading(false);
             }
         };
 
         loadBadges();
-    }, [studentId, nameFromQuery]);
+    }, [shareId, nameFromQuery]);
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href)
-            .then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            })
-            .catch(err => {
-                console.error("Failed to copy link: ", err);
-            });
-    };
+    const handleCopyLink = () => copyLink(window.location.href);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -88,46 +83,44 @@ const StudentPublicBadges: React.FC = () => {
         switch (level.toLowerCase()) {
             case 'expert': return 'bg-purple-600';
             case 'advanced': return 'bg-blue-600';
-            case 'intermediate': return 'bg-ucf-gold';
-            case 'beginner': return 'bg-green-600';
-            default: return 'bg-gray-600';
+            case 'intermediate': return 'bg-amber-700';
+            case 'beginner': return 'bg-green-700';
+            default: return 'bg-ucf-grey';
         }
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+            <main className="flex justify-center items-center min-h-screen bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
-            </div>
+            </main>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
+            <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
                 <div className="max-w-md w-full bg-white rounded-lg shadow p-8 text-center border-t-4 border-red-500">
-                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h2>
+                    <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h1>
                     <p className="text-gray-600">{error}</p>
-                    <Link to="/login" className="mt-6 inline-block text-ucf-gold hover:text-yellow-600 font-medium">
+                    <Link to="/login" className="mt-6 inline-block text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 font-medium">
                         Return to Login
                     </Link>
                 </div>
-            </div>
+            </main>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <main className="min-h-screen bg-gray-50 pb-12">
             {/* Simple Public Header */}
             <nav className="bg-white shadow-sm mb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0 flex items-center">
-                                <div className="w-8 h-8 bg-ucf-gold rounded-lg flex items-center justify-center">
-                                    <span className="text-ucf-black font-bold text-lg">A</span>
-                                </div>
+                                <BookOpen className="h-9 w-9 text-au-gold" />
                                 <span className="ml-2 text-xl font-bold text-gray-900">AchieveUp</span>
                             </Link>
                         </div>
@@ -149,7 +142,7 @@ const StudentPublicBadges: React.FC = () => {
 
                     <button
                         onClick={handleCopyLink}
-                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all"
+                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all"
                     >
                         {copied ? (
                             <><Check className="w-5 h-5 mr-2 text-green-400" /> Copied to Clipboard!</>
@@ -171,13 +164,13 @@ const StudentPublicBadges: React.FC = () => {
                             <div key={badge.badge_id} className="bg-white overflow-hidden shadow-lg rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
                                 <div className={`h-44 ${getBadgeColor(badge.badge_level)} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
                                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-                                    <Award className="absolute w-40 h-40 text-white opacity-20 z-0" />
+                                    <Award className="absolute w-40 h-40 text-ucf-white opacity-20 z-0" />
                                     <div className="z-10 text-center flex flex-col items-center">
-                                        <Award className="w-8 h-8 text-white mb-2 shadow-sm" />
-                                        <h3 className="text-lg font-bold text-white leading-tight px-2 drop-shadow-md">
+                                        <Award className="w-8 h-8 text-ucf-white mb-2 shadow-sm" />
+                                        <h3 className="text-lg font-bold text-ucf-white leading-tight px-2 drop-shadow-md">
                                             {badge.badge_name}
                                         </h3>
-                                        <p className="text-xs text-white opacity-90 mt-2 font-medium bg-black bg-opacity-20 px-3 py-1 rounded-full drop-shadow-sm">
+                                        <p className="text-xs text-ucf-white opacity-90 mt-2 font-medium bg-black bg-opacity-20 px-3 py-1 rounded-full drop-shadow-sm">
                                             AchieveUp Verified
                                         </p>
                                     </div>
@@ -185,7 +178,7 @@ const StudentPublicBadges: React.FC = () => {
                                 <div className="p-6">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <p className="text-sm font-semibold text-ucf-gold uppercase tracking-wider mb-1">
+                                            <p className="text-sm font-semibold text-amber-700 dark:text-ucf-gold uppercase tracking-wider mb-1">
                                                 {badge.badge_level} Level
                                             </p>
                                             <h3 className="text-xl font-bold text-gray-900 leading-tight">
@@ -216,7 +209,7 @@ const StudentPublicBadges: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </main>
     );
 };
 

@@ -13,7 +13,7 @@ const MasteryRing: React.FC<MasteryRingProps> = ({
   percent,
   size = 80,
   strokeWidth = 8,
-  colorClassName = 'text-au-gold',
+  colorClassName = 'text-amber-700 dark:text-au-gold',
   trackClassName = 'text-gray-100',
   children,
 }) => {

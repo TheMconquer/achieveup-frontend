@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Settings, HelpCircle, LogOut, ArrowLeftRight } from 'lucide-react';
 import { User } from '../../../types';
+import ThemeToggle from './ThemeToggle';
 
 interface AccountMenuProps {
   user?: User | null;
@@ -32,7 +33,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
             <p className="truncate text-sm font-semibold text-gray-900">
               {user?.name || user?.email || 'User'}
             </p>
-            <p className="text-xs text-gray-400">{displayAsInstructor ? 'Instructor' : 'Student'}</p>
+            <p className="text-xs text-gray-500">{displayAsInstructor ? 'Instructor' : 'Student'}</p>
           </div>
 
           <div className="my-1 border-t border-gray-100" />
@@ -89,6 +90,10 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
         <LogOut className="h-4 w-4" />
         Logout
       </button>
+
+      {/* Theme */}
+      <div className="my-1 border-t border-gray-100" />
+      <ThemeToggle />
     </div>
   );
 };

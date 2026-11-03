@@ -8,6 +8,7 @@ import {
   tierBgClass,
 } from '../../utils/skillTiers';
 import SkillVideoPanel from './SkillVideoPanel';
+import { onActivateKey } from '../../utils/a11y';
 
 export interface SkillMasterySummary {
   name: string;
@@ -46,10 +47,22 @@ const SkillMasteryList: React.FC<SkillMasteryListProps> = ({ skills }) => {
             <div
               className={`flex items-center gap-4 py-3.5 ${canShowVideos ? 'cursor-pointer' : ''}`}
               onClick={() => canShowVideos && setExpandedKey(isExpanded ? null : rowKey)}
+              role={canShowVideos ? 'button' : undefined}
+              tabIndex={canShowVideos ? 0 : undefined}
+              aria-expanded={canShowVideos ? isExpanded : undefined}
+              onKeyDown={
+                canShowVideos
+                  ? onActivateKey(() => setExpandedKey(isExpanded ? null : rowKey))
+                  : undefined
+              }
             >
               {canShowVideos && (
-                <div className="flex h-9 w-4 flex-shrink-0 items-center justify-center text-gray-400">
-                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <div className="flex h-9 w-4 flex-shrink-0 items-center justify-center text-gray-500">
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
                 </div>
               )}
               <div
@@ -59,7 +72,9 @@ const SkillMasteryList: React.FC<SkillMasteryListProps> = ({ skills }) => {
               </div>
               <div className="flex min-w-32 flex-1 flex-col gap-1.5">
                 <div className="text-sm font-semibold text-gray-900">{skill.name}</div>
-                {skill.courseName && <div className="text-xs text-gray-500">{skill.courseName}</div>}
+                {skill.courseName && (
+                  <div className="text-xs text-gray-500">{skill.courseName}</div>
+                )}
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                   <div
                     className={`h-full rounded-full ${tierBarClass[tier]}`}

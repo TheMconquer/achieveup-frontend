@@ -24,7 +24,7 @@ import {
   QuestionSkillAssignment,
   SkillVideo,
   AddSkillVideoRequest,
-  SkillVideoVoteRequest,
+  SkillVideoVoteRequest
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -65,14 +65,8 @@ api.interceptors.response.use(
 
 // Skill Matrix Management
 export const skillMatrixAPI = {
-  importMatricesFromCourse: (
-    sourceCourseId: string,
-    targetCourseId: string
-  ): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[] }>> =>
-    api.post('/achieveup/matrix/import', {
-      source_course_id: sourceCourseId,
-      target_course_id: targetCourseId,
-    }),
+  importMatricesFromCourse: (sourceCourseId: string, targetCourseId: string): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[]; }>> =>
+    api.post('/achieveup/matrix/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   create: (data: CreateSkillMatrixRequest): Promise<AxiosResponse<SkillMatrix>> =>
     api.post('/achieveup/matrix/create', data),
   get: (courseId: string): Promise<AxiosResponse<SkillMatrix>> =>
@@ -84,48 +78,23 @@ export const skillMatrixAPI = {
     api.put(`/achieveup/matrix/${matrixId}`, data),
   delete: (matrixId: string): Promise<AxiosResponse<void>> =>
     api.delete(`/achieveup/matrix/delete/${matrixId}`),
-  getSkillSuggestions: (data: {
-    courseId: string;
-    courseName: string;
-    courseCode: string;
-    courseDescription?: string;
-  }): Promise<AxiosResponse<unknown[]>> => api.post('/achieveup/ai/suggest-skills', data),
-  getImportStatus: (
-    courseId: string
-  ): Promise<
-    AxiosResponse<{
-      target_course_id: string;
-      source_course_id: string;
-      matrices_imported: boolean;
-      assignments_imported: boolean;
-    }>
-  > => api.get(`/achieveup/import-status/${courseId}`),
+  getSkillSuggestions: (data: { courseId: string; courseName: string; courseCode: string; courseDescription?: string }): Promise<AxiosResponse<unknown[]>> =>
+    api.post('/achieveup/ai/suggest-skills', data),
+  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
+    api.get(`/achieveup/import-status/${courseId}`),
 };
 
 export const courseDescriptionAPI = {
-  get: (
-    courseId: string
-  ): Promise<
-    AxiosResponse<{ course_id: string; description: string; updated_at: string | null }>
-  > => api.get(`/achieveup/course-description/${courseId}`),
-  update: (
-    courseId: string,
-    description: string
-  ): Promise<
-    AxiosResponse<{ course_id: string; description: string; updated_at: string | null }>
-  > => api.put(`/achieveup/course-description/${courseId}`, { description }),
+  get: (courseId: string): Promise<AxiosResponse<{ course_id: string; description: string; updated_at: string | null }>> =>
+    api.get(`/achieveup/course-description/${courseId}`),
+  update: (courseId: string, description: string): Promise<AxiosResponse<{ course_id: string; description: string; updated_at: string | null }>> =>
+    api.put(`/achieveup/course-description/${courseId}`, { description }),
 };
 
 // Skill Assignment
 export const skillAssignmentAPI = {
-  importAssignmentsFromCourse: (
-    sourceCourseId: string,
-    targetCourseId: string
-  ): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[] }>> =>
-    api.post('/achieveup/skills/import', {
-      source_course_id: sourceCourseId,
-      target_course_id: targetCourseId,
-    }),
+  importAssignmentsFromCourse: (sourceCourseId: string, targetCourseId: string): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[]; }>> =>
+    api.post('/achieveup/skills/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   assign: (data: SkillAssignmentRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/skills/assign', data),
   analyzeQuestions: (data: {
@@ -134,70 +103,32 @@ export const skillAssignmentAPI = {
     matrixId?: string;
     questions: Array<{ id: string; text: string; type: string; points: number }>;
   }): Promise<AxiosResponse<QuestionAnalysis[]>> =>
-    api.post('/achieveup/ai/analyze-questions', {
-      courseId: data.courseId,
-      quizId: data.quizId,
-      matrixId: data.matrixId,
-      questions: data.questions,
-    }),
+    api.post('/achieveup/ai/analyze-questions', { courseId: data.courseId, quizId: data.quizId, matrixId: data.matrixId, questions: data.questions }),
   // Backend still expects the query param name "question_id"; we now pass question text as its value.
-  getAssignments: (
-    courseId: string,
-    questionTexts: string[]
-  ): Promise<AxiosResponse<{ question_skills: Record<string, string[]> }>> => {
+  getAssignments: (courseId: string, questionTexts: string[]): Promise<AxiosResponse<{ question_skills: Record<string, string[]> }>> => {
     const params = new URLSearchParams({ course_id: courseId });
-    questionTexts.forEach((text) => params.append('question_id', text));
+    questionTexts.forEach(text => params.append('question_id', text));
     return api.get(`/achieveup/skills/assignments?${params.toString()}`);
   },
-  getImportStatus: (
-    courseId: string
-  ): Promise<
-    AxiosResponse<{
-      target_course_id: string;
-      source_course_id: string;
-      matrices_imported: boolean;
-      assignments_imported: boolean;
-    }>
-  > => api.get(`/achieveup/import-status/${courseId}`),
+  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
+    api.get(`/achieveup/import-status/${courseId}`),
 };
 
 // Skill Video Recommendations
 export const skillVideoAPI = {
-  getForSkill: (
-    courseId: string,
-    matrixId: string | undefined,
-    skillName: string
-  ): Promise<AxiosResponse<{ videos: SkillVideo[]; matrix_id: string }>> =>
-    api.post('/achieveup/skill-videos/get', {
-      course_id: courseId,
-      matrix_id: matrixId,
-      skill_name: skillName,
-    }),
+  getForSkill: (courseId: string, matrixId: string | undefined, skillName: string): Promise<AxiosResponse<{ videos: SkillVideo[]; matrix_id: string }>> =>
+    api.post('/achieveup/skill-videos/get', { course_id: courseId, matrix_id: matrixId, skill_name: skillName }),
   add: (data: AddSkillVideoRequest): Promise<AxiosResponse<SkillVideo>> =>
     api.post('/achieveup/skill-videos', data),
-  update: (
-    videoId: string,
-    updates: Partial<Pick<SkillVideo, 'title' | 'link' | 'channel' | 'thumbnail' | 'status'>>
-  ): Promise<AxiosResponse<SkillVideo>> => api.put(`/achieveup/skill-videos/${videoId}`, updates),
+  update: (videoId: string, updates: Partial<Pick<SkillVideo, 'title' | 'link' | 'channel' | 'thumbnail' | 'status'>>): Promise<AxiosResponse<SkillVideo>> =>
+    api.put(`/achieveup/skill-videos/${videoId}`, updates),
   remove: (videoId: string): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.delete(`/achieveup/skill-videos/${videoId}`),
   // Generates AI-recommended videos for a skill — they publish immediately (visible to
   // students right away), tagged source: 'ai_suggested' to distinguish from instructor adds.
-  generateAiRecommendations: (
-    courseId: string,
-    matrixId: string | undefined,
-    skillName: string,
-    count?: number
-  ): Promise<AxiosResponse<{ videos: SkillVideo[] }>> =>
-    api.post('/achieveup/skill-videos/suggest', {
-      course_id: courseId,
-      matrix_id: matrixId,
-      skill_name: skillName,
-      count,
-    }),
-  vote: (
-    data: SkillVideoVoteRequest
-  ): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
+  generateAiRecommendations: (courseId: string, matrixId: string | undefined, skillName: string, count?: number): Promise<AxiosResponse<{ videos: SkillVideo[] }>> =>
+    api.post('/achieveup/skill-videos/suggest', { course_id: courseId, matrix_id: matrixId, skill_name: skillName, count }),
+  vote: (data: SkillVideoVoteRequest): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.post('/achieveup/skill-videos/vote', data),
   // Instructor-only, opt-in: searches a manually-added video's captions for the moment
   // most relevant to its skill and stores it as a deep-link timestamp.
@@ -208,23 +139,23 @@ export const skillVideoAPI = {
     api.post(`/achieveup/skill-videos/${videoId}/verify`),
 };
 
-// YouTube Channel Preferences
+// YouTube channels an instructor links to a course; AI video suggestions
+// search these first.
 export interface CourseChannel {
   channel_id: string;
   name: string;
 }
 
+// Matches the backend's MAX_COURSE_CHANNELS.
+export const MAX_COURSE_CHANNELS = 3;
+
 export const courseChannelsAPI = {
   get: (courseId: string): Promise<AxiosResponse<{ channels: CourseChannel[] }>> =>
     api.get(`/achieveup/instructor/courses/${courseId}/channels`),
-
-  update: (
-    courseId: string,
-    channels: CourseChannel[]
-  ): Promise<AxiosResponse<{ success: boolean; channels: CourseChannel[] }>> =>
-    api.put(`/achieveup/instructor/courses/${courseId}/channels`, {
-      channels: channels.map((c) => c.channel_id),
-    }),
+  // Replaces the whole saved list. Entries can be channel IDs or @handles;
+  // the backend resolves them and returns the saved channels.
+  update: (courseId: string, channels: string[]): Promise<AxiosResponse<{ success: boolean; channels: CourseChannel[] }>> =>
+    api.put(`/achieveup/instructor/courses/${courseId}/channels`, { channels }),
 };
 
 // Badge Management
@@ -235,52 +166,60 @@ export const badgeAPI = {
     api.get(`/achieveup/badges/${studentId}`),
   getCourseBadges: (courseId: string): Promise<AxiosResponse<unknown>> =>
     api.get(`/achieveup/badges/course/${courseId}`),
-  getStudentEarnedBadges: (
-    studentId: string
-  ): Promise<
-    AxiosResponse<{
-      student_id: string;
-      total_badges: number;
-      badges: Array<{
-        badge_id: string;
-        badge_name: string;
-        skill_name: string;
-        badge_level: string;
-        progress_percentage: number;
-        earned_at: string;
-        course_id: string;
-        course_name: string;
-      }>;
-    }>
-  > => api.get(`/achieveup/badges/student/${studentId}/earned`),
-  getPublicStudentBadges: (
-    studentId: string
-  ): Promise<
-    AxiosResponse<{
-      student_id: string;
-      student_name?: string;
-      total_badges: number;
-      badges: Array<{
-        badge_id: string;
-        badge_name: string;
-        skill_name: string;
-        badge_level: string;
-        progress_percentage: number;
-        earned_at: string;
-        course_id: string;
-        course_name?: string;
-        shareable_link?: string;
-      }>;
-    }>
-  > => api.get(`/achieveup/public/badges/student/${studentId}/earned`),
+  getStudentEarnedBadges: (studentId: string, courseId?: string): Promise<AxiosResponse<{
+    student_id: string;
+    total_badges: number;
+    badges: Array<{
+      badge_id: string;
+      badge_name: string;
+      skill_name: string;
+      badge_level: string;
+      progress_percentage: number;
+      earned_at: string;
+      course_id: string;
+      course_name: string | null;
+    }>;
+  }>> =>
+    api.get(`/achieveup/badges/student/${studentId}/earned`, { params: courseId ? { course_id: courseId } : undefined }),
+  getPublicBadgesByShare: (shareId: string): Promise<AxiosResponse<{
+    student_name?: string;
+    total_badges: number;
+    badges: Array<{
+      badge_id: string;
+      badge_name: string;
+      skill_name: string;
+      badge_level: string;
+      progress_percentage: number;
+      earned_at: string;
+      course_id: string;
+      course_name?: string | null;
+    }>;
+  }>> =>
+    api.get(`/achieveup/public/badges/share/${shareId}/earned`),
+  getBadgeShareStatus: (): Promise<AxiosResponse<{
+    shared: boolean;
+    share_link: string | null;
+    opted_out: boolean;
+  }>> =>
+    api.get('/achieveup/badges/share-status'),
+  // With no args, shares the caller's own profile. An instructor passes
+  // studentId (and courseId, as a hint for which course to check first) to
+  // get a share link for a student they teach instead.
+  generateBadgeShareLink: (studentId?: string, courseId?: string): Promise<AxiosResponse<{
+    message: string;
+    share_link: string;
+    share_id: string;
+  }>> =>
+    api.post('/achieveup/badges/share-profile', studentId ? { student_id: studentId, course_id: courseId } : undefined),
+  optOutOfBadgeSharing: (): Promise<AxiosResponse<{ message: string; opted_out: boolean }>> =>
+    api.post('/achieveup/badges/opt-out'),
+  optInToBadgeSharing: (): Promise<AxiosResponse<{ message: string; opted_out: boolean }>> =>
+    api.post('/achieveup/badges/opt-in'),
 };
 
 // Progress Tracking
 export const progressAPI = {
-  getSkillProgress: (
-    studentId: string,
-    courseId: string
-  ): Promise<AxiosResponse<StudentProgress>> =>
+  getSkillProgress: (studentId: string, courseId: string): Promise<AxiosResponse<StudentProgress>> =>
     api.get(`/achieveup/progress/${studentId}/${courseId}`),
   updateSkillProgress: (data: UpdateProgressRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/progress/update', data),
@@ -298,45 +237,38 @@ export const analyticsAPI = {
 
 // Canvas Integration
 export const canvasAPI = {
-  getCourses: (): Promise<AxiosResponse<CanvasCourse[]>> => api.get('/canvas/courses'),
+  getCourses: (): Promise<AxiosResponse<CanvasCourse[]>> =>
+    api.get('/canvas/courses'),
   getQuizzes: (courseId: string): Promise<AxiosResponse<CanvasQuiz[]>> =>
     api.get(`/canvas/courses/${courseId}/quizzes`),
   getQuestions: (quizId: string): Promise<AxiosResponse<CanvasQuestion[]>> =>
     api.get(`/canvas/quizzes/${quizId}/questions`),
-  testConnection: (): Promise<
-    AxiosResponse<{ connected: boolean; message?: string; user_info?: object }>
-  > => api.get('/canvas/test-connection'),
+  testConnection: (): Promise<AxiosResponse<{ connected: boolean; message?: string; user_info?: object }>> =>
+    api.get('/canvas/test-connection'),
   // Instructor-specific endpoints
   getInstructorCourses: (): Promise<AxiosResponse<CanvasCourse[]>> =>
     api.get('/canvas/instructor/courses'),
   getInstructorQuizzes: (courseId: string): Promise<AxiosResponse<CanvasQuiz[]>> =>
     api.get(`/canvas/instructor/courses/${courseId}/quizzes`),
-  getInstructorQuestions: (
-    quizId: string,
-    courseId: string
-  ): Promise<AxiosResponse<CanvasQuestion[]>> =>
+  getInstructorQuestions: (quizId: string, courseId: string): Promise<AxiosResponse<CanvasQuestion[]>> =>
     api.get(`/canvas/instructor/courses/${courseId}/quizzes/${quizId}/questions`),
 };
 
 // Authentication
 export const authAPI = {
-  login: (data: {
-    email: string;
-    password: string;
-  }): Promise<AxiosResponse<{ token: string; user: User }>> => api.post('/auth/login', data),
+  login: (data: { email: string; password: string }): Promise<AxiosResponse<{ token: string; user: User }>> =>
+    api.post('/auth/login', data),
   signup: (data: SignupRequest): Promise<AxiosResponse<{ token: string; user: User }>> =>
     api.post('/auth/signup', data),
-  verify: (): Promise<AxiosResponse<{ user: User }>> => api.get('/auth/verify'),
-  me: (): Promise<AxiosResponse<{ user: User }>> => api.get('/auth/me'),
+  verify: (): Promise<AxiosResponse<{ user: User }>> =>
+    api.get('/auth/verify'),
+  me: (): Promise<AxiosResponse<{ user: User }>> =>
+    api.get('/auth/me'),
   updateProfile: (data: ProfileUpdateRequest): Promise<AxiosResponse<{ user: User }>> =>
     api.put('/auth/profile', data),
-  changePassword: (data: {
-    currentPassword: string;
-    newPassword: string;
-  }): Promise<AxiosResponse<void>> => api.put('/auth/password', data),
-  validateCanvasToken: (
-    data: CanvasTokenValidationRequest
-  ): Promise<AxiosResponse<{ valid: boolean; message?: string; user_info?: object }>> =>
+  changePassword: (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<void>> =>
+    api.put('/auth/password', data),
+  validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string; user_info?: object }>> =>
     api.post('/auth/validate-canvas-token', data),
 };
 
@@ -347,96 +279,66 @@ export const instructorAPI = {
   getCourseAnalytics: (courseId: string): Promise<AxiosResponse<InstructorCourseAnalytics>> =>
     api.get(`/achieveup/instructor/courses/${courseId}/analytics`),
 
+
   // AI-powered skill suggestions for course context
-  suggestSkillsForCourse: (
-    courseId: string,
-    courseTitle: string
-  ): Promise<AxiosResponse<string[]>> =>
+  suggestSkillsForCourse: (courseId: string, courseTitle: string): Promise<AxiosResponse<string[]>> =>
     api.post('/achieveup/instructor/courses/suggest-skills', { courseId, courseTitle }),
 
   // AI-powered question analysis and auto-tagging
-  analyzeQuestionsWithAI: (
-    questions: Array<{ id: string; text: string }>,
-    courseContext: string
-  ): Promise<AxiosResponse<QuestionAnalysis[]>> =>
+  analyzeQuestionsWithAI: (questions: Array<{ id: string; text: string }>, courseContext: string): Promise<AxiosResponse<QuestionAnalysis[]>> =>
     api.post('/achieveup/instructor/questions/analyze-ai', { questions, courseContext }),
 
   // Bulk skill assignment with AI suggestions
-  bulkAssignSkillsWithAI: (
-    courseId: string,
-    quizId: string
-  ): Promise<AxiosResponse<QuestionSkillAssignment>> =>
+  bulkAssignSkillsWithAI: (courseId: string, quizId: string): Promise<AxiosResponse<QuestionSkillAssignment>> =>
     api.post('/achieveup/instructor/skills/bulk-assign-ai', { courseId, quizId }),
 
   // Student skill assessment (copying original algorithm)
-  assessStudentSkills: (
-    studentId: string,
-    courseId: string,
-    quizResponses: Array<{ questionId: string; correct: boolean }>
-  ): Promise<AxiosResponse<StudentProgress>> =>
+  assessStudentSkills: (studentId: string, courseId: string, quizResponses: Array<{ questionId: string; correct: boolean }>): Promise<AxiosResponse<StudentProgress>> =>
     api.post('/achieveup/instructor/assessment/evaluate', { studentId, courseId, quizResponses }),
 
   // Generate web-linked badges
-  generateWebLinkedBadges: (
-    studentId: string,
-    courseId: string,
-    skillLevels: Record<string, 'beginner' | 'intermediate' | 'advanced'>
-  ): Promise<AxiosResponse<Badge[]>> =>
-    api.post('/achieveup/instructor/badges/generate-web-linked', {
-      studentId,
-      courseId,
-      skillLevels,
-    }),
+  generateWebLinkedBadges: (studentId: string, courseId: string, skillLevels: Record<string, 'beginner' | 'intermediate' | 'advanced'>): Promise<AxiosResponse<Badge[]>> =>
+    api.post('/achieveup/instructor/badges/generate-web-linked', { studentId, courseId, skillLevels }),
 
   // Get instructor dashboard data
-  getInstructorDashboard: (): Promise<
-    AxiosResponse<{
-      totalCourses: number;
-      students: number;
-      averageProgress: number;
-      recentActivity: unknown[];
-    }>
-  > => api.get('/achieveup/instructor/dashboard'),
+  getInstructorDashboard: (): Promise<AxiosResponse<{
+    totalCourses: number;
+    students: number;
+    averageProgress: number;
+    recentActivity: unknown[];
+  }>> =>
+    api.get('/achieveup/instructor/dashboard'),
 
   // Get course-specific student analytics
-  getCourseStudentAnalytics: (
-    courseId: string
-  ): Promise<
-    AxiosResponse<{
-      analytics: {
-        students: Array<{
-          id: string;
-          name: string;
-          progress: number;
-          skillsMastered: number;
-          badgesEarned: number;
-          riskLevel: 'low' | 'medium' | 'high';
-          skillBreakdown?: Record<
-            string,
-            { score: number; level: string; questionsAttempted: number; questionsCorrect: number }
-          >;
-          totalQuestionsAttempted?: number;
-        }>;
-        skillDistribution: Record<string, number>;
-        averageScores: Record<string, number>;
-      };
-    }>
-  > => api.get(`/achieveup/instructor/courses/${courseId}/student-analytics`),
+  getCourseStudentAnalytics: (courseId: string): Promise<AxiosResponse<{
+    analytics: {
+      students: Array<{
+        id: string;
+        name: string;
+        progress: number;
+        skillsMastered: number;
+        badgesEarned: number;
+        riskLevel: 'low' | 'medium' | 'high';
+        skillBreakdown?: Record<string, { score: number; level: string; questionsAttempted: number; questionsCorrect: number }>;
+        totalQuestionsAttempted?: number;
+      }>;
+      skillDistribution: Record<string, number>;
+      averageScores: Record<string, number>;
+    };
+  }>> =>
+    api.get(`/achieveup/instructor/courses/${courseId}/student-analytics`),
 
   // Force a data sync for a specific course (triggers Canvas → mastery → progress)
-  forceSyncCourse: (
-    courseId: string
-  ): Promise<
-    AxiosResponse<{
-      message: string;
-      details: {
-        total_quizzes: number;
-        total_synced: number;
-        progress_synced: number;
-        total_errors: number;
-      };
-    }>
-  > => api.post(`/achieveup/instructor/course/${courseId}/force-sync`),
+  forceSyncCourse: (courseId: string): Promise<AxiosResponse<{
+    message: string;
+    details: {
+      total_quizzes: number;
+      total_synced: number;
+      progress_synced: number;
+      total_errors: number;
+    };
+  }>> =>
+    api.post(`/achieveup/instructor/course/${courseId}/force-sync`),
 };
 
 // Enhanced Canvas API for instructor functionality
@@ -467,3 +369,4 @@ export const canvasInstructorAPI = {
 };
 
 export default api;
+

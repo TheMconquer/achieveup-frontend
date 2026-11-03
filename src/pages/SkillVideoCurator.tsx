@@ -440,9 +440,9 @@ const SkillVideoCurator: React.FC = () => {
                       onClick={() => handleRemoveChannel(channel)}
                       disabled={savingChannels}
                       aria-label={`Remove ${channel.name}`}
-                      className="rounded-full hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+                      className="rounded-full hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </li>
                 ))}
@@ -469,7 +469,7 @@ const SkillVideoCurator: React.FC = () => {
                     value={newChannel}
                     onChange={(e) => setNewChannel(e.target.value)}
                     disabled={savingChannels}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold disabled:bg-gray-100"
                   />
                 </div>
                 <Button type="submit" loading={savingChannels} disabled={!newChannel.trim()} size="sm" variant="outline">

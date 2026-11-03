@@ -33,8 +33,8 @@ const SyncOverlay: React.FC<SyncOverlayProps> = ({ quizzesDone = 0, quizzesTotal
           className="flex flex-col items-center rounded-xl border border-gray-200 bg-white px-8 py-6 shadow-lg"
         >
           <div className="relative h-16 w-20" aria-hidden="true">
-            <Cog className="absolute left-0 top-1 h-12 w-12 text-amber-600 dark:text-ucf-gold motion-safe:animate-gear-cw" />
-            <Cog className="absolute right-0 top-0 h-8 w-8 text-gray-500 motion-safe:animate-gear-ccw" />
+            <Cog aria-hidden="true" className="absolute left-0 top-1 h-12 w-12 text-amber-600 dark:text-ucf-gold motion-safe:animate-gear-cw" />
+            <Cog aria-hidden="true" className="absolute right-0 top-0 h-8 w-8 text-gray-500 motion-safe:animate-gear-ccw" />
           </div>
           <p className="mt-3 text-base font-medium text-gray-900">Syncing with Canvas</p>
           <p className="mt-1 text-sm text-gray-600">{progress}</p>

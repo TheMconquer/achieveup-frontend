@@ -118,8 +118,9 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
   return (
     <div className="bg-gray-50 p-4 space-y-4">
       {loading ? (
-        <div className="flex justify-center py-4">
-          <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" />
+        <div className="flex justify-center py-4" role="status">
+          <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-ucf-gold" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       ) : loadError ? (
         <p className="text-sm text-red-700 dark:text-red-400">{loadError}</p>
@@ -143,7 +144,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
               onClick={() => copy(shareLink)}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              {copied ? <Check className="h-4 w-4 text-green-700 dark:text-green-400" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check aria-hidden="true" className="h-4 w-4 text-green-700 dark:text-green-400" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
@@ -154,7 +155,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
             disabled={shareLoading}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Share2 className="h-4 w-4" />
+            <Share2 aria-hidden="true" className="h-4 w-4" />
             Get Share Link
           </button>
         )}
@@ -167,7 +168,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
               disabled={page === 1}
               className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
               Previous
             </button>
 
@@ -182,7 +183,7 @@ const InstructorStudentBadgesPanel: React.FC<{ studentId: string; courseId: stri
               className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -355,8 +356,8 @@ const StudentProgress: React.FC = () => {
 
   const getRiskIcon = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return <CheckCircle className="w-3 h-3 mr-1" />;
-      case 'medium': case 'high': return <AlertTriangle className="w-3 h-3 mr-1" />;
+      case 'low': return <CheckCircle aria-hidden="true" className="w-3 h-3 mr-1" />;
+      case 'medium': case 'high': return <AlertTriangle aria-hidden="true" className="w-3 h-3 mr-1" />;
       default: return null;
     }
   };
@@ -364,8 +365,9 @@ const StudentProgress: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+        <div className="flex justify-center items-center h-64" role="status">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       </div>
     );
@@ -427,7 +429,7 @@ const StudentProgress: React.FC = () => {
       {courses.length === 0 && !loading && !error && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-500 text-2xl">📚</span>
+            <span className="text-gray-500 text-2xl" aria-hidden="true">📚</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Courses Found</h2>
           <p className="text-gray-600 mb-4">
@@ -457,7 +459,7 @@ const StudentProgress: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col items-center text-center">
               <p className="text-sm font-medium text-gray-500">Total Students</p>
               <div className="mt-2 w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 dark:text-blue-400 font-bold">{studentData.students.length}</span>
+                <span className="text-blue-700 dark:text-blue-400 font-bold">{studentData.students.length}</span>
               </div>
             </div>
 
@@ -521,9 +523,9 @@ const StudentProgress: React.FC = () => {
                           aria-expanded={expandedStudentId === student.id}
                         >
                           {expandedStudentId === student.id ? (
-                            <ChevronDown className="w-3 h-3 mr-1" />
+                            <ChevronDown aria-hidden="true" className="w-3 h-3 mr-1" />
                           ) : (
-                            <ChevronRight className="w-3 h-3 mr-1" />
+                            <ChevronRight aria-hidden="true" className="w-3 h-3 mr-1" />
                           )}
                           {student.name}
                         </button>
@@ -625,7 +627,7 @@ const StudentProgress: React.FC = () => {
       {selectedCourse && studentData && studentData.students.length === 0 && !error && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-gray-500 text-2xl">📊</span>
+            <span className="text-gray-500 text-2xl" aria-hidden="true">📊</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Student Progress Data Yet</h2>
           <p className="text-gray-600 mb-6">
@@ -712,7 +714,7 @@ const StudentProgress: React.FC = () => {
                 <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">{selectedStudent.skillsMastered}</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-bold text-lg">{selectedStudent.skillsMastered}</span>
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Skills Mastered</p>
@@ -800,7 +802,7 @@ const StudentProgress: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-gray-500 text-2xl">📊</span>
+                      <span className="text-gray-500 text-2xl" aria-hidden="true">📊</span>
                     </div>
                     <p className="text-gray-600">No detailed skill data available yet.</p>
                     <p className="text-sm text-gray-500 mt-2">

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Lock, Mail, User, BookOpen, Key, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { passwordRules } from '../utils/passwordPolicy';
+import { passwordRules, PASSWORD_MIN_LENGTH } from '../utils/passwordPolicy';
 import toast from 'react-hot-toast';
 import { getApiErrorMessage } from '../utils/apiError';
 import Button from '../components/common/Button';
@@ -59,7 +59,7 @@ const Signup: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <BookOpen className="w-12 h-12 text-primary-600" />
+              <BookOpen aria-hidden="true" className="w-12 h-12 text-primary-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
             <p className="text-gray-600">Join AchieveUp to track skills with AI</p>
@@ -72,9 +72,12 @@ const Signup: React.FC = () => {
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <User aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="name"
+                  aria-invalid={errors.name ? 'true' : 'false'}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                  autoComplete="name"
                   {...register('name', {
                     required: 'Name is required',
                     minLength: {
@@ -87,7 +90,7 @@ const Signup: React.FC = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              {errors.name && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.name.message}</p>}
+              {errors.name && <p id="name-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
@@ -95,9 +98,12 @@ const Signup: React.FC = () => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Mail aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="email"
+                  aria-invalid={errors.email ? 'true' : 'false'}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  autoComplete="email"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -110,7 +116,7 @@ const Signup: React.FC = () => {
                   placeholder="Enter your email address"
                 />
               </div>
-              {errors.email && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p id="email-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -118,9 +124,12 @@ const Signup: React.FC = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Lock aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="password"
+                  aria-invalid={errors.password ? 'true' : 'false'}
+                  aria-describedby={errors.password ? 'password-hint password-error' : 'password-hint'}
+                  autoComplete="new-password"
                   {...register('password', passwordRules)}
                   type={showPassword ? 'text' : 'password'}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-primary-500 focus:border-transparent"
@@ -132,11 +141,14 @@ const Signup: React.FC = () => {
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff aria-hidden="true" className="w-5 h-5" /> : <Eye aria-hidden="true" className="w-5 h-5" />}
                 </button>
               </div>
+              <p id="password-hint" className="text-gray-600 text-sm mt-1">
+                At least {PASSWORD_MIN_LENGTH} characters, with an uppercase letter, a lowercase letter, and a number.
+              </p>
               {errors.password && (
-                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
+                <p id="password-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -148,9 +160,12 @@ const Signup: React.FC = () => {
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Lock aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="confirmPassword"
+                  aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+                  aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                  autoComplete="new-password"
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
                     validate: (value) => value === password || 'Passwords do not match',
@@ -166,14 +181,14 @@ const Signup: React.FC = () => {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff aria-hidden="true" className="w-5 h-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye aria-hidden="true" className="w-5 h-5" />
                   )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
+                <p id="confirmPassword-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -185,9 +200,12 @@ const Signup: React.FC = () => {
                 Canvas API Token
               </label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Key aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="canvasApiToken"
+                  aria-invalid={errors.canvasApiToken ? 'true' : 'false'}
+                  aria-describedby={errors.canvasApiToken ? 'canvasApiToken-error' : undefined}
+                  autoComplete="off"
                   {...register('canvasApiToken', {
                     required: 'Canvas API token is required to sign up',
                   })}
@@ -197,7 +215,7 @@ const Signup: React.FC = () => {
                 />
               </div>
               {errors.canvasApiToken && (
-                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.canvasApiToken.message}</p>
+                <p id="canvasApiToken-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.canvasApiToken.message}</p>
               )}
 
               <div className="mt-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -212,9 +230,9 @@ const Signup: React.FC = () => {
                     How to get your Canvas API Token
                   </span>
                   {showInstructions ? (
-                    <ChevronUp className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <ChevronUp aria-hidden="true" className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <ChevronDown aria-hidden="true" className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   )}
                 </button>
                 {showInstructions && (

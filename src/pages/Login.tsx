@@ -43,7 +43,7 @@ const Login: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <BookOpen className="w-12 h-12 text-primary-600" />
+              <BookOpen aria-hidden="true" className="w-12 h-12 text-primary-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">AchieveUp Portal</h1>
             <p className="text-gray-600">
@@ -56,9 +56,12 @@ const Login: React.FC = () => {
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Mail aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="email"
+                  aria-invalid={errors.email ? 'true' : 'false'}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  autoComplete="email"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -71,15 +74,18 @@ const Login: React.FC = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
+              {errors.email && <p id="email-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Lock aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   id="password"
+                  aria-invalid={errors.password ? 'true' : 'false'}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
+                  autoComplete="current-password"
                   {...register('password', {
                     required: 'Password is required',
                   })}
@@ -93,11 +99,11 @@ const Login: React.FC = () => {
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff aria-hidden="true" className="w-5 h-5" /> : <Eye aria-hidden="true" className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
+                <p id="password-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 

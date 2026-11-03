@@ -38,7 +38,7 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 id="skill-video-help-title" className="text-lg font-semibold text-gray-900">How Skill Video Assignment Works</h2>
         <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-600">
-          <X className="h-5 w-5" />
+          <X aria-hidden="true" className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-4 p-6 text-sm text-gray-700">
@@ -252,7 +252,7 @@ const SkillVideoCurator: React.FC = () => {
               aria-label="How Skill Video Assignment works"
               className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
             >
-              <Info className="h-5 w-5" />
+              <Info aria-hidden="true" className="h-5 w-5" />
             </button>
           </div>
           <p className="mt-1.5 text-sm text-gray-600">
@@ -262,8 +262,9 @@ const SkillVideoCurator: React.FC = () => {
         {showInfoModal && <SkillVideoInfoModal onClose={() => setShowInfoModal(false)} />}
         <Card title="Select a Course">
           {coursesLoading ? (
-            <div className="flex justify-center py-6">
-              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+            <div className="flex justify-center py-6" role="status">
+              <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" aria-hidden="true" />
+              <span className="sr-only">Loading…</span>
             </div>
           ) : courses.length === 0 ? (
             <p className="py-2 text-sm text-gray-500">
@@ -278,7 +279,7 @@ const SkillVideoCurator: React.FC = () => {
                   onClick={() => setCourseId(course.id)}
                   className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40"
                 >
-                  <BookOpen className="h-4 w-4 flex-shrink-0 text-gray-500" />
+                  <BookOpen aria-hidden="true" className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   <div>
                     <div className="text-sm font-semibold text-gray-900">{course.name}</div>
                     <div className="text-xs text-gray-500">{course.code}</div>
@@ -316,7 +317,7 @@ const SkillVideoCurator: React.FC = () => {
             aria-label="How Skill Video Assignment works"
             className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
           >
-            <Info className="h-5 w-5" />
+            <Info aria-hidden="true" className="h-5 w-5" />
           </button>
         </div>
         <p className="mt-1.5 text-sm text-gray-600">
@@ -368,14 +369,15 @@ const SkillVideoCurator: React.FC = () => {
         subtitle="Visible to students studying this skill"
         headerActions={
           <Button onClick={handleGetSuggestions} loading={suggesting} size="sm" variant="outline">
-            <Sparkles className="mr-1.5 inline h-4 w-4" />
+            <Sparkles aria-hidden="true" className="mr-1.5 inline h-4 w-4" />
             Get AI Suggestions
           </Button>
         }
       >
         {loadingVideos ? (
-          <div className="flex justify-center py-6">
-            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+          <div className="flex justify-center py-6" role="status">
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" aria-hidden="true" />
+            <span className="sr-only">Loading…</span>
           </div>
         ) : videos.length === 0 ? (
           <p className="py-2 text-sm text-gray-500">
@@ -428,9 +430,9 @@ const SkillVideoCurator: React.FC = () => {
                     className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-green-600 dark:hover:text-green-400 disabled:opacity-50"
                   >
                     {verifyingId === video._id ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" />
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-green-600" aria-hidden="true" />
                     ) : (
-                      <CheckCircle className="h-4 w-4" />
+                      <CheckCircle aria-hidden="true" className="h-4 w-4" />
                     )}
                   </button>
                 )}
@@ -444,9 +446,9 @@ const SkillVideoCurator: React.FC = () => {
                     className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
                   >
                     {findingMomentId === video._id ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" aria-hidden="true" />
                     ) : (
-                      <Clock className="h-4 w-4" />
+                      <Clock aria-hidden="true" className="h-4 w-4" />
                     )}
                   </button>
                 )}
@@ -457,28 +459,36 @@ const SkillVideoCurator: React.FC = () => {
                   aria-label={`Remove ${video.title}`}
                   className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
-          <input
-            type="text"
-            placeholder="Video title (optional)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
-          <input
-            type="text"
-            placeholder="YouTube URL"
-            value={newLink}
-            onChange={(e) => setNewLink(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
+        <div className="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label htmlFor="curator-new-title" className="mb-1 block text-sm font-medium text-gray-700">Video title (optional)</label>
+            <input
+              id="curator-new-title"
+              type="text"
+              placeholder="e.g. Recursion explained"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="curator-new-link" className="mb-1 block text-sm font-medium text-gray-700">YouTube URL</label>
+            <input
+              id="curator-new-link"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=…"
+              value={newLink}
+              onChange={(e) => setNewLink(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
+            />
+          </div>
           <Button onClick={handleAddVideo} loading={adding} size="sm">
             Add Video
           </Button>

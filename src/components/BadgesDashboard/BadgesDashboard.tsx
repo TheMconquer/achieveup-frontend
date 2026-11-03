@@ -185,8 +185,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+            <div className="flex justify-center items-center h-64" role="status">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+                <span className="sr-only">Loading…</span>
             </div>
         );
     }
@@ -196,14 +197,14 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
             <Card title="Course Badges" className="mt-8">
                 <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Award className="w-8 h-8 text-gray-500" />
+                        <Award aria-hidden="true" className="w-8 h-8 text-gray-500" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No Badges Available</h3>
                     <p className="text-gray-600 mb-4">
                         Badges are automatically created for each skill in your course's skill matrix.
                     </p>
                     <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
-                        <AlertCircle className="w-4 h-4 mr-2" />
+                        <AlertCircle aria-hidden="true" className="w-4 h-4 mr-2" />
                         Create a skill matrix first to enable badges
                     </div>
                 </div>
@@ -215,7 +216,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
         <Card title={`Course Badges (${badges.length} Skills)`} className="mt-8">
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
                 <div className="flex items-start">
-                    <Target className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <Target aria-hidden="true" className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
                         <strong>One badge per skill:</strong> Each skill in your course has a corresponding badge.
                         Students earn higher tiers as their score grows: Beginner at 25%, Intermediate at 50%, Advanced at 75%, and Expert at 90%. 
@@ -246,7 +247,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                     <div className="flex items-center space-x-4 flex-1">
                                         {/* Badge Icon */}
                                         <div className={`w-16 h-16 ${iconColor} rounded-full flex items-center justify-center flex-shrink-0`}>
-                                            <Award className="w-8 h-8 text-ucf-white" />
+                                            <Award aria-hidden="true" className="w-8 h-8 text-ucf-white" />
                                         </div>
 
                                         {/* Badge Info */}
@@ -257,16 +258,16 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                             <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
                                             <div className="flex items-center space-x-4 text-sm">
                                                 <div className="flex items-center text-green-700 dark:text-green-400">
-                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    <CheckCircle aria-hidden="true" className="w-4 h-4 mr-1" />
                                                     <span>{badge.studentsEarned.length} earned</span>
                                                 </div>
                                                 <div className="flex items-center text-orange-700 dark:text-orange-400">
-                                                    <Clock className="w-4 h-4 mr-1" />
+                                                    <Clock aria-hidden="true" className="w-4 h-4 mr-1" />
                                                     <span>{badge.studentsNotEarned.length} in progress</span>
                                                 </div>
                                                 {totalStudents > 0 && (
                                                     <div className="flex items-center text-gray-500">
-                                                        <Users className="w-4 h-4 mr-1" />
+                                                        <Users aria-hidden="true" className="w-4 h-4 mr-1" />
                                                         <span>{totalStudents} total</span>
                                                     </div>
                                                 )}
@@ -287,9 +288,9 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                         {/* Expand Icon */}
                                         <div className="flex-shrink-0">
                                             {isExpanded ? (
-                                                <ChevronUp className="w-5 h-5 text-gray-500" />
+                                                <ChevronUp aria-hidden="true" className="w-5 h-5 text-gray-500" />
                                             ) : (
-                                                <ChevronDown className="w-5 h-5 text-gray-500" />
+                                                <ChevronDown aria-hidden="true" className="w-5 h-5 text-gray-500" />
                                             )}
                                         </div>
                                     </div>
@@ -310,7 +311,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                 }`}
                                         >
                                             <div className="flex items-center justify-center space-x-2">
-                                                <CheckCircle className="w-4 h-4" />
+                                                <CheckCircle aria-hidden="true" className="w-4 h-4" />
                                                 <span>Earned ({badge.studentsEarned.length})</span>
                                             </div>
                                         </button>
@@ -323,7 +324,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                 }`}
                                         >
                                             <div className="flex items-center justify-center space-x-2">
-                                                <TrendingUp className="w-4 h-4" />
+                                                <TrendingUp aria-hidden="true" className="w-4 h-4" />
                                                 <span>In Progress ({badge.studentsNotEarned.length})</span>
                                             </div>
                                         </button>
@@ -340,7 +341,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
-                                                                        <CheckCircle className="w-5 h-5 text-green-700 dark:text-green-400" />
+                                                                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-green-700 dark:text-green-400" />
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
@@ -359,7 +360,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8 text-gray-500">
-                                                    <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                                    <Users aria-hidden="true" className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                                                     <p>No students have earned this badge yet</p>
                                                 </div>
                                             )
@@ -372,7 +373,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                             <div className="flex items-center justify-between mb-3">
                                                                 <div className="flex items-center space-x-3">
                                                                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                                                        <Clock className="w-5 h-5 text-orange-700 dark:text-orange-400" />
+                                                                        <Clock aria-hidden="true" className="w-5 h-5 text-orange-700 dark:text-orange-400" />
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium text-gray-900">{student.name}</p>
@@ -405,7 +406,7 @@ const BadgesDashboard: React.FC<BadgesDashboardProps> = ({ courseId }) => {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8 text-gray-500">
-                                                    <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                                    <Users aria-hidden="true" className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                                                     <p>All students have earned this badge!</p>
                                                 </div>
                                             )

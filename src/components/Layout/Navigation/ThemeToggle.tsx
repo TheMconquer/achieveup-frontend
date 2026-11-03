@@ -28,7 +28,7 @@ const ThemeToggle: React.FC = () => {
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             {label}
           </button>
         ))}

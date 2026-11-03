@@ -38,7 +38,7 @@ const RecentBadgesGrid: React.FC<RecentBadgesGridProps> = ({ badges }) => {
             <div
               className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-ucf-white ${tierGradientClass[tier]}`}
             >
-              <Award className="h-[18px] w-[18px]" />
+              <Award aria-hidden="true" className="h-[18px] w-[18px]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold text-gray-900">{badge.skillName}</div>

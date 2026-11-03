@@ -59,16 +59,16 @@ const SkillMasteryList: React.FC<SkillMasteryListProps> = ({ skills }) => {
               {canShowVideos && (
                 <div className="flex h-9 w-4 flex-shrink-0 items-center justify-center text-gray-500">
                   {isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown aria-hidden="true" className="h-4 w-4" />
                   ) : (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight aria-hidden="true" className="h-4 w-4" />
                   )}
                 </div>
               )}
               <div
                 className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${tierBgClass[tier]} ${tierTextClass[tier]}`}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil aria-hidden="true" className="h-4 w-4" />
               </div>
               <div className="flex min-w-32 flex-1 flex-col gap-1.5">
                 <div className="text-sm font-semibold text-gray-900">{skill.name}</div>

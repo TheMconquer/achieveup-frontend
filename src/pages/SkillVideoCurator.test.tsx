@@ -24,7 +24,13 @@ jest.mock('../services/api', () => ({
   MAX_COURSE_CHANNELS: 3,
   courseChannelsAPI: { get: jest.fn(), update: jest.fn() },
   skillMatrixAPI: { getAllByCourse: jest.fn() },
-  skillVideoAPI: { getForSkill: jest.fn(), generateAiRecommendations: jest.fn() },
+  skillVideoAPI: {
+    getForSkill: jest.fn(),
+    generateAiRecommendations: jest.fn(),
+    add: jest.fn(),
+    findRelevantMoment: jest.fn(),
+    verify: jest.fn(),
+  },
 }));
 
 jest.mock('react-hot-toast', () => ({
@@ -41,9 +47,9 @@ const baz = { channel_id: 'UCbaz', name: 'Baz Channel' };
 
 type Settle = { resolve: (value: unknown) => void; reject: (reason: unknown) => void };
 
-const axiosError = (message: string) => ({
+const axiosError = (message: string, status = 400) => ({
   isAxiosError: true,
-  response: { data: { error: 'Channel not found', message } },
+  response: { status, data: { error: 'Channel not found', message } },
 });
 
 const renderCurator = (courseId = 'c1', query = '') =>
@@ -85,6 +91,35 @@ describe('SkillVideoCurator preferred channels', () => {
 
     expect(await screen.findByText('Foo Channel')).toBeInTheDocument();
     expect(updateChannels).not.toHaveBeenCalled();
+  });
+
+  it('shows why access was refused, without a retry that cannot help', async () => {
+    getChannels.mockRejectedValue(axiosError('Course c1 was not found in Canvas.', 403));
+    renderCurator();
+
+    expect(await screen.findByText('Course c1 was not found in Canvas.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Add a channel')).not.toBeInTheDocument();
+  });
+
+  it('offers a retry with the backend message on a server error', async () => {
+    getChannels.mockRejectedValue(axiosError('Canvas API returned error 500.', 502));
+    renderCurator();
+
+    expect(await screen.findByText('Canvas API returned error 500.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('sends the handle from a pasted channel URL', async () => {
+    getChannels.mockResolvedValue({ data: { channels: [foo] } });
+    updateChannels.mockResolvedValue({ data: { success: true, channels: [foo, bar] } });
+    renderCurator();
+    await screen.findByText('Foo Channel');
+
+    addChannel('https://www.youtube.com/@bar/videos');
+
+    await screen.findByText('Bar Channel');
+    expect(updateChannels).toHaveBeenCalledWith('c1', ['UCfoo', '@bar']);
   });
 
   it("ignores a load that finishes after the course changed", async () => {
@@ -263,6 +298,110 @@ describe('SkillVideoCurator AI suggestions', () => {
     const other = screen.getByText('Other pick');
     expect(preferred.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(getForSkill).toHaveBeenCalledTimes(2);
+  });
+
+  describe('with a skill dropdown', () => {
+    const getForSkill = skillVideoAPI.getForSkill as jest.Mock;
+    const generate = skillVideoAPI.generateAiRecommendations as jest.Mock;
+    const titles = () =>
+      screen.queryAllByRole('link').map((a) => a.textContent?.replace(' (opens in new tab)', ''));
+
+    beforeEach(() => {
+      (skillMatrixAPI.getAllByCourse as jest.Mock).mockResolvedValue({
+        data: [{ _id: 'm1', matrix_name: 'Matrix', skills: ['Algebra', 'Logs'] }],
+      });
+      getForSkill.mockImplementation((course: string, _matrix: string, skill: string) =>
+        Promise.resolve({ data: { videos: [video(`${course} ${skill}`, 'ai_suggested')] } })
+      );
+    });
+
+    const renderWithMatrix = async () => {
+      renderCurator('c1', '&matrixId=m1&skill=Algebra');
+      await screen.findByText('c1 Algebra');
+    };
+
+    it('shows the selected skill when suggestions finish after it changed', async () => {
+      let finish: (value: unknown) => void = () => {};
+      generate.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+      await renderWithMatrix();
+
+      fireEvent.click(screen.getByRole('button', { name: /Get AI Suggestions/ }));
+      fireEvent.change(screen.getByLabelText('Skill'), { target: { value: 'Logs' } });
+      await screen.findByText('c1 Logs');
+      await act(async () => finish({ data: { videos: [video('New', 'ai_suggested')] } }));
+
+      await waitFor(() => expect(getForSkill).toHaveBeenCalledTimes(3));
+      await screen.findByText('c1 Logs');
+      expect(titles()).toEqual(['c1 Logs']);
+    });
+
+    it('shows the selected course when suggestions finish after it changed', async () => {
+      let finish: (value: unknown) => void = () => {};
+      generate.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+      await renderWithMatrix();
+
+      fireEvent.click(screen.getByRole('button', { name: /Get AI Suggestions/ }));
+      fireEvent.click(screen.getByRole('button', { name: '← Change course' }));
+      fireEvent.click(screen.getByRole('button', { name: /Course Two/ }));
+      await screen.findByText('c2 Algebra');
+      await act(async () => finish({ data: { videos: [video('New', 'ai_suggested')] } }));
+
+      await waitFor(() => expect(getForSkill).toHaveBeenCalledTimes(3));
+      await screen.findByText('c2 Algebra');
+      expect(titles()).toEqual(['c2 Algebra']);
+    });
+
+    it('ignores a slow load that finishes after a newer one', async () => {
+      let finishSlow: (value: unknown) => void = () => {};
+      await renderWithMatrix();
+
+      getForSkill.mockImplementationOnce(() => new Promise((resolve) => (finishSlow = resolve)));
+      fireEvent.change(screen.getByLabelText('Skill'), { target: { value: 'Logs' } });
+      await waitFor(() => expect(getForSkill).toHaveBeenCalledTimes(2));
+      fireEvent.change(screen.getByLabelText('Skill'), { target: { value: 'Algebra' } });
+      await screen.findByText('c1 Algebra');
+
+      await act(async () => finishSlow({ data: { videos: [video('Slow', 'ai_suggested')] } }));
+
+      expect(titles()).toEqual(['c1 Algebra']);
+    });
+
+    it('shows the selected skill when an added video finishes after it changed', async () => {
+      let finish: (value: unknown) => void = () => {};
+      (skillVideoAPI.add as jest.Mock).mockReturnValue(new Promise((resolve) => (finish = resolve)));
+      await renderWithMatrix();
+
+      fireEvent.change(screen.getByPlaceholderText('YouTube URL'), {
+        target: { value: 'https://youtu.be/abc' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Add Video' }));
+      fireEvent.change(screen.getByLabelText('Skill'), { target: { value: 'Logs' } });
+      await screen.findByText('c1 Logs');
+      await act(async () => finish({ data: {} }));
+
+      await waitFor(() => expect(getForSkill).toHaveBeenCalledTimes(3));
+      await screen.findByText('c1 Logs');
+      expect(getForSkill).toHaveBeenLastCalledWith('c1', 'm1', 'Logs');
+    });
+
+    it.each([
+      ['finding a moment', /Find relevant moment/, skillVideoAPI.findRelevantMoment],
+      ['verifying', /Mark as instructor verified/, skillVideoAPI.verify],
+    ])('keeps vote counts after %s', async (_label, button, action) => {
+      const voted = { ...video('Voted', 'ai_suggested'), upvotes: 4, downvotes: 2 };
+      getForSkill.mockResolvedValue({ data: { videos: [voted] } });
+      (action as jest.Mock).mockResolvedValue({
+        data: { ...video('Voted', 'ai_suggested'), instructor_verified: true, timestamp_seconds: 90 },
+      });
+      renderCurator('c1', '&matrixId=m1&skill=Algebra');
+      await screen.findByText('Voted');
+
+      fireEvent.click(screen.getByRole('button', { name: button }));
+
+      await waitFor(() => expect(action).toHaveBeenCalled());
+      await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      expect(screen.getByText('4 found helpful · 2 did not')).toBeInTheDocument();
+    });
   });
 
   it('skips the reload when there are no new suggestions', async () => {

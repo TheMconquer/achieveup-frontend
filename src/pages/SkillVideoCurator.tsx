@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
@@ -14,8 +14,8 @@ import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
-import { getApiErrorMessage } from '../utils/apiError';
+import { withTimestamp, formatTimestamp, channelEntryFromUrl } from '../utils/youtubeLinks';
+import { getApiErrorMessage, isRetryableApiError } from '../utils/apiError';
 import DialogPanel from '../components/common/DialogPanel';
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -100,6 +100,7 @@ const SkillVideoCurator: React.FC = () => {
   const [matrixId, setMatrixId] = useState<string | undefined>(matrixIdParam);
   const [skillName, setSkillName] = useState<string>(searchParams.get('skill') ?? '');
   const [videos, setVideos] = useState<SkillVideo[]>([]);
+  const [videosReloadKey, setVideosReloadKey] = useState(0);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -112,6 +113,7 @@ const SkillVideoCurator: React.FC = () => {
   // replaces the whole list, so saving before then would wipe it.
   const [channels, setChannels] = useState<CourseChannel[]>([]);
   const [channelsStatus, setChannelsStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [channelsError, setChannelsError] = useState<{ message: string; canRetry: boolean } | null>(null);
   const [channelsReloadKey, setChannelsReloadKey] = useState(0);
   const [newChannel, setNewChannel] = useState('');
   const [savingChannels, setSavingChannels] = useState(false);
@@ -143,8 +145,13 @@ const SkillVideoCurator: React.FC = () => {
         setChannels(res.data.channels);
         setChannelsStatus('loaded');
       })
-      .catch(() => {
-        if (!stale) setChannelsStatus('error');
+      .catch((error: unknown) => {
+        if (stale) return;
+        setChannelsError({
+          message: getApiErrorMessage(error) || "Couldn't load this course's saved channels.",
+          canRetry: isRetryableApiError(error),
+        });
+        setChannelsStatus('error');
       });
     return () => {
       stale = true;
@@ -173,19 +180,30 @@ const SkillVideoCurator: React.FC = () => {
     }
   }, [selectedMatrix, skillName]);
 
-  const loadVideos = useCallback(() => {
-    if (!courseId || !skillName) return;
+  // Anything that changes the list bumps this instead of fetching directly, so
+  // the reload is always for the course and skill selected by the time it runs.
+  useEffect(() => {
+    if (!courseId || !skillName) {
+      setLoadingVideos(false);
+      return;
+    }
+    let stale = false;
     setLoadingVideos(true);
     skillVideoAPI
       .getForSkill(courseId, matrixId, skillName)
-      .then((res) => setVideos(res.data.videos))
-      .catch(() => toast.error('Could not load videos for this skill.'))
-      .finally(() => setLoadingVideos(false));
-  }, [courseId, matrixId, skillName]);
-
-  useEffect(() => {
-    loadVideos();
-  }, [loadVideos]);
+      .then((res) => {
+        if (!stale) setVideos(res.data.videos);
+      })
+      .catch(() => {
+        if (!stale) toast.error('Could not load videos for this skill.');
+      })
+      .finally(() => {
+        if (!stale) setLoadingVideos(false);
+      });
+    return () => {
+      stale = true;
+    };
+  }, [courseId, matrixId, skillName, videosReloadKey]);
 
   const handleAddVideo = async () => {
     if (!newLink.trim()) {
@@ -204,7 +222,7 @@ const SkillVideoCurator: React.FC = () => {
       setNewTitle('');
       setNewLink('');
       toast.success('Video added');
-      loadVideos();
+      setVideosReloadKey((k) => k + 1);
     } catch {
       toast.error('Failed to add video');
     } finally {
@@ -226,7 +244,7 @@ const SkillVideoCurator: React.FC = () => {
     setFindingMomentId(video._id);
     try {
       const res = await skillVideoAPI.findRelevantMoment(video._id);
-      setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
+      setVideos((prev) => prev.map((v) => (v._id === video._id ? { ...v, ...res.data } : v)));
       toast.success(
         res.data.timestamp_seconds != null
           ? `Found it — jumps to ${formatTimestamp(res.data.timestamp_seconds)}`
@@ -243,7 +261,7 @@ const SkillVideoCurator: React.FC = () => {
     setVerifyingId(video._id);
     try {
       const res = await skillVideoAPI.verify(video._id);
-      setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
+      setVideos((prev) => prev.map((v) => (v._id === video._id ? { ...v, ...res.data } : v)));
       toast.success('Marked as instructor verified');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error) || 'Could not verify this video');
@@ -253,7 +271,7 @@ const SkillVideoCurator: React.FC = () => {
   };
 
   const handleAddChannel = async () => {
-    const entry = newChannel.trim();
+    const entry = channelEntryFromUrl(newChannel.trim());
     if (!entry || savingChannels || channelsStatus !== 'loaded') return;
     if (channels.length >= MAX_COURSE_CHANNELS) return;
 
@@ -317,7 +335,7 @@ const SkillVideoCurator: React.FC = () => {
     try {
       const res = await skillVideoAPI.generateAiRecommendations(courseId, matrixId, skillName);
       // Reload rather than append so new picks land in the backend's order.
-      if (res.data.videos.length > 0) loadVideos();
+      if (res.data.videos.length > 0) setVideosReloadKey((k) => k + 1);
       toast.success(
         res.data.videos.length === 0
           ? 'No new suggestions found.'
@@ -428,12 +446,12 @@ const SkillVideoCurator: React.FC = () => {
           </div>
         ) : channelsStatus === 'error' ? (
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-red-600 dark:text-red-400">
-              Couldn't load this course's saved channels.
-            </p>
-            <Button onClick={() => setChannelsReloadKey((k) => k + 1)} size="sm" variant="outline">
-              Try again
-            </Button>
+            <p className="text-sm text-red-600 dark:text-red-400">{channelsError?.message}</p>
+            {channelsError?.canRetry && (
+              <Button onClick={() => setChannelsReloadKey((k) => k + 1)} size="sm" variant="outline">
+                Try again
+              </Button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-3">

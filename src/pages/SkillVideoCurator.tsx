@@ -117,6 +117,17 @@ const SkillVideoCurator: React.FC = () => {
   const [savingChannels, setSavingChannels] = useState(false);
   // Lets a channel request that finishes after the course changed be ignored.
   const channelsCourseRef = useRef(courseId);
+  // Saving disables the controls, which drops keyboard focus, so it's put back
+  // once the save finishes: on the input, or on the limit note that replaces it.
+  const channelInputRef = useRef<HTMLInputElement>(null);
+  const channelLimitNoteRef = useRef<HTMLParagraphElement>(null);
+  const restoreChannelFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (savingChannels || !restoreChannelFocusRef.current) return;
+    restoreChannelFocusRef.current = false;
+    (channelInputRef.current ?? channelLimitNoteRef.current)?.focus();
+  }, [savingChannels]);
 
   useEffect(() => {
     channelsCourseRef.current = courseId;
@@ -275,6 +286,7 @@ const SkillVideoCurator: React.FC = () => {
         toast.error(getApiErrorMessage(error) || 'Could not add that channel. Please try again.');
       }
     } finally {
+      restoreChannelFocusRef.current = channelsCourseRef.current === forCourse;
       setSavingChannels(false);
     }
   };
@@ -294,6 +306,7 @@ const SkillVideoCurator: React.FC = () => {
         toast.error(getApiErrorMessage(error) || 'Could not remove that channel. Please try again.');
       }
     } finally {
+      restoreChannelFocusRef.current = channelsCourseRef.current === forCourse;
       setSavingChannels(false);
     }
   };
@@ -303,7 +316,8 @@ const SkillVideoCurator: React.FC = () => {
     setSuggesting(true);
     try {
       const res = await skillVideoAPI.generateAiRecommendations(courseId, matrixId, skillName);
-      setVideos((prev) => [...prev, ...res.data.videos]);
+      // Reload rather than append so new picks land in the backend's order.
+      if (res.data.videos.length > 0) loadVideos();
       toast.success(
         res.data.videos.length === 0
           ? 'No new suggestions found.'
@@ -449,7 +463,7 @@ const SkillVideoCurator: React.FC = () => {
               </ul>
             )}
             {channels.length >= MAX_COURSE_CHANNELS ? (
-              <p className="text-sm text-gray-600">
+              <p ref={channelLimitNoteRef} tabIndex={-1} className="text-sm text-gray-600 focus:outline-none">
                 You've linked the maximum of {MAX_COURSE_CHANNELS} channels. Remove one to add another.
               </p>
             ) : (
@@ -464,6 +478,7 @@ const SkillVideoCurator: React.FC = () => {
                   <label htmlFor="curator-channel" className="mb-1 block text-sm font-medium text-gray-700">Add a channel</label>
                   <input
                     id="curator-channel"
+                    ref={channelInputRef}
                     type="text"
                     placeholder="e.g. @3Blue1Brown or a channel ID"
                     value={newChannel}

@@ -275,13 +275,9 @@ const SkillVideoCurator: React.FC = () => {
     if (!entry || savingChannels || channelsStatus !== 'loaded') return;
     if (channels.length >= MAX_COURSE_CHANNELS) return;
 
-    // The page only knows each channel's ID and display name, so this catches
-    // the obvious repeats; the backend catches the rest (see below).
-    const key = entry.replace(/^@/, '').toLowerCase();
-    const alreadyLinked = channels.some(
-      (c) => c.channel_id.toLowerCase() === key || c.name.replace(/^@/, '').toLowerCase() === key
-    );
-    if (alreadyLinked) {
+    // Only an ID can be matched here. A handle has to go to the backend: display
+    // names aren't unique, so one matching a saved name may be a different channel.
+    if (channels.some((c) => c.channel_id === entry)) {
       toast.error(DUPLICATE_CHANNEL_MESSAGE);
       return;
     }

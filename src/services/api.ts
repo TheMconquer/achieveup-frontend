@@ -130,8 +130,8 @@ export const skillVideoAPI = {
     api.post('/achieveup/skill-videos/suggest', { course_id: courseId, matrix_id: matrixId, skill_name: skillName, count }),
   vote: (data: SkillVideoVoteRequest): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.post('/achieveup/skill-videos/vote', data),
-  // Instructor-only, opt-in: searches a manually-added video's captions for the moment
-  // most relevant to its skill and stores it as a deep-link timestamp.
+  // Instructor-only, opt-in: searches a video's captions for the moment most relevant
+  // to its skill and stores it as a deep-link timestamp.
   findRelevantMoment: (videoId: string): Promise<AxiosResponse<SkillVideo>> =>
     api.post(`/achieveup/skill-videos/${videoId}/find-moment`),
   // Instructor-only: marks an AI-suggested video as reviewed/approved.

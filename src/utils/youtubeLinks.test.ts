@@ -7,6 +7,8 @@ describe('channelEntryFromUrl', () => {
     ['https://youtube.com/@3Blue1Brown?si=abc', '@3Blue1Brown'],
     ['m.youtube.com/@3Blue1Brown', '@3Blue1Brown'],
     ['https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw', 'UCYO_jab_esuFRV4b17AJtAw'],
+    ['https://www.youtube.com/c/numberphile', '@numberphile'],
+    ['https://www.youtube.com/user/numberphile/videos', '@numberphile'],
   ])('pulls the channel out of %s', (input, expected) => {
     expect(channelEntryFromUrl(input)).toBe(expected);
   });

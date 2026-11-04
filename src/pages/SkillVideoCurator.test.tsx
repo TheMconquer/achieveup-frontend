@@ -194,17 +194,32 @@ describe('SkillVideoCurator preferred channels', () => {
     expect(screen.getByLabelText('Add a channel')).toHaveValue('@typo');
   });
 
-  it('catches a repeat of a saved channel without calling the backend', async () => {
-    getChannels.mockResolvedValue({ data: { channels: [{ channel_id: 'UC3b', name: '3Blue1Brown' }] } });
+  it('catches a repeated channel ID or URL without calling the backend', async () => {
+    const id = 'UCYO_jab_esuFRV4b17AJtAw';
+    getChannels.mockResolvedValue({ data: { channels: [{ channel_id: id, name: '3Blue1Brown' }] } });
     renderCurator();
     await screen.findByText('3Blue1Brown');
 
-    addChannel('@3blue1brown');
-    addChannel('uc3b');
+    addChannel(id);
+    addChannel(`https://www.youtube.com/channel/${id}`);
 
     expect(updateChannels).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledTimes(2);
     expect(toast.error).toHaveBeenCalledWith('That channel is already linked to this course.');
+  });
+
+  it("doesn't reject a handle for sharing a saved channel's display name", async () => {
+    const math = { channel_id: 'UCmath', name: 'Math' };
+    const other = { channel_id: 'UCother', name: 'Math Again' };
+    getChannels.mockResolvedValue({ data: { channels: [math] } });
+    updateChannels.mockResolvedValue({ data: { success: true, channels: [math, other] } });
+    renderCurator();
+    await screen.findByText('Math');
+
+    addChannel('@math');
+
+    expect(await screen.findByText('Math Again')).toBeInTheDocument();
+    expect(updateChannels).toHaveBeenCalledWith('c1', ['UCmath', '@math']);
   });
 
   it('says so when the backend drops the new entry as a duplicate', async () => {

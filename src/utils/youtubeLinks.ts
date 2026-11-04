@@ -18,8 +18,12 @@ export function formatTimestamp(seconds: number): string {
 }
 
 // Instructors often paste a channel page's URL instead of its handle. Pulls the
-// @handle or channel ID out of one; anything else comes back unchanged.
+// @handle or channel ID out of one; anything else comes back unchanged. Old /c/
+// and /user/ URLs have no direct lookup, so their name is tried as a handle.
 export function channelEntryFromUrl(input: string): string {
-  const match = input.match(/youtube\.com\/(?:(@[^/?#]+)|channel\/(UC[\w-]{22}))/i);
-  return match ? match[1] ?? match[2] : input;
+  const match = input.match(
+    /youtube\.com\/(?:(@[^/?#]+)|channel\/(UC[\w-]{22})|(?:c|user)\/([^/?#]+))/i
+  );
+  if (!match) return input;
+  return match[1] ?? match[2] ?? `@${match[3]}`;
 }

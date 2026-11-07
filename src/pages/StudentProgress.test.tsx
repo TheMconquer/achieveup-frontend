@@ -164,6 +164,35 @@ test('a non-404 failure on student data shows the generic retry message', async 
   );
 });
 
+test('Try again after a courses-load failure reloads the courses', async () => {
+  jest.mocked(canvasInstructorAPI.getInstructorCourses)
+    .mockRejectedValueOnce({ isAxiosError: true, code: 'ERR_NETWORK' })
+    .mockResolvedValueOnce({ data: [course('c1', 'Data Structures')] } as any);
+  jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(analyticsWith([student()]));
+  renderPage();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+
+  await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+  expect(screen.queryByText(CANVAS_DOWN)).not.toBeInTheDocument();
+  expect(canvasInstructorAPI.getInstructorCourses).toHaveBeenCalledTimes(2);
+});
+
+test('Try again after a student-data failure reloads that course', async () => {
+  oneCourse();
+  jest.mocked(instructorAPI.getCourseStudentAnalytics)
+    .mockRejectedValueOnce({ isAxiosError: true, response: { status: 500 } })
+    .mockResolvedValueOnce(analyticsWith([student()]));
+  renderPage();
+
+  await screen.findByText('Failed to load student data. Please try again.');
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+  await waitFor(() => expect(screen.getByText('Jordan Miller')).toBeInTheDocument());
+  expect(instructorAPI.getCourseStudentAnalytics).toHaveBeenLastCalledWith('c1');
+  expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+});
+
 test('shows only the top 3 skills per student, sorted by score descending', async () => {
   oneCourse();
   jest.mocked(instructorAPI.getCourseStudentAnalytics).mockResolvedValue(

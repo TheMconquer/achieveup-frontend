@@ -198,6 +198,8 @@ const StudentProgress: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [studentData, setStudentData] = useState<StudentProgressData | null>(null);
   const [error, setError] = useState<string>('');
+  // Which load the error came from, so Try again repeats that one.
+  const [failedLoad, setFailedLoad] = useState<'courses' | 'students' | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<StudentProgressEntry | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [startingSync, setStartingSync] = useState(false);
@@ -218,12 +220,15 @@ const StudentProgress: React.FC = () => {
   const loadCourses = async () => {
     try {
       setLoading(true);
+      setError('');
+      setFailedLoad(null);
       const { canvasInstructorAPI } = await import('../services/api');
       const response = await canvasInstructorAPI.getInstructorCourses();
       // Anything but a list (e.g. an error body) means Canvas didn't answer.
       if (!Array.isArray(response.data)) {
         console.error('Unexpected courses response:', response.data);
         setError(CANVAS_UNAVAILABLE_MESSAGE);
+        setFailedLoad('courses');
         return;
       }
       setCourses(response.data);
@@ -239,6 +244,7 @@ const StudentProgress: React.FC = () => {
           ? CANVAS_UNAVAILABLE_MESSAGE
           : getApiErrorMessage(err) || 'Failed to load courses. Please check your Canvas integration.'
       );
+      setFailedLoad('courses');
     } finally {
       setLoading(false);
     }
@@ -250,6 +256,7 @@ const StudentProgress: React.FC = () => {
     try {
       if (!quiet) setLoading(true);
       setError('');
+      setFailedLoad(null);
 
       const { instructorAPI } = await import('../services/api');
       const response = await instructorAPI.getCourseStudentAnalytics(courseId);
@@ -305,6 +312,7 @@ const StudentProgress: React.FC = () => {
       console.error('Error loading student data:', err);
       const isNotFound = axios.isAxiosError(err) && err.response?.status === 404;
       setError(`Failed to load student data. ${isNotFound ? 'No data found for this course.' : 'Please try again.'}`);
+      setFailedLoad('students');
       setStudentData(null);
     } finally {
       setLoading(false);
@@ -418,8 +426,21 @@ const StudentProgress: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg">
+        <div
+          role="alert"
+          className="mb-8 flex flex-col gap-3 p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg sm:flex-row sm:items-center sm:justify-between"
+        >
           <p className="text-red-700 dark:text-red-300">{error}</p>
+          {failedLoad && (
+            <button
+              type="button"
+              onClick={() => (failedLoad === 'courses' ? loadCourses() : loadStudentData(selectedCourse))}
+              className="inline-flex flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300"
+            >
+              <RefreshCw className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Try again
+            </button>
+          )}
         </div>
       )}
 

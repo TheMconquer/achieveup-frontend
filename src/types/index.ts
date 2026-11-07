@@ -131,7 +131,6 @@ export interface SkillVideo {
   thumbnail: string;
   source: 'manual' | 'ai_suggested';
   status: 'published' | 'candidate';
-  added_by: string;
   instructor_verified?: boolean;
   timestamp_seconds?: number | null;
   created_at: string;
@@ -147,7 +146,6 @@ export interface AddSkillVideoRequest {
   skill_name: string;
   link: string;
   title?: string;
-  source?: 'manual' | 'ai_suggested';
 }
 
 export interface SkillVideoVoteRequest {
@@ -338,4 +336,18 @@ export interface InstructorSkillMatrixRequest {
   quiz_questions: {
     [questionId: string]: string[];
   };
+}
+
+// Latest Canvas sync of a course. 'idle' means it has never synced.
+export interface CourseSyncStatus {
+  course_id: string;
+  status: 'idle' | 'running' | 'done' | 'failed';
+  source?: 'manual' | 'scheduled' | null;
+  started_at?: string | null;
+  // Refreshed by each quiz finishing and by a heartbeat every minute.
+  updated_at?: string | null;
+  finished_at?: string | null;
+  quizzes_done?: number;
+  quizzes_total?: number;
+  error?: string | null;
 }

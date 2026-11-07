@@ -73,6 +73,8 @@
     ]
   },
   "devDependencies": {
+    "@types/jest-axe": "^3.5.9",
+    "jest-axe": "^8.0.0",
     "prettier": "^3.9.5"
   }
 }

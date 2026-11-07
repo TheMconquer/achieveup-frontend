@@ -65,7 +65,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         </div>
 
         {/* Arrow */}
-        <ChevronDown
+        <ChevronDown aria-hidden="true"
           className={`h-4 w-4 text-gray-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
         />
       </button>

@@ -43,6 +43,11 @@ module.exports = {
           900: '#997102',
         },
 
+        // Status colors for the success and danger Button variants. Both
+        // pass 4.5:1 against white text.
+        success: '#15803d', // green-700
+        danger: '#b91c1c', // red-700
+
         // Secondary colors
         secondary: {
           50: '#f9fafb',
@@ -76,8 +81,14 @@ module.exports = {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'bounce-in': 'bounceIn 0.6s ease-out',
+        'gear-cw': 'spin 3s linear infinite',
+        'gear-ccw': 'spinReverse 2s linear infinite',
       },
       keyframes: {
+        spinReverse: {
+          from: { transform: 'rotate(360deg)' },
+          to: { transform: 'rotate(0deg)' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

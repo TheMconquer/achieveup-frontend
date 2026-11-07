@@ -43,15 +43,16 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           aria-expanded={isNavOpen}
           className="flex flex-shrink-0 items-center justify-center rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-au-gold"
         >
-          {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isNavOpen ? <X aria-hidden="true" className="h-6 w-6" /> : <Menu aria-hidden="true" className="h-6 w-6" />}
         </button>
 
         {/* Logo */}
         <Link
           to={displayAsInstructor ? '/' : '/student-dashboard'}
           className="flex flex-shrink-0 items-center"
+          aria-label="AchieveUp home"
         >
-          <BookOpen className="h-7 w-7 text-au-gold" />
+          <BookOpen className="h-7 w-7 text-au-gold" aria-hidden="true" />
         </Link>
 
         {/* Search */}

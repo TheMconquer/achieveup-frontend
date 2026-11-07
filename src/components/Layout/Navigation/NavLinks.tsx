@@ -35,7 +35,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
               : 'flex cursor-not-allowed items-center rounded-lg px-4 py-3 text-base font-medium text-gray-300'
           }
         >
-          <Icon className={isDesktop ? 'h-[18px] w-[18px] flex-shrink-0' : 'mr-3 h-5 w-5'} />
+          <Icon className={isDesktop ? 'h-[18px] w-[18px] flex-shrink-0' : 'mr-3 h-5 w-5'} aria-hidden="true" />
           <span>{item.name}</span>
         </span>
       );
@@ -46,6 +46,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
         key={item.name}
         to={item.href}
         onClick={onNavigate}
+        aria-current={isActive ? 'page' : undefined}
         className={
           isDesktop
             ? `flex h-[42px] items-center gap-4 rounded-lg px-4 text-sm font-medium transition-colors ${
@@ -64,16 +65,17 @@ const NavLinks: React.FC<NavLinksProps> = ({ items, currentPath, variant, onNavi
           className={`${isDesktop ? 'h-[18px] w-[18px] flex-shrink-0' : 'mr-3 h-5 w-5'} ${
             isActive ? ACTIVE_ICON_CLASSES : ''
           }`}
+          aria-hidden="true"
         />
         <span>{item.name}</span>
       </Link>
     );
   });
 
-  return isDesktop ? (
-    <nav aria-label="Main" className="space-y-2">{links}</nav>
-  ) : (
-    <div className="space-y-1">{links}</div>
+  return (
+    <nav aria-label="Main" className={isDesktop ? 'space-y-2' : 'space-y-1'}>
+      {links}
+    </nav>
   );
 };
 

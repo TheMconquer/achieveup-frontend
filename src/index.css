@@ -56,10 +56,10 @@
   }
 
   /* Without an explicit background, Chrome paints its own grey behind
-     <select> in dark mode, which fails contrast with our text colours. */
-  select,
-  textarea,
-  input:not([type='checkbox']):not([type='radio']) {
+     form fields in dark mode, which fails contrast with our text colours.
+     :where() keeps this at zero specificity, so any bg-* class on a field
+     still wins (the :not([type]) checks would otherwise outrank it). */
+  :where(select, textarea, input:not([type='checkbox']):not([type='radio'])) {
     @apply bg-white;
   }
 

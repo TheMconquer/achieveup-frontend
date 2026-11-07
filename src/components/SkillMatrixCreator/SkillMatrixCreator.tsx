@@ -20,6 +20,7 @@ import { SkillMatrix, CanvasCourse, UpdateSkillMatrixRequest } from '../../types
 import { useCourseList } from '../../hooks/useCourseList';
 import { getApiErrorMessage } from '../../utils/apiError';
 import Button from '../common/Button';
+import CoursesLoadError from '../common/CoursesLoadError';
 import Card from '../common/Card';
 import DialogPanel from '../common/DialogPanel';
 import { onActivateKey } from '../../utils/a11y';
@@ -79,13 +80,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
     courses,
     loading: coursesLoading,
     error: coursesError,
+    canvasUnavailable,
+    reload: reloadCourses,
   } = useCourseList<CanvasCourse>(isInstructor);
-
-  useEffect(() => {
-    if (coursesError) {
-      toast.error('Failed to load courses. Please check your Canvas integration.');
-    }
-  }, [coursesError]);
 
   // inline edit state
   const [editingMatrixId, setEditingMatrixId] = useState<string | null>(null);
@@ -505,6 +502,10 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         toast.error('Authentication failed. Please check your instructor token in Settings.');
       } else if (status === 403) {
         toast.error('Access denied. Instructor permissions required.');
+      } else if (status === 429) {
+        toast.error(
+          getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.'
+        );
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         toast.error(
@@ -766,7 +767,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           {step === 'select-course' && (
             <div>
               <h2 ref={stepHeadingRef} tabIndex={-1} className="text-lg font-medium text-gray-900 mb-4 focus:outline-none">Step 1: Select Course</h2>
-              {courses.length === 0 ? (
+              {coursesError ? (
+                <CoursesLoadError canvasUnavailable={canvasUnavailable} onRetry={reloadCourses} />
+              ) : courses.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-gray-500" />

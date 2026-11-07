@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import InstructorDashboard from './InstructorDashboard';
@@ -91,22 +91,63 @@ test('on success, shows real course/student/matrix counts', async () => {
   expect(screen.getByText('Data Structures')).toBeInTheDocument();
 });
 
-test('a courses-load failure (with a Canvas token) shows an error toast and falls back to an empty dashboard', async () => {
+test('a Canvas outage (5xx) shows the Canvas-unavailable banner, not "0 courses" and "Connected"', async () => {
   mockAuth(instructorWithToken);
-  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue(new Error('Canvas down'));
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue(
+    { isAxiosError: true, response: { status: 502, data: { message: 'Canvas error' } } }
+  );
 
   renderDashboard();
 
-  // Wait for the actual rendered outcome (loading -> false) rather than the
-  // toast mock call - the toast fires synchronously earlier in the same
-  // update, so by the time this resolves it's already guaranteed to have
-  // happened; asserting on the mock call first and the UI second raced
-  // against React's render flush under the full suite's timing.
-  await waitFor(() => expect(screen.getByText('Getting Started Tips')).toBeInTheDocument());
-  expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
-    'Could not load courses from Canvas. Please try refreshing.'
+  expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't reach Canvas to load your courses");
+  expect(screen.getByText('Canvas Unavailable')).toBeInTheDocument();
+  expect(screen.queryByText('Canvas Connected')).not.toBeInTheDocument();
+  expect(statValue('Active Courses')).toBe('—');
+});
+
+test('an error body returned with 200 is treated as Canvas being unavailable, not a course list', async () => {
+  mockAuth(instructorWithToken);
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockResolvedValue({
+    data: { error: 'Failed to fetch instructor courses: 503', statusCode: 503 },
+  } as any);
+
+  renderDashboard();
+
+  expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't reach Canvas to load your courses");
+  expect(statValue('Active Courses')).toBe('—');
+});
+
+test('a non-outage courses failure points to the token in Settings', async () => {
+  mockAuth(instructorWithToken);
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValue(
+    { isAxiosError: true, response: { status: 400, data: { message: 'Invalid Canvas token' } } }
   );
-  expect(statValue('Active Courses')).toBe('0');
+
+  renderDashboard();
+
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent('Check your Canvas token in Settings');
+  expect(screen.getByText('Canvas Error')).toBeInTheDocument();
+});
+
+test('"Try again" reloads the courses and clears the banner once Canvas answers', async () => {
+  mockAuth(instructorWithToken);
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockRejectedValueOnce(
+    { isAxiosError: true, response: { status: 502 } }
+  );
+  renderDashboard();
+  await screen.findByRole('alert');
+
+  jest.mocked(canvasInstructorAPI.getInstructorCourses).mockResolvedValue({
+    data: [course('c1', 'Data Structures')],
+  } as any);
+  jest.mocked(instructorAPI.getInstructorDashboard).mockResolvedValue({ data: { students: 3 } } as any);
+  jest.mocked(skillMatrixAPI.getAllByCourse).mockResolvedValue({ data: [] } as any);
+  fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+
+  await waitFor(() => expect(screen.getByText('Data Structures')).toBeInTheDocument());
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(statValue('Active Courses')).toBe('1');
 });
 
 test('a courses-load failure without a Canvas token is silent (expected, not an error)', async () => {
@@ -117,6 +158,7 @@ test('a courses-load failure without a Canvas token is silent (expected, not an 
 
   await waitFor(() => expect(screen.getByText('Getting Started Tips')).toBeInTheDocument());
   expect(toast.error).not.toHaveBeenCalled();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 
 test('courses succeed but the dashboard-stats call fails independently: courses still show, student/progress stats fall back to zero, with a toast (has token)', async () => {

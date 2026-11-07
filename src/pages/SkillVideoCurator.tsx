@@ -1,15 +1,21 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Trash2, Sparkles, Clock, CheckCircle, BookOpen, Info, X } from 'lucide-react';
-import { skillMatrixAPI, skillVideoAPI } from '../services/api';
+import {
+  skillMatrixAPI,
+  skillVideoAPI,
+  courseChannelsAPI,
+  CourseChannel,
+  MAX_COURSE_CHANNELS,
+} from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourseList } from '../hooks/useCourseList';
 import { SkillMatrix, SkillVideo, CanvasCourse } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { withTimestamp, formatTimestamp } from '../utils/youtubeLinks';
-import { getApiErrorMessage } from '../utils/apiError';
+import { withTimestamp, formatTimestamp, channelEntryFromUrl } from '../utils/youtubeLinks';
+import { getApiErrorMessage, isRetryableApiError } from '../utils/apiError';
 import DialogPanel from '../components/common/DialogPanel';
 
 const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -50,8 +56,8 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             .
           </li>
           <li>
-            For a video you added yourself, click the clock icon to automatically find the
-            most relevant moment in it, so the link students see jumps straight to that point.
+            Click a video's clock icon to automatically find the most relevant moment in it, so
+            the link students see jumps straight to that point.
           </li>
           <li>Students can upvote or downvote each video to tell you whether it actually helped.</li>
         </ul>
@@ -66,6 +72,8 @@ const SkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     </DialogPanel>
   </div>
 );
+
+const DUPLICATE_CHANNEL_MESSAGE = 'That channel is already linked to this course.';
 
 const SkillVideoCurator: React.FC = () => {
   const { isInstructor } = useAuth();
@@ -92,6 +100,7 @@ const SkillVideoCurator: React.FC = () => {
   const [matrixId, setMatrixId] = useState<string | undefined>(matrixIdParam);
   const [skillName, setSkillName] = useState<string>(searchParams.get('skill') ?? '');
   const [videos, setVideos] = useState<SkillVideo[]>([]);
+  const [videosReloadKey, setVideosReloadKey] = useState(0);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -100,6 +109,54 @@ const SkillVideoCurator: React.FC = () => {
   const [findingMomentId, setFindingMomentId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  // The add box stays locked until the saved channels have loaded. Saving
+  // replaces the whole list, so saving before then would wipe it.
+  const [channels, setChannels] = useState<CourseChannel[]>([]);
+  const [channelsStatus, setChannelsStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [channelsError, setChannelsError] = useState<{ message: string; canRetry: boolean } | null>(null);
+  const [channelsReloadKey, setChannelsReloadKey] = useState(0);
+  const [newChannel, setNewChannel] = useState('');
+  const [savingChannels, setSavingChannels] = useState(false);
+  // Lets a channel request that finishes after the course changed be ignored.
+  const channelsCourseRef = useRef(courseId);
+  // Saving disables the controls, which drops keyboard focus, so it's put back
+  // once the save finishes: on the input, or on the limit note that replaces it.
+  const channelInputRef = useRef<HTMLInputElement>(null);
+  const channelLimitNoteRef = useRef<HTMLParagraphElement>(null);
+  const restoreChannelFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (savingChannels || !restoreChannelFocusRef.current) return;
+    restoreChannelFocusRef.current = false;
+    (channelInputRef.current ?? channelLimitNoteRef.current)?.focus();
+  }, [savingChannels]);
+
+  useEffect(() => {
+    channelsCourseRef.current = courseId;
+    setChannels([]);
+    setNewChannel('');
+    setChannelsStatus('loading');
+    if (!courseId) return;
+    let stale = false;
+    courseChannelsAPI
+      .get(courseId)
+      .then((res) => {
+        if (stale) return;
+        setChannels(res.data.channels);
+        setChannelsStatus('loaded');
+      })
+      .catch((error: unknown) => {
+        if (stale) return;
+        setChannelsError({
+          message: getApiErrorMessage(error) || "Couldn't load this course's saved channels.",
+          canRetry: isRetryableApiError(error),
+        });
+        setChannelsStatus('error');
+      });
+    return () => {
+      stale = true;
+    };
+  }, [courseId, channelsReloadKey]);
 
   useEffect(() => {
     if (!courseId) return;
@@ -123,19 +180,30 @@ const SkillVideoCurator: React.FC = () => {
     }
   }, [selectedMatrix, skillName]);
 
-  const loadVideos = useCallback(() => {
-    if (!courseId || !skillName) return;
+  // Anything that changes the list bumps this instead of fetching directly, so
+  // the reload is always for the course and skill selected by the time it runs.
+  useEffect(() => {
+    if (!courseId || !skillName) {
+      setLoadingVideos(false);
+      return;
+    }
+    let stale = false;
     setLoadingVideos(true);
     skillVideoAPI
       .getForSkill(courseId, matrixId, skillName)
-      .then((res) => setVideos(res.data.videos))
-      .catch(() => toast.error('Could not load videos for this skill.'))
-      .finally(() => setLoadingVideos(false));
-  }, [courseId, matrixId, skillName]);
-
-  useEffect(() => {
-    loadVideos();
-  }, [loadVideos]);
+      .then((res) => {
+        if (!stale) setVideos(res.data.videos);
+      })
+      .catch(() => {
+        if (!stale) toast.error('Could not load videos for this skill.');
+      })
+      .finally(() => {
+        if (!stale) setLoadingVideos(false);
+      });
+    return () => {
+      stale = true;
+    };
+  }, [courseId, matrixId, skillName, videosReloadKey]);
 
   const handleAddVideo = async () => {
     if (!newLink.trim()) {
@@ -154,7 +222,7 @@ const SkillVideoCurator: React.FC = () => {
       setNewTitle('');
       setNewLink('');
       toast.success('Video added');
-      loadVideos();
+      setVideosReloadKey((k) => k + 1);
     } catch {
       toast.error('Failed to add video');
     } finally {
@@ -176,7 +244,7 @@ const SkillVideoCurator: React.FC = () => {
     setFindingMomentId(video._id);
     try {
       const res = await skillVideoAPI.findRelevantMoment(video._id);
-      setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
+      setVideos((prev) => prev.map((v) => (v._id === video._id ? { ...v, ...res.data } : v)));
       toast.success(
         res.data.timestamp_seconds != null
           ? `Found it — jumps to ${formatTimestamp(res.data.timestamp_seconds)}`
@@ -193,7 +261,7 @@ const SkillVideoCurator: React.FC = () => {
     setVerifyingId(video._id);
     try {
       const res = await skillVideoAPI.verify(video._id);
-      setVideos((prev) => prev.map((v) => (v._id === video._id ? res.data : v)));
+      setVideos((prev) => prev.map((v) => (v._id === video._id ? { ...v, ...res.data } : v)));
       toast.success('Marked as instructor verified');
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error) || 'Could not verify this video');
@@ -202,12 +270,68 @@ const SkillVideoCurator: React.FC = () => {
     }
   };
 
+  const handleAddChannel = async () => {
+    const entry = channelEntryFromUrl(newChannel.trim());
+    if (!entry || savingChannels || channelsStatus !== 'loaded') return;
+    if (channels.length >= MAX_COURSE_CHANNELS) return;
+
+    // Only an ID can be matched here. A handle has to go to the backend: display
+    // names aren't unique, so one matching a saved name may be a different channel.
+    if (channels.some((c) => c.channel_id === entry)) {
+      toast.error(DUPLICATE_CHANNEL_MESSAGE);
+      return;
+    }
+
+    const forCourse = courseId;
+    setSavingChannels(true);
+    try {
+      const res = await courseChannelsAPI.update(forCourse, [...channels.map((c) => c.channel_id), entry]);
+      if (channelsCourseRef.current !== forCourse) return;
+      // The backend drops an entry that resolves to a channel already saved.
+      if (res.data.channels.length === channels.length) {
+        toast.error(DUPLICATE_CHANNEL_MESSAGE);
+      } else {
+        toast.success('Channel added');
+        setNewChannel('');
+      }
+      setChannels(res.data.channels);
+    } catch (error: unknown) {
+      if (channelsCourseRef.current === forCourse) {
+        toast.error(getApiErrorMessage(error) || 'Could not add that channel. Please try again.');
+      }
+    } finally {
+      restoreChannelFocusRef.current = channelsCourseRef.current === forCourse;
+      setSavingChannels(false);
+    }
+  };
+
+  const handleRemoveChannel = async (channel: CourseChannel) => {
+    if (savingChannels) return;
+    const forCourse = courseId;
+    setSavingChannels(true);
+    try {
+      const remaining = channels.filter((c) => c.channel_id !== channel.channel_id);
+      const res = await courseChannelsAPI.update(forCourse, remaining.map((c) => c.channel_id));
+      if (channelsCourseRef.current !== forCourse) return;
+      setChannels(res.data.channels);
+      toast.success(`Removed ${channel.name}`);
+    } catch (error: unknown) {
+      if (channelsCourseRef.current === forCourse) {
+        toast.error(getApiErrorMessage(error) || 'Could not remove that channel. Please try again.');
+      }
+    } finally {
+      restoreChannelFocusRef.current = channelsCourseRef.current === forCourse;
+      setSavingChannels(false);
+    }
+  };
+
   const handleGetSuggestions = async () => {
     if (!skillName) return;
     setSuggesting(true);
     try {
       const res = await skillVideoAPI.generateAiRecommendations(courseId, matrixId, skillName);
-      setVideos((prev) => [...prev, ...res.data.videos]);
+      // Reload rather than append so new picks land in the backend's order.
+      if (res.data.videos.length > 0) setVideosReloadKey((k) => k + 1);
       toast.success(
         res.data.videos.length === 0
           ? 'No new suggestions found.'
@@ -307,6 +431,84 @@ const SkillVideoCurator: React.FC = () => {
       </div>
 
       {showInfoModal && <SkillVideoInfoModal onClose={() => setShowInfoModal(false)} />}
+
+      <Card
+        title="Preferred YouTube Channels"
+        subtitle={`AI suggestions for every skill in this course search these channels first. You can link up to ${MAX_COURSE_CHANNELS}.`}
+      >
+        {channelsStatus === 'loading' ? (
+          <div className="flex justify-center py-4">
+            <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+          </div>
+        ) : channelsStatus === 'error' ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-red-600 dark:text-red-400">{channelsError?.message}</p>
+            {channelsError?.canRetry && (
+              <Button onClick={() => setChannelsReloadKey((k) => k + 1)} size="sm" variant="outline">
+                Try again
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {channels.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No channels linked yet, so AI searches all of YouTube.
+              </p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {channels.map((channel) => (
+                  <li
+                    key={channel.channel_id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/40 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300"
+                  >
+                    {channel.name}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveChannel(channel)}
+                      disabled={savingChannels}
+                      aria-label={`Remove ${channel.name}`}
+                      className="rounded-full hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {channels.length >= MAX_COURSE_CHANNELS ? (
+              <p ref={channelLimitNoteRef} tabIndex={-1} className="text-sm text-gray-600 focus:outline-none">
+                You've linked the maximum of {MAX_COURSE_CHANNELS} channels. Remove one to add another.
+              </p>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddChannel();
+                }}
+                className="flex flex-col gap-2 sm:flex-row sm:items-end"
+              >
+                <div className="flex-1">
+                  <label htmlFor="curator-channel" className="mb-1 block text-sm font-medium text-gray-700">Add a channel</label>
+                  <input
+                    id="curator-channel"
+                    ref={channelInputRef}
+                    type="text"
+                    placeholder="e.g. @3Blue1Brown or a channel ID"
+                    value={newChannel}
+                    onChange={(e) => setNewChannel(e.target.value)}
+                    disabled={savingChannels}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold disabled:bg-gray-100"
+                  />
+                </div>
+                <Button type="submit" loading={savingChannels} disabled={!newChannel.trim()} size="sm" variant="outline">
+                  Add Channel
+                </Button>
+              </form>
+            )}
+          </div>
+        )}
+      </Card>
 
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -422,22 +624,20 @@ const SkillVideoCurator: React.FC = () => {
                     )}
                   </button>
                 )}
-                {video.source === 'manual' && (
-                  <button
-                    type="button"
-                    onClick={() => handleFindMoment(video)}
-                    disabled={findingMomentId === video._id}
-                    title="Find relevant moment in this video"
-                    aria-label={`Find relevant moment: ${video.title}`}
-                    className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
-                  >
-                    {findingMomentId === video._id ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
-                    ) : (
-                      <Clock className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleFindMoment(video)}
+                  disabled={findingMomentId === video._id}
+                  title="Find relevant moment in this video"
+                  aria-label={`Find relevant moment: ${video.title}`}
+                  className="flex-shrink-0 rounded p-1 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
+                >
+                  {findingMomentId === video._id ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={() => handleRemove(video._id)}

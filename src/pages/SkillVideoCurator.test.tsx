@@ -289,7 +289,14 @@ describe('SkillVideoCurator preferred channels', () => {
 });
 
 describe('SkillVideoCurator AI suggestions', () => {
-  const video = (id: string, source: string) => ({ _id: id, title: id, link: '', channel: '', source });
+  // A real YouTube link, since titles only render as links for YouTube URLs.
+  const video = (id: string, source: string) => ({
+    _id: id,
+    title: id,
+    link: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    channel: '',
+    source,
+  });
 
   beforeEach(() => {
     getChannels.mockResolvedValue({ data: { channels: [] } });

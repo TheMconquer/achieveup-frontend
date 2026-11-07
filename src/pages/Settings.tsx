@@ -331,7 +331,7 @@ const Settings: React.FC = () => {
             <p className="text-xs font-medium text-gray-700 mb-1">Current Status:</p>
             {user?.hasCanvasToken ? (
               <p className="text-xs text-green-700 dark:text-green-400">
-                ✅ {user.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} token is set and ready to use
+                ✅ {viewLabel} token is set and ready to use
               </p>
             ) : (
               <p className="text-xs text-orange-700 dark:text-orange-400">
@@ -561,7 +561,7 @@ const Settings: React.FC = () => {
                   <div>
                     <span className="text-gray-500">••••••••••••••••••••••••••••••••</span>
                     <p className="text-xs text-gray-500 mt-1">
-                      {profile.canvasTokenType === 'instructor' ? 'Instructor Token' : 'Student Token'} - stored securely
+                      {viewLabel} Token - stored securely
                     </p>
                   </div>
                 </div>

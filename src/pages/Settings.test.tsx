@@ -469,6 +469,27 @@ describe('role-specific content', () => {
     );
   });
 
+  test('a dual-role instructor in student view sees their saved token labelled for the student view', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'student');
+    renderSettings();
+
+    expect(screen.getByText('Student Token - stored securely')).toBeInTheDocument();
+    expect(screen.getByText(/Student token is set and ready to use/)).toBeInTheDocument();
+    expect(screen.queryByText(/Instructor Token/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+  });
+
+  test('the same account in instructor view sees an instructor token', () => {
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'instructor');
+    renderSettings();
+
+    expect(screen.getByText('Instructor Token - stored securely')).toBeInTheDocument();
+    expect(screen.getByText(/Instructor token is set and ready to use/)).toBeInTheDocument();
+  });
+
   test('an instructor sees the instructor token copy and benefits', () => {
     mockAuth(withoutToken);
     renderSettings();

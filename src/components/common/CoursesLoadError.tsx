@@ -37,7 +37,7 @@ const CoursesLoadError: React.FC<CoursesLoadErrorProps> = ({ canvasUnavailable, 
     <button
       type="button"
       onClick={onRetry}
-      className="inline-flex flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300"
+      className="inline-flex flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/40"
     >
       <RefreshCw className="mr-1.5 h-4 w-4" aria-hidden="true" />
       Try again

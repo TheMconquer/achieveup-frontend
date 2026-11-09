@@ -393,7 +393,8 @@ describe('SkillVideoCurator AI suggestions', () => {
       (skillVideoAPI.add as jest.Mock).mockReturnValue(new Promise((resolve) => (finish = resolve)));
       await renderWithMatrix();
 
-      fireEvent.change(screen.getByPlaceholderText('YouTube URL'), {
+      // Found by label, not hint text, so it still works when the hint changes.
+      fireEvent.change(screen.getByLabelText('YouTube URL'), {
         target: { value: 'https://youtu.be/abc' },
       });
       fireEvent.click(screen.getByRole('button', { name: 'Add Video' }));

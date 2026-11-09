@@ -656,6 +656,7 @@ const SkillVideoCurator: React.FC = () => {
           <input
             type="text"
             placeholder="Video title (optional)"
+            aria-label="Video title (optional)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -663,6 +664,7 @@ const SkillVideoCurator: React.FC = () => {
           <input
             type="text"
             placeholder="YouTube URL"
+            aria-label="YouTube URL"
             value={newLink}
             onChange={(e) => setNewLink(e.target.value)}
             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"

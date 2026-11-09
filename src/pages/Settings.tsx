@@ -83,7 +83,7 @@ const Settings: React.FC = () => {
   // Settings is shared by both portals, so show what belongs to the view the
   // user is in: a dual-role account in student view sees the student settings,
   // and a plain student never sees instructor-only content.
-  const { displayAsInstructor, viewingAsStudent } = useViewMode();
+  const { canSwitchToStudentView, displayAsInstructor, viewingAsStudent } = useViewMode();
   const showStudentSettings = user?.role === 'student' || viewingAsStudent;
   const viewLabel = displayAsInstructor ? 'Instructor' : 'Student';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -153,10 +153,9 @@ const Settings: React.FC = () => {
         canvasTokenType: tokenType 
       });
       if (response.data.valid) {
-        toast.success(`Canvas API ${tokenType} token is valid!`);
         return true;
       } else {
-        toast.error(response.data.message || `Invalid Canvas API ${tokenType} token`);
+        toast.error(response.data.message || `Invalid Canvas API ${viewLabel.toLowerCase()} token`);
         return false;
       }
     } catch (error: unknown) {
@@ -215,7 +214,12 @@ const Settings: React.FC = () => {
         canvasTokenType: profile.canvasTokenType
       });
       await refreshUser();
-      toast.success(`Canvas API ${profile.canvasTokenType} token updated successfully!`);
+      // A dual-role account has one token for both views, so say it covers the other one too.
+      toast.success(
+        canSwitchToStudentView
+          ? `${viewLabel} token updated! You also have ${viewingAsStudent ? 'instructor' : 'student'} access with this token.`
+          : `Canvas API ${viewLabel.toLowerCase()} token updated successfully!`
+      );
       setIsEditingToken(false);
       setProfile(prev => ({ ...prev, canvasApiToken: '' }));
     } catch (error: unknown) {

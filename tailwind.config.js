@@ -43,6 +43,11 @@ module.exports = {
           900: '#997102',
         },
 
+        // Status colors for the success and danger Button variants. Both
+        // pass 4.5:1 against white text.
+        success: '#15803d', // green-700
+        danger: '#b91c1c', // red-700
+
         // Secondary colors
         secondary: {
           50: '#f9fafb',

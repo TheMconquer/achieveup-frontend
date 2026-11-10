@@ -25,7 +25,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
       <div className="flex h-[72px] items-center border-b border-gray-200 px-7">
         <Link to={displayAsInstructor ? '/' : '/student-dashboard'} className="flex items-center gap-3">
-          <BookOpen className="h-9 w-9 text-au-gold" />
+          <BookOpen aria-hidden="true" className="h-9 w-9 text-au-gold" />
 
           <span className="text-[23px] font-bold tracking-tight text-gray-900">AchieveUp</span>
         </Link>
@@ -42,7 +42,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               onClick={onHelpClick}
               className="flex h-[42px] w-full items-center gap-4 rounded-lg px-4 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
-              <HelpCircle className="h-[18px] w-[18px]" />
+              <HelpCircle aria-hidden="true" className="h-[18px] w-[18px]" />
               <span>How It Works</span>
             </button>
           )}
@@ -53,7 +53,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             onClick={onLogout}
             className="mt-2 flex h-[42px] w-full items-center gap-4 rounded-lg px-4 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
-            <LogOut className="h-[18px] w-[18px]" />
+            <LogOut aria-hidden="true" className="h-[18px] w-[18px]" />
 
             <span>Logout</span>
           </button>

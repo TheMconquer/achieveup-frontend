@@ -47,7 +47,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
           onClick={onItemClick}
           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900"
         >
-          <ArrowLeftRight className="h-4 w-4" />
+          <ArrowLeftRight aria-hidden="true" className="h-4 w-4" />
           {viewingAsStudent ? 'Back to Instructor' : 'View as Student'}
         </Link>
       )}
@@ -58,7 +58,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
         onClick={onItemClick}
         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       >
-        <Settings className="h-4 w-4" />
+        <Settings aria-hidden="true" className="h-4 w-4" />
         Settings
       </Link>
 
@@ -71,7 +71,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
           }}
           className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900"
         >
-          <HelpCircle className="h-4 w-4" />
+          <HelpCircle aria-hidden="true" className="h-4 w-4" />
           How It Works
         </button>
       )}
@@ -87,7 +87,7 @@ const AccountMenu: React.FC<AccountMenuProps> = ({
         }}
         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       >
-        <LogOut className="h-4 w-4" />
+        <LogOut aria-hidden="true" className="h-4 w-4" />
         Logout
       </button>
 

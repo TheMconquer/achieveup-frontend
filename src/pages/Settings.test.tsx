@@ -469,6 +469,64 @@ describe('role-specific content', () => {
     );
   });
 
+  test('a dual-role instructor in student view sees their saved token labelled for the student view', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'student');
+    renderSettings();
+
+    expect(screen.getByText('Student Token - stored securely')).toBeInTheDocument();
+    expect(screen.getByText(/Student token is set and ready to use/)).toBeInTheDocument();
+    expect(screen.queryByText(/Instructor Token/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Badge Sharing')).toBeInTheDocument());
+  });
+
+  test('the same account in instructor view sees an instructor token', () => {
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'instructor');
+    renderSettings();
+
+    expect(screen.getByText('Instructor Token - stored securely')).toBeInTheDocument();
+    expect(screen.getByText(/Instructor token is set and ready to use/)).toBeInTheDocument();
+  });
+
+  // Saves a new token from the Edit form and returns the success toast's text.
+  const saveNewToken = async () => {
+    jest.mocked(authAPI.validateCanvasToken).mockResolvedValue({ data: { valid: true } } as any);
+    jest.mocked(authAPI.updateProfile).mockResolvedValue({ data: {} } as any);
+    fireEvent.click(screen.getByRole('button', { name: /edit canvas api token/i }));
+    fireEvent.change(screen.getByPlaceholderText('Paste your Canvas API token'), { target: { value: 'new-token' } });
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    return jest.mocked(toast.success).mock.calls[0][0];
+  };
+
+  test('a dual-role instructor saving a token in student view is told it also gives instructor access', async () => {
+    jest.mocked(badgeAPI.getBadgeShareStatus).mockResolvedValue({ data: { shared: false, share_link: null, opted_out: false } } as any);
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'student');
+    renderSettings();
+
+    expect(await saveNewToken()).toBe('Student token updated! You also have instructor access with this token.');
+    // Still checked as an instructor token, so it can't drop the account's teaching access.
+    expect(authAPI.validateCanvasToken).toHaveBeenCalledWith({ canvasApiToken: 'new-token', canvasTokenType: 'instructor' });
+  });
+
+  test('the same account in instructor view is told it also gives student access', async () => {
+    mockAuth(dualRoleInstructor);
+    sessionStorage.setItem(`achieveup:view-mode:${dualRoleInstructor.id}`, 'instructor');
+    renderSettings();
+
+    expect(await saveNewToken()).toBe('Instructor token updated! You also have student access with this token.');
+  });
+
+  test('an instructor without student access just hears the instructor token was updated', async () => {
+    mockAuth(withToken);
+    renderSettings();
+
+    expect(await saveNewToken()).toBe('Canvas API instructor token updated successfully!');
+  });
+
   test('an instructor sees the instructor token copy and benefits', () => {
     mockAuth(withoutToken);
     renderSettings();

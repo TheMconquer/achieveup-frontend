@@ -645,8 +645,9 @@ const SkillAssignmentInterface: React.FC = () => {
   if (coursesLoading && courses.length === 0) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+        <div className="flex justify-center items-center h-64" role="status">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       </div>
     );
@@ -666,6 +667,8 @@ const SkillAssignmentInterface: React.FC = () => {
               <label htmlFor="skill-assignment-course" className="block text-sm font-medium text-gray-700 mb-2">Course</label>
               <select
                 id="skill-assignment-course"
+                aria-invalid={errors.courseId ? 'true' : 'false'}
+                aria-describedby={errors.courseId ? 'courseId-error' : undefined}
                 {...register('courseId', { required: 'Please select a course' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
               >
@@ -678,7 +681,7 @@ const SkillAssignmentInterface: React.FC = () => {
                   ))}
               </select>
               {errors.courseId && (
-                <p className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.courseId.message}</p>
+                <p id="courseId-error" className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.courseId.message}</p>
               )}
             </div>
 
@@ -719,6 +722,8 @@ const SkillAssignmentInterface: React.FC = () => {
               <label htmlFor="skill-assignment-quiz" className="block text-sm font-medium text-gray-700 mb-2">Quiz</label>
               <select
                 id="skill-assignment-quiz"
+                aria-invalid={errors.quizId ? 'true' : 'false'}
+                aria-describedby={errors.quizId ? 'quizId-error' : undefined}
                 {...register('quizId', { required: 'Please select a quiz' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                 disabled={
@@ -740,7 +745,7 @@ const SkillAssignmentInterface: React.FC = () => {
                   ))}
               </select>
               {errors.quizId && (
-                <p className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.quizId.message}</p>
+                <p id="quizId-error" className="mt-1 text-sm text-red-700 dark:text-red-400">{errors.quizId.message}</p>
               )}
             </div>
           </div>
@@ -749,7 +754,7 @@ const SkillAssignmentInterface: React.FC = () => {
           {!selectedCourse && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-gray-500" />
+                <BookOpen aria-hidden="true" className="w-8 h-8 text-gray-500" />
               </div>
               <h2 className="text-lg font-medium text-gray-900 mb-2">
                 Select a Course to Get Started
@@ -764,7 +769,7 @@ const SkillAssignmentInterface: React.FC = () => {
           {selectedCourse && !selectedQuiz && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-gray-500" />
+                <Target aria-hidden="true" className="w-8 h-8 text-gray-500" />
               </div>
               <h2 className="text-lg font-medium text-gray-900 mb-2">Select a Quiz</h2>
               <p className="text-gray-600">
@@ -843,7 +848,7 @@ const SkillAssignmentInterface: React.FC = () => {
                 <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 dark:text-blue-400 font-bold">{stats.totalQuestions}</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-bold">{stats.totalQuestions}</span>
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Total Questions</p>
@@ -894,7 +899,7 @@ const SkillAssignmentInterface: React.FC = () => {
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <Brain className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
+                      <Brain aria-hidden="true" className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
                       <div>
                         <h2 className="text-lg font-medium text-gray-900">AI-Powered Analysis</h2>
                         <p className="text-sm text-gray-600">
@@ -910,7 +915,7 @@ const SkillAssignmentInterface: React.FC = () => {
                         disabled={questions.length === 0}
                         className="flex items-center"
                       >
-                        <Zap className="w-4 h-4 mr-2" />
+                        <Zap aria-hidden="true" className="w-4 h-4 mr-2" />
                         Analyze Questions
                       </Button>
                       <Button
@@ -920,7 +925,7 @@ const SkillAssignmentInterface: React.FC = () => {
                         disabled={Object.values(suggestions).every((arr) => arr.length === 0)}
                         className="flex items-center"
                       >
-                        <Target className="w-4 h-4 mr-2" />
+                        <Target aria-hidden="true" className="w-4 h-4 mr-2" />
                         Bulk Assign
                       </Button>
                     </div>
@@ -1032,13 +1037,13 @@ const SkillAssignmentInterface: React.FC = () => {
                                   Question {questionNumber}
                                 </h2>
                                 {analysisStatus === 'analyzing' && (
-                                  <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400 ml-2 animate-spin" />
+                                  <Clock aria-hidden="true" className="w-4 h-4 text-blue-500 dark:text-blue-400 ml-2 animate-spin" />
                                 )}
                                 {analysisStatus === 'completed' && (
-                                  <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400 ml-2" />
+                                  <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-500 dark:text-green-400 ml-2" />
                                 )}
                                 {analysisStatus === 'error' && (
-                                  <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 ml-2" />
+                                  <AlertCircle aria-hidden="true" className="w-4 h-4 text-red-500 dark:text-red-400 ml-2" />
                                 )}
                                 {isReviewed && (
                                   <div className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 text-xs rounded-full">
@@ -1094,10 +1099,10 @@ const SkillAssignmentInterface: React.FC = () => {
                                       }`}
                                       disabled={assignedSkills.includes(skill)}
                                     >
-                                      <Lightbulb className="w-3 h-3 inline mr-1" />
+                                      <Lightbulb aria-hidden="true" className="w-3 h-3 inline mr-1" />
                                       {skill}
                                       {assignedSkills.includes(skill) && (
-                                        <CheckCircle className="w-3 h-3 inline ml-1" />
+                                        <CheckCircle aria-hidden="true" className="w-3 h-3 inline ml-1" />
                                       )}
                                     </button>
                                   ))}
@@ -1113,7 +1118,7 @@ const SkillAssignmentInterface: React.FC = () => {
                               </h3>
                               <div className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                                 <div className="flex items-center">
-                                  <AlertCircle className="w-4 h-4 text-yellow-700 dark:text-yellow-400 mr-2" />
+                                  <AlertCircle aria-hidden="true" className="w-4 h-4 text-yellow-700 dark:text-yellow-400 mr-2" />
                                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
                                     <strong>No matching skill found.</strong> The AI analyzed this
                                     question but didn't find any skill in your matrix that fits it.
@@ -1134,7 +1139,7 @@ const SkillAssignmentInterface: React.FC = () => {
                               </h3>
                               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                 <div className="flex items-center">
-                                  <AlertCircle className="w-4 h-4 text-red-700 dark:text-red-400 mr-2" />
+                                  <AlertCircle aria-hidden="true" className="w-4 h-4 text-red-700 dark:text-red-400 mr-2" />
                                   <p className="text-sm text-red-800">
                                     <strong>AI analysis failed.</strong> The request to analyze this
                                     question didn't complete, so no suggestions were generated.
@@ -1241,7 +1246,7 @@ const SkillAssignmentInterface: React.FC = () => {
           {selectedCourse && selectedQuiz && questions.length === 0 && !loading && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-gray-500" />
+                <AlertCircle aria-hidden="true" className="w-8 h-8 text-gray-500" />
               </div>
               <h2 className="text-lg font-medium text-gray-900 mb-2">No Questions Found</h2>
               <p className="text-gray-600">
@@ -1264,7 +1269,7 @@ const SkillAssignmentInterface: React.FC = () => {
                   disabled={stats.assignedQuestions === 0}
                   className="flex items-center"
                 >
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save aria-hidden="true" className="w-4 h-4 mr-2" />
                   Save Skill Assignments
                 </Button>
               </div>

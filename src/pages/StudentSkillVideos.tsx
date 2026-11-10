@@ -15,7 +15,7 @@ const StudentSkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 id="about-videos-title" className="text-lg font-semibold text-gray-900">About These Videos</h2>
         <button onClick={onClose} aria-label="Close" className="text-gray-500 hover:text-gray-600">
-          <X className="h-5 w-5" />
+          <X aria-hidden="true" className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-4 p-6 text-sm text-gray-700">
@@ -45,14 +45,14 @@ const StudentSkillVideoInfoModal: React.FC<{ onClose: () => void }> = ({ onClose
         <div>
           <p className="mb-2 font-medium text-gray-900">What upvote / downvote means</p>
           <p className="flex items-start gap-2">
-            <ThumbsUp className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
+            <ThumbsUp aria-hidden="true" className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
             <span>
               Click if the video actually helped you understand the skill — it tells your
               instructor this video is working.
             </span>
           </p>
           <p className="mt-2 flex items-start gap-2">
-            <ThumbsDown className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
+            <ThumbsDown aria-hidden="true" className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
             <span>Click if it didn't help — this flags it so your instructor can swap it out.</span>
           </p>
         </div>
@@ -88,8 +88,9 @@ const StudentSkillVideos: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" />
+      <div className="flex h-64 items-center justify-center" role="status">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -105,7 +106,7 @@ const StudentSkillVideos: React.FC = () => {
             aria-label="What the video tags and votes mean"
             className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
           >
-            <Info className="h-5 w-5" />
+            <Info aria-hidden="true" className="h-5 w-5" />
           </button>
         </div>
         <p className="mt-1.5 text-sm text-gray-600">
@@ -117,7 +118,7 @@ const StudentSkillVideos: React.FC = () => {
 
       {loadError && (
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <AlertTriangle aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
           Some of your data couldn't be loaded from Canvas. Try refreshing the page.
         </div>
       )}
@@ -156,7 +157,7 @@ const StudentSkillVideos: React.FC = () => {
                     <div
                       className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${tierBgClass[tier]} ${tierTextClass[tier]}`}
                     >
-                      <PlayCircle className="h-4 w-4" />
+                      <PlayCircle aria-hidden="true" className="h-4 w-4" />
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="text-sm font-semibold text-gray-900">{skill.name}</span>
@@ -186,7 +187,7 @@ const StudentSkillVideos: React.FC = () => {
               disabled={page === 1}
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
               Previous
             </button>
 
@@ -201,7 +202,7 @@ const StudentSkillVideos: React.FC = () => {
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         )}

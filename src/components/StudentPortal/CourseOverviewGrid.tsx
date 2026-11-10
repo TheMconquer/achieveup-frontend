@@ -36,8 +36,8 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
             className="flex flex-col gap-3 rounded-2xl border border-gray-200 p-4 transition-colors hover:border-au-gold"
           >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light text-amber-700 dark:text-au-gold">
-                <BookOpen className="h-3.5 w-3.5" />
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-au-gold-light dark:bg-amber-900/40 text-amber-700 dark:text-au-gold">
+                <BookOpen aria-hidden="true" className="h-3.5 w-3.5" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-gray-900">{course.name}</div>
@@ -54,7 +54,7 @@ const CourseOverviewGrid: React.FC<CourseOverviewGridProps> = ({ courses }) => {
               />
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Icon className="h-3 w-3 flex-shrink-0" />
+              <Icon className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
               <span className="truncate">{course.nextHint}</span>
             </div>
           </Link>

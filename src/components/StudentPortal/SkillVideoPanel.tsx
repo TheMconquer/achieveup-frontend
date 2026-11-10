@@ -83,8 +83,9 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center py-6" role="status">
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -154,7 +155,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
                 video.student_vote === 'upvote' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
-              <ThumbsUp className="h-4 w-4" />
+              <ThumbsUp aria-hidden="true" className="h-4 w-4" />
               {video.upvotes ?? 0}
             </button>
             <button
@@ -167,7 +168,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
                 video.student_vote === 'downvote' ? 'text-red-700 dark:text-red-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
-              <ThumbsDown className="h-4 w-4" />
+              <ThumbsDown aria-hidden="true" className="h-4 w-4" />
               {video.downvotes ?? 0}
             </button>
           </div>

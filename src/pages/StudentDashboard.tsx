@@ -105,8 +105,9 @@ const StudentDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" />
+      <div className="flex h-64 items-center justify-center" role="status">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -125,7 +126,7 @@ const StudentDashboard: React.FC = () => {
 
       {loadError && (
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <AlertTriangle aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
           Some of your data couldn't be loaded from Canvas. Try refreshing the page.
         </div>
       )}
@@ -177,8 +178,8 @@ const StudentDashboard: React.FC = () => {
         <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
-                <BookOpen className="h-6 w-6" />
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light dark:bg-amber-900/40 text-amber-700 dark:text-au-gold">
+                <BookOpen aria-hidden="true" className="h-6 w-6" />
               </div>
 
               <span className="text-[15px] font-semibold text-gray-900">Active Courses</span>
@@ -200,8 +201,8 @@ const StudentDashboard: React.FC = () => {
         <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
-                <Award className="h-6 w-6" />
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light dark:bg-amber-900/40 text-amber-700 dark:text-au-gold">
+                <Award aria-hidden="true" className="h-6 w-6" />
               </div>
 
               <span className="text-[15px] font-semibold text-gray-900">Badges Earned</span>
@@ -223,8 +224,8 @@ const StudentDashboard: React.FC = () => {
         <Card className="min-h-[220px] py-2">
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3">
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light text-amber-700 dark:text-au-gold">
-                <Sparkles className="h-6 w-6" />
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-au-gold-light dark:bg-amber-900/40 text-amber-700 dark:text-au-gold">
+                <Sparkles aria-hidden="true" className="h-6 w-6" />
               </div>
 
               <span className="text-[15px] font-semibold text-gray-900">Skills Earned</span>

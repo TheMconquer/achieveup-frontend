@@ -267,7 +267,7 @@ describe('SkillMatrixCreator Component', () => {
     const customSkillInput = await screen.findByPlaceholderText('Add custom skill...');
     fireEvent.change(customSkillInput, { target: { value: 'Custom Skill' } });
 
-    const addButton = screen.getByRole('button', { name: '' }); // Plus icon button
+    const addButton = screen.getByRole('button', { name: 'Add skill' });
     fireEvent.click(addButton);
 
     expect(screen.getByText('Custom Skill')).toBeInTheDocument();
@@ -544,7 +544,7 @@ describe('SkillMatrixCreator Component', () => {
     const customSkillInput = await screen.findByPlaceholderText('Add custom skill...');
     fireEvent.change(customSkillInput, { target: { value: 'HTML/CSS Fundamentals' } }); // Duplicate
 
-    const addButton = screen.getByRole('button', { name: '' });
+    const addButton = screen.getByRole('button', { name: 'Add skill' });
     fireEvent.click(addButton);
 
     // "HTML/CSS Fundamentals" legitimately appears twice at once - once in

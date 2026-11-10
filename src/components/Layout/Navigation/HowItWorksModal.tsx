@@ -26,7 +26,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
             aria-label="Close"
             className="text-gray-500 hover:text-gray-600"
           >
-            <X className="h-6 w-6" />
+            <X aria-hidden="true" className="h-6 w-6" />
           </button>
         </div>
 
@@ -56,7 +56,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
 
                 <div className="flex items-start">
                   <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">1</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">1</span>
                   </div>
 
                   <div>
@@ -241,7 +241,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ onClose }) => {
 
             {/* Getting Started */}
 
-            <div className="rounded-lg bg-au-gold-light p-6">
+            <div className="rounded-lg bg-au-gold-light dark:bg-amber-900/40 p-6">
               <h3 className="mb-4 text-lg font-medium text-gray-900">Ready to Get Started?</h3>
 
               <p className="mb-4 text-gray-700">

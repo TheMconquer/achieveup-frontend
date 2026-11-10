@@ -77,8 +77,9 @@ const StudentCourseDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" />
+      <div className="flex h-64 items-center justify-center" role="status">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -86,7 +87,7 @@ const StudentCourseDetail: React.FC = () => {
   if (error || notFound) {
     return (
       <Card className="mx-auto max-w-md p-8 text-center">
-        <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+        <AlertCircle aria-hidden="true" className="mx-auto mb-4 h-12 w-12 text-red-400" />
         <h2 className="mb-2 text-lg font-semibold text-gray-900">
           {notFound ? 'Course not found' : 'Could not load this course'}
         </h2>
@@ -113,7 +114,7 @@ const StudentCourseDetail: React.FC = () => {
         to="/courses"
         className="flex w-fit items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
         Back to My Courses
       </Link>
 

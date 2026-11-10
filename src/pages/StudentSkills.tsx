@@ -41,8 +41,9 @@ const StudentSkills: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" />
+      <div className="flex h-64 items-center justify-center" role="status">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-au-gold" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -58,7 +59,7 @@ const StudentSkills: React.FC = () => {
 
       {loadError && (
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <AlertTriangle aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
           Some of your data couldn't be loaded from Canvas. Try refreshing the page.
         </div>
       )}
@@ -121,7 +122,7 @@ const StudentSkills: React.FC = () => {
               disabled={page === 1}
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
               Previous
             </button>
 
@@ -136,7 +137,7 @@ const StudentSkills: React.FC = () => {
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
         )}

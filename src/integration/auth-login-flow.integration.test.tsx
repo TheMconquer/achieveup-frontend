@@ -49,6 +49,11 @@ const instructor = {
 
 const validToken = '7~' + 'a'.repeat(62);
 
+// Route pages are lazy-loaded, so the first visit to each one in a file also
+// loads its code inside the wait. On a cold or slow disk that can take longer
+// than waitFor's 1s default, so those waits get more time.
+const LAZY_PAGE_WAIT = { timeout: 3000 };
+
 beforeEach(() => {
   localStorage.clear();
   window.history.pushState({}, '', '/login');
@@ -84,7 +89,7 @@ describe('auth login flow (real AuthContext, real form)', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Transform your assessments/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/instructor-dashboard');
     expect(jest.mocked(authAPI.login)).toHaveBeenCalledWith({
       email: 'taylor@example.com',
@@ -141,7 +146,7 @@ describe('auth login flow (real AuthContext, real form)', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Transform your assessments/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(window.location.pathname).toBe('/instructor-dashboard');
     expect(localStorage.getItem('token')).toBe('new-token');
   });
@@ -155,7 +160,7 @@ describe('auth login flow (real AuthContext, real form)', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Transform your assessments/i)).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
 
     // DesktopSidebar's own Logout button is always in the DOM (unlike the one
     // inside UserMenu's dropdown, which only mounts on hover) - use it

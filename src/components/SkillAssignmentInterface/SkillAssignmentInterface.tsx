@@ -104,11 +104,6 @@ const SkillAssignmentInterface: React.FC = () => {
   const [selectedMatrixData, setSelectedMatrixData] = useState<SkillMatrix | null>(null);
   const [loadingMatrices, setLoadingMatrices] = useState<boolean>(false);
 
-  const [selectedPastCourse, setSelectedPastCourse] = useState<string>('');
-  const [selectedPastCourseData, setSelectedPastCourseData] = useState<CanvasCourse | null>(null);
-  //const [selectedCourseData, setSelectedCourseData] = useState<CanvasCourse | null>(null);
-  const [showImportBox, setShowImportBox] = useState(true);
-
   const {
     register,
     handleSubmit,
@@ -247,35 +242,6 @@ const SkillAssignmentInterface: React.FC = () => {
         [isInstructor, selectedMatrix]
   );
 
-  const getSection = useCallback((courseCode: string) => {
-    const parts = courseCode.split(' ');
-    return parts[1]; // "0002"
-  }, []);
-
-  const getBaseCourseCode = useCallback((courseCode?: string) => {
-    if (!courseCode) return '';
-    return courseCode.split('-')[0];
-  }, []);
-
-  const findPastCourse = useCallback(
-    (selected: CanvasCourse) => {
-      const base = getBaseCourseCode(selected.code);
-      const section = getSection(selected.code);
-      const matches = courses.filter(
-        (c) =>
-          getBaseCourseCode(c.code) === base &&
-          getSection(c.code) === section &&
-          c.id !== selected.id &&
-          c.term < selected.term
-      );
-
-      matches.sort((a, b) => b.term - a.term);
-
-      return matches[0];
-    },
-    [courses, getBaseCourseCode, getSection]
-  );
-
   const loadQuizzes = useCallback(
     async (courseId: string): Promise<void> => {
       try {
@@ -288,10 +254,6 @@ const SkillAssignmentInterface: React.FC = () => {
         setQuizzes(response.data);
 
         setSelectedCourse(courseId);
-        //setSelectedCourseData(course || null);
-        const statusResponse = await skillMatrixAPI.getImportStatus(courseId);
-        const assignmentImported = statusResponse.data.assignments_imported;
-        setShowImportBox(!assignmentImported);
 
         // Reset quiz selection when course changes
         setSelectedQuiz('');
@@ -320,57 +282,6 @@ const SkillAssignmentInterface: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isInstructor, setValue, courses]
   );
-
-  useEffect(() => {
-    if (!selectedCourse || courses.length === 0) return;
-
-    const course = courses.find((c) => String(c.id) === String(selectedCourse));
-    //setSelectedCourseData(course || null);
-
-    const pastCourse = course ? findPastCourse(course) : undefined;
-
-    if (pastCourse) {
-      setSelectedPastCourse(pastCourse.id);
-      setSelectedPastCourseData(pastCourse);
-    } else {
-      setSelectedPastCourse('');
-      setSelectedPastCourseData(null);
-    }
-  }, [selectedCourse, courses, findPastCourse]);
-
-  const handleImportAssignmentsFromPastCourse = async (pastCourseId: string) => {
-    if (!selectedCourse) {
-      toast.error('No target course selected');
-      return;
-    }
-
-    if (!pastCourseId) {
-      toast.error('No past course selected');
-      return;
-    }
-
-    try {
-      const response = await skillAssignmentAPI.importAssignmentsFromCourse(
-        pastCourseId,
-        selectedCourse
-      );
-
-      toast.success(
-        `Imported ${response.data.imported_count} skill assignment(s) from past course`
-      );
-      const statusResponse = await skillMatrixAPI.getImportStatus(selectedCourse);
-      const assignmentImported = statusResponse.data.assignments_imported;
-      setShowImportBox(!assignmentImported);
-
-      // optional: reload questions so UI shows new assigned skills immediately
-      if (selectedQuiz) {
-        await loadQuestions(selectedQuiz, selectedCourse);
-      }
-    } catch (error) {
-      console.error('Import skill assignments failed:', error);
-      toast.error('Failed to import skill assignments from past course');
-    }
-  };
 
   const loadSkillMatrices = async (courseId: string) => {
     try {
@@ -846,21 +757,6 @@ const SkillAssignmentInterface: React.FC = () => {
               <p className="text-gray-600">
                 Choose one of your courses above to view and assign skills to quiz questions.
               </p>
-            </div>
-          )}
-
-          {showImportBox && selectedPastCourseData && (
-            <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200">Similar Course Found</h3>
-                <button
-                  type="button"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
-                  onClick={() => handleImportAssignmentsFromPastCourse(selectedPastCourse)}
-                >
-                  Import Assignments From {selectedPastCourseData?.name}
-                </button>
-              </div>
             </div>
           )}
 

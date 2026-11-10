@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { validatePassword } from '../utils/passwordPolicy';
+import { validatePassword, PASSWORD_MIN_LENGTH } from '../utils/passwordPolicy';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { authAPI, canvasAPI, badgeAPI } from '../services/api';
 import { User as UserType } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useViewMode } from '../hooks/useViewMode';
 
 // A separate component (not nested inside Settings) so its own loading/opted-out
 // state survives re-renders of the rest of the settings form.
@@ -54,7 +55,7 @@ const BadgeSharingSettings: React.FC = () => {
   return (
     <Card className="p-6">
       <div className="flex items-center mb-4">
-        <Share2 className="w-6 h-6 text-primary-600 mr-2" />
+        <Share2 aria-hidden="true" className="w-6 h-6 text-primary-600 mr-2" />
         <h2 className="text-xl font-semibold text-gray-900">Badge Sharing</h2>
       </div>
       {loadError ? (
@@ -79,6 +80,12 @@ const BadgeSharingSettings: React.FC = () => {
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  // Settings is shared by both portals, so show what belongs to the view the
+  // user is in: a dual-role account in student view sees the student settings,
+  // and a plain student never sees instructor-only content.
+  const { canSwitchToStudentView, displayAsInstructor, viewingAsStudent } = useViewMode();
+  const showStudentSettings = user?.role === 'student' || viewingAsStudent;
+  const viewLabel = displayAsInstructor ? 'Instructor' : 'Student';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingToken, setIsEditingToken] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,7 +109,10 @@ const Settings: React.FC = () => {
         name: user.name || '',
         email: user.email || '',
         canvasApiToken: '',
-        canvasTokenType: user.canvasTokenType || 'instructor'
+        // Validate against the account's real role: an instructor's token is
+        // checked for teaching access (so they can't accidentally swap in a
+        // student-only token), a student's just needs to be a valid token.
+        canvasTokenType: user.role === 'instructor' ? 'instructor' : 'student'
       }));
     }
   }, [user]);
@@ -143,10 +153,9 @@ const Settings: React.FC = () => {
         canvasTokenType: tokenType 
       });
       if (response.data.valid) {
-        toast.success(`Canvas API ${tokenType} token is valid!`);
         return true;
       } else {
-        toast.error(response.data.message || `Invalid Canvas API ${tokenType} token`);
+        toast.error(response.data.message || `Invalid Canvas API ${viewLabel.toLowerCase()} token`);
         return false;
       }
     } catch (error: unknown) {
@@ -205,7 +214,12 @@ const Settings: React.FC = () => {
         canvasTokenType: profile.canvasTokenType
       });
       await refreshUser();
-      toast.success(`Canvas API ${profile.canvasTokenType} token updated successfully!`);
+      // A dual-role account has one token for both views, so say it covers the other one too.
+      toast.success(
+        canSwitchToStudentView
+          ? `${viewLabel} token updated! You also have ${viewingAsStudent ? 'instructor' : 'student'} access with this token.`
+          : `Canvas API ${viewLabel.toLowerCase()} token updated successfully!`
+      );
       setIsEditingToken(false);
       setProfile(prev => ({ ...prev, canvasApiToken: '' }));
     } catch (error: unknown) {
@@ -268,25 +282,43 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Token type is informational only - the backend works out the role from
+  // what Canvas reports for the token, never from anything sent here.
+  const TokenTypeNote = () => (
+    <div>
+      <p className="block text-sm font-medium text-gray-700 mb-2">Token Type</p>
+      <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
+        <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+          {user?.role === 'instructor' ? 'Instructor Token (Required)' : 'Student Token'}
+        </span>
+        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+          {user?.role === 'instructor'
+            ? 'Must come from a Canvas account that teaches at least one course'
+            : 'Use a token from your own Canvas account'}
+        </p>
+      </div>
+    </div>
+  );
+
   // Canvas token instructions
   const CanvasTokenInstructions = () => (
     <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
       <div className="flex items-start">
-        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+        <Info aria-hidden="true" className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
         <div className="text-sm text-blue-800 dark:text-blue-300">
           <p className="font-medium mb-2">
-            How to get your Canvas API {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} Token:
+            How to get your Canvas API {viewLabel} Token:
           </p>
           <ol className="list-decimal list-inside space-y-1">
             <li>Log into your Canvas account</li>
             <li>Go to Account → Settings</li>
             <li>Scroll down to "Approved Integrations"</li>
             <li>Click "New Access Token"</li>
-            <li>Give it a name (e.g., "AchieveUp {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'}")</li>
+            <li>Give it a name (e.g., "AchieveUp {viewLabel}")</li>
             <li>Copy the generated token and paste it above</li>
           </ol>
           
-          {profile.canvasTokenType === 'instructor' && (
+          {displayAsInstructor && (
             <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded">
               <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">Instructor Token Benefits:</p>
               <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
@@ -303,11 +335,11 @@ const Settings: React.FC = () => {
             <p className="text-xs font-medium text-gray-700 mb-1">Current Status:</p>
             {user?.hasCanvasToken ? (
               <p className="text-xs text-green-700 dark:text-green-400">
-                ✅ {user.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} token is set and ready to use
+                ✅ {viewLabel} token is set and ready to use
               </p>
             ) : (
               <p className="text-xs text-orange-700 dark:text-orange-400">
-                ⚠️ No token set - {profile.canvasTokenType === 'instructor' ? 'instructor features' : 'courses'} won't load until you add one
+                ⚠️ No token set - {displayAsInstructor ? 'instructor features' : 'courses'} won't load until you add one
               </p>
             )}
           </div>
@@ -331,26 +363,35 @@ const Settings: React.FC = () => {
         <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <Info className="h-6 w-6 text-blue-400" />
+              <Info aria-hidden="true" className="h-6 w-6 text-blue-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-2">
+              <h2 className="text-lg font-medium text-blue-900 dark:text-blue-200 mb-2">
                 Canvas Integration Required
-              </h3>
+              </h2>
               <p className="text-blue-800 dark:text-blue-300 mb-4">
-                To use AchieveUp features like course access, skill matrix creation, and student progress tracking, 
-                you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses 
+                To use AchieveUp features like {displayAsInstructor ? 'course access, skill matrix creation, and student progress tracking' : 'your courses, skill progress, and badges'},
+                you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses
                 and provide AI-powered skill tracking.
               </p>
               <div className="bg-blue-100 dark:bg-blue-900/40 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">What you can do with Canvas integration:</h4>
-                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                  <li>• Access your Canvas courses and quizzes</li>
-                  <li>• Create skill matrices for your courses</li>
-                  <li>• Assign skills to quiz questions with AI assistance</li>
-                  <li>• Track student progress and skill mastery</li>
-                  <li>• Generate skill-based analytics and insights</li>
-                </ul>
+                <h3 className="font-medium text-blue-900 dark:text-blue-200 mb-2">What you can do with Canvas integration:</h3>
+                {displayAsInstructor ? (
+                  <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    <li>• Access your Canvas courses and quizzes</li>
+                    <li>• Create skill matrices for your courses</li>
+                    <li>• Assign skills to quiz questions with AI assistance</li>
+                    <li>• Track student progress and skill mastery</li>
+                    <li>• Generate skill-based analytics and insights</li>
+                  </ul>
+                ) : (
+                  <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    <li>• See your Canvas courses in one place</li>
+                    <li>• Track your progress on each course skill</li>
+                    <li>• Earn badges as you master skills</li>
+                    <li>• Get skill videos for topics you're working on</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>
@@ -363,12 +404,12 @@ const Settings: React.FC = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <User className="w-6 h-6 text-primary-600 mr-2" />
+                <User aria-hidden="true" className="w-6 h-6 text-primary-600 mr-2" />
                 <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
               </div>
               {!isEditingProfile && (
                 <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} aria-label="Edit profile">
-                  <Edit className="w-4 h-4 mr-2" />Edit
+                  <Edit aria-hidden="true" className="w-4 h-4 mr-2" />Edit
                 </Button>
               )}
             </div>
@@ -387,14 +428,14 @@ const Settings: React.FC = () => {
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name *</label>
-                  <Input id="name" name="name" type="text" value={profile.name} onChange={handleChange} placeholder="Enter your full name" required />
+                  <Input id="name" name="name" type="text" autoComplete="name" value={profile.name} onChange={handleChange} placeholder="Enter your full name" required />
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address *</label>
-                  <Input id="email" name="email" type="email" value={profile.email} onChange={handleChange} placeholder="your.email@example.com" required />
+                  <Input id="email" name="email" type="email" autoComplete="email" value={profile.email} onChange={handleChange} placeholder="your.email@example.com" required />
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <Button type="submit" loading={loading} disabled={loading}><Save className="w-4 h-4 mr-2" />Save</Button>
+                  <Button type="submit" loading={loading} disabled={loading}><Save aria-hidden="true" className="w-4 h-4 mr-2" />Save</Button>
                   <Button type="button" variant="outline" onClick={() => { setIsEditingProfile(false); if (user) setProfile(prev => ({ ...prev, name: user.name || '', email: user.email || '' })); }} disabled={loading}>Cancel</Button>
                 </div>
               </form>
@@ -404,7 +445,7 @@ const Settings: React.FC = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <Key className="w-6 h-6 text-primary-600 mr-2" />
+                <Key aria-hidden="true" className="w-6 h-6 text-primary-600 mr-2" />
                 <h2 className="text-xl font-semibold text-gray-900">Canvas API Token</h2>
               </div>
               {user?.hasCanvasToken && (
@@ -416,9 +457,9 @@ const Settings: React.FC = () => {
                   disabled={testingConnection}
                 >
                   {connectionStatus?.connected ? (
-                    <Wifi className="w-4 h-4 mr-2 text-green-500 dark:text-green-400" />
+                    <Wifi aria-hidden="true" className="w-4 h-4 mr-2 text-green-500 dark:text-green-400" />
                   ) : (
-                    <WifiOff className="w-4 h-4 mr-2 text-gray-500" />
+                    <WifiOff aria-hidden="true" className="w-4 h-4 mr-2 text-gray-500" />
                   )}
                   Test Connection
                 </Button>
@@ -434,9 +475,9 @@ const Settings: React.FC = () => {
               }`}>
                 <div className="flex items-center">
                   {connectionStatus.connected ? (
-                    <Wifi className="w-4 h-4 mr-2" />
+                    <Wifi aria-hidden="true" className="w-4 h-4 mr-2" />
                   ) : (
-                    <WifiOff className="w-4 h-4 mr-2" />
+                    <WifiOff aria-hidden="true" className="w-4 h-4 mr-2" />
                   )}
                   <span className="text-sm font-medium">
                     {connectionStatus.connected ? 'Connected to Canvas' : 'Connection Failed'}
@@ -461,28 +502,13 @@ const Settings: React.FC = () => {
             {!user?.hasCanvasToken ? (
               // No token set - show input field
               <form onSubmit={handleUpdateToken} className="space-y-3">
-                {/* Token Type Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="canvasTokenType"
-                        value="instructor"
-                        checked={true}
-                        readOnly
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
-                    </div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
-                  </div>
-                </div>
-                
+                <TokenTypeNote />
+
+                <label htmlFor="canvasApiToken" className="block text-sm font-medium text-gray-700">Canvas API Token</label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                  <Key aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
+                    id="canvasApiToken"
                     name="canvasApiToken"
                     type="text"
                     value={profile.canvasApiToken}
@@ -497,7 +523,7 @@ const Settings: React.FC = () => {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" size="sm" loading={loading || validatingToken} disabled={loading || validatingToken} className="flex-1">
-                    <Save className="w-4 h-4 mr-2" />
+                    <Save aria-hidden="true" className="w-4 h-4 mr-2" />
                     {validatingToken ? 'Validating...' : 'Set Token'}
                   </Button>
                 </div>
@@ -505,28 +531,13 @@ const Settings: React.FC = () => {
             ) : isEditingToken ? (
               // Editing token - show input field
               <form onSubmit={handleUpdateToken} className="space-y-3">
-                {/* Token Type Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="canvasTokenType"
-                        value="instructor"
-                        checked={true}
-                        readOnly
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
-                    </div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
-                  </div>
-                </div>
-                
+                <TokenTypeNote />
+
+                <label htmlFor="canvasApiToken" className="block text-sm font-medium text-gray-700">Canvas API Token</label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                  <Key aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
+                    id="canvasApiToken"
                     name="canvasApiToken"
                     type="text"
                     value={profile.canvasApiToken}
@@ -541,7 +552,7 @@ const Settings: React.FC = () => {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" size="sm" loading={loading || validatingToken} disabled={loading || validatingToken}>
-                    <Save className="w-4 h-4 mr-2" />
+                    <Save aria-hidden="true" className="w-4 h-4 mr-2" />
                     {validatingToken ? 'Validating...' : 'Save'}
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => { setIsEditingToken(false); setProfile(prev => ({ ...prev, canvasApiToken: '' })); }} disabled={loading}>Cancel</Button>
@@ -554,13 +565,13 @@ const Settings: React.FC = () => {
                   <div>
                     <span className="text-gray-500">••••••••••••••••••••••••••••••••</span>
                     <p className="text-xs text-gray-500 mt-1">
-                      {profile.canvasTokenType === 'instructor' ? 'Instructor Token' : 'Student Token'} - stored securely
+                      {viewLabel} Token - stored securely
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setIsEditingToken(true)} aria-label="Edit Canvas API token">
-                    <Edit className="w-4 h-4 mr-2" />Edit
+                    <Edit aria-hidden="true" className="w-4 h-4 mr-2" />Edit
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleClearToken} disabled={loading} aria-label="Clear Canvas API token" className="text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:text-red-800 dark:hover:text-red-300">
                     Clear
@@ -571,11 +582,10 @@ const Settings: React.FC = () => {
             <CanvasTokenInstructions />
           </Card>
 
-          {/* Same "does this account reach the student portal" check RequireRole
-              uses for /badges — a dual-role instructor with a student
-              enrollment (has_student_access) can share badges there, so they
-              need the opt-out control here too, not just plain students. */}
-          {(user?.role === 'student' || (user?.role === 'instructor' && !!user?.has_student_access)) && (
+          {/* Student-only setting: plain students, plus a dual-role instructor
+              (has_student_access) while they're in the student view, since
+              that's where their badges live. */}
+          {showStudentSettings && (
             <BadgeSharingSettings />
           )}
         </div>
@@ -583,21 +593,21 @@ const Settings: React.FC = () => {
         <div className="lg:row-span-2">
           <Card className="p-6 h-full">
             <div className="flex items-center mb-6">
-              <Lock className="w-6 h-6 text-primary-600 mr-2" />
+              <Lock aria-hidden="true" className="w-6 h-6 text-primary-600 mr-2" />
               <h2 className="text-xl font-semibold text-gray-900">Change Password</h2>
             </div>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
                 <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password *</label>
-                <Input id="currentPassword" name="currentPassword" type="password" value={profile.currentPassword} onChange={handleChange} placeholder="Enter your current password" required />
+                <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" value={profile.currentPassword} onChange={handleChange} placeholder="Enter your current password" required />
               </div>
               <div>
                 <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password *</label>
-                <Input id="newPassword" name="newPassword" type="password" value={profile.newPassword} onChange={handleChange} placeholder="Enter your new password" required />
+                <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" helperText={`At least ${PASSWORD_MIN_LENGTH} characters, with an uppercase letter, a lowercase letter, and a number.`} value={profile.newPassword} onChange={handleChange} placeholder="Enter your new password" required />
               </div>
               <div>
                 <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700">Confirm New Password *</label>
-                <Input id="confirmNewPassword" name="confirmNewPassword" type="password" value={profile.confirmNewPassword} onChange={handleChange} placeholder="Confirm your new password" required />
+                <Input id="confirmNewPassword" name="confirmNewPassword" type="password" autoComplete="new-password" value={profile.confirmNewPassword} onChange={handleChange} placeholder="Confirm your new password" required />
               </div>
               <Button type="submit" loading={loading} disabled={loading}>Change Password</Button>
             </form>

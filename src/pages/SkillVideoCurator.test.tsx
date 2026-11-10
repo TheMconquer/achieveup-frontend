@@ -1,9 +1,12 @@
+// These tests feed in javascript: links on purpose, to check they're never rendered.
+/* eslint-disable no-script-url */
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import SkillVideoCurator from './SkillVideoCurator';
+import SkillVideoCurator, { VideoTitle } from './SkillVideoCurator';
+import { SkillVideo } from '../types';
 import { courseChannelsAPI, skillMatrixAPI, skillVideoAPI } from '../services/api';
 
 jest.mock('../contexts/AuthContext', () => ({
@@ -436,5 +439,37 @@ describe('SkillVideoCurator AI suggestions', () => {
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('No new suggestions found.'));
     expect(skillVideoAPI.getForSkill).toHaveBeenCalledTimes(1);
+  });
+});
+
+const makeVideo = (overrides: Partial<SkillVideo>): SkillVideo => ({
+  _id: 'v-1',
+  course_id: '100',
+  matrix_id: 'm-1',
+  skill_name: 'Loops',
+  title: 'Loops explained',
+  link: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  channel: 'CS Channel',
+  thumbnail: '',
+  source: 'manual',
+  status: 'published',
+  created_at: '',
+  updated_at: '',
+  ...overrides,
+});
+
+describe('VideoTitle', () => {
+  test('links a YouTube video, with its start time', () => {
+    render(<VideoTitle video={makeVideo({ timestamp_seconds: 90 })} />);
+    expect(screen.getByRole('link', { name: /loops explained/i })).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90s'
+    );
+  });
+
+  test('shows any other link as plain text', () => {
+    render(<VideoTitle video={makeVideo({ link: 'javascript:alert(document.cookie)' })} />);
+    expect(screen.getByText('Loops explained')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });

@@ -20,6 +20,7 @@ import { SkillMatrix, CanvasCourse, UpdateSkillMatrixRequest } from '../../types
 import { useCourseList } from '../../hooks/useCourseList';
 import { getApiErrorMessage } from '../../utils/apiError';
 import Button from '../common/Button';
+import CoursesLoadError from '../common/CoursesLoadError';
 import Card from '../common/Card';
 import DialogPanel from '../common/DialogPanel';
 import { onActivateKey } from '../../utils/a11y';
@@ -79,13 +80,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
     courses,
     loading: coursesLoading,
     error: coursesError,
+    canvasUnavailable,
+    reload: reloadCourses,
   } = useCourseList<CanvasCourse>(isInstructor);
-
-  useEffect(() => {
-    if (coursesError) {
-      toast.error('Failed to load courses. Please check your Canvas integration.');
-    }
-  }, [coursesError]);
 
   // inline edit state
   const [editingMatrixId, setEditingMatrixId] = useState<string | null>(null);
@@ -505,6 +502,10 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         toast.error('Authentication failed. Please check your instructor token in Settings.');
       } else if (status === 403) {
         toast.error('Access denied. Instructor permissions required.');
+      } else if (status === 429) {
+        toast.error(
+          getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.'
+        );
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         toast.error(
@@ -747,8 +748,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
   if (coursesLoading && courses.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+        <div className="flex justify-center items-center h-64" role="status">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       </div>
     );
@@ -766,10 +768,12 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           {step === 'select-course' && (
             <div>
               <h2 ref={stepHeadingRef} tabIndex={-1} className="text-lg font-medium text-gray-900 mb-4 focus:outline-none">Step 1: Select Course</h2>
-              {courses.length === 0 ? (
+              {coursesError ? (
+                <CoursesLoadError canvasUnavailable={canvasUnavailable} onRetry={reloadCourses} />
+              ) : courses.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8 text-gray-500" />
+                    <BookOpen aria-hidden="true" className="w-8 h-8 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Courses Found</h3>
                   <p className="text-gray-600 mb-4">
@@ -822,9 +826,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           {selectedCourseData && (
             <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/40 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-blue-900 dark:text-blue-200">
+                <h2 className="text-lg font-medium text-blue-900 dark:text-blue-200">
                   Existing Skill Matrices for {selectedCourseData.name}
-                </h3>
+                </h2>
                 <button
                   onClick={() => setShowExistingMatrices(!showExistingMatrices)}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
@@ -836,8 +840,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
               {showExistingMatrices && (
                 <>
                   {loadingExistingMatrices ? (
-                    <div className="flex justify-center items-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <div className="flex justify-center items-center py-4" role="status">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" aria-hidden="true" />
+                      <span className="sr-only">Loading…</span>
                     </div>
                   ) : existingMatrices.length > 0 ? (
                     <div className="space-y-3">
@@ -853,9 +858,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                               // ===================== VIEW MODE =====================
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                  <h4 className="font-medium text-gray-900">
+                                  <h3 className="font-medium text-gray-900">
                                     {matrix.matrix_name}
-                                  </h4>
+                                  </h3>
                                   <p className="text-sm text-gray-600 mt-1">
                                     {matrix.skills.length} skills • Created{' '}
                                     {new Date(matrix.created_at).toLocaleDateString()}
@@ -932,7 +937,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                               // ===================== EDIT MODE (INLINE) =====================
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <h4 className="font-medium text-gray-900">Editing Matrix</h4>
+                                  <h3 className="font-medium text-gray-900">Editing Matrix</h3>
                                   <div className="flex gap-3">
                                     <button
                                       type="button"
@@ -954,10 +959,11 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
                                 {/* name */}
                                 <div>
-                                  <label className="block text-sm text-gray-700 mb-1">
+                                  <label htmlFor={`edit-matrix-name-${matrix._id}`} className="block text-sm text-gray-700 mb-1">
                                     Matrix Name
                                   </label>
                                   <input
+                                    id={`edit-matrix-name-${matrix._id}`}
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -966,7 +972,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
 
                                 {/* skills chips */}
                                 <div>
-                                  <label className="block text-sm text-gray-700 mb-1">Skills</label>
+                                  <p className="block text-sm text-gray-700 mb-1">Skills</p>
                                   <div className="flex flex-wrap gap-2">
                                     {editSkills.map((skill, i) => (
                                       <span
@@ -979,8 +985,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                                           onClick={() => removeEditSkill(i)}
                                           className="text-blue-900 dark:text-blue-200 hover:text-blue-950"
                                           title="Remove"
+                                          aria-label={`Remove ${skill}`}
                                         >
-                                          ×
+                                          <span aria-hidden="true">×</span>
                                         </button>
                                       </span>
                                     ))}
@@ -991,6 +998,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                                     <input
                                       value={editNewSkill}
                                       onChange={(e) => setEditNewSkill(e.target.value)}
+                                      aria-label="Add a skill"
                                       placeholder="Add a skill..."
                                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                                       onKeyDown={(e) => {
@@ -1038,7 +1046,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           {step === 'get-suggestions' && selectedCourseData && (
             <div>
               <h2 ref={stepHeadingRef} tabIndex={-1} className="text-lg font-medium text-gray-900 mb-4 flex items-center focus:outline-none">
-                <Brain className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+                <Brain aria-hidden="true" className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
                 Step 2: Get Skill Suggestions
               </h2>
 
@@ -1069,7 +1077,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                     disabled={suggestionsLoading}
                     className="flex items-center"
                   >
-                    <Brain className="w-4 h-4 mr-2" />
+                    <Brain aria-hidden="true" className="w-4 h-4 mr-2" />
                     {suggestionsLoading
                       ? 'Getting Skill Suggestions...'
                       : 'Get AI Skill Suggestions'}
@@ -1077,7 +1085,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                 ) : (
                   <div className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
                     <div className="flex items-center">
-                      <AlertCircle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 mr-2" />
+                      <AlertCircle aria-hidden="true" className="w-5 h-5 text-yellow-700 dark:text-yellow-400 mr-2" />
                       <p className="text-sm text-yellow-800 dark:text-yellow-300">
                         <strong>Instructor access required</strong> for AI skill suggestions.
                       </p>
@@ -1106,30 +1114,34 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
           {step === 'review-skills' && (
             <div>
               <h2 ref={stepHeadingRef} tabIndex={-1} className="text-lg font-medium text-gray-900 mb-4 flex items-center focus:outline-none">
-                <Edit2 className="w-5 h-5 mr-2 text-green-700 dark:text-green-400" />
+                <Edit2 aria-hidden="true" className="w-5 h-5 mr-2 text-green-700 dark:text-green-400" />
                 Step 3: Review and Customize Skills
               </h2>
 
               {/* Matrix Name */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Matrix Name</label>
+                <label htmlFor="matrix-name" className="block text-sm font-medium text-gray-700 mb-2">Matrix Name</label>
                 <input
+                  id="matrix-name"
+                  aria-invalid={errors.matrixName ? 'true' : 'false'}
+                  aria-describedby={errors.matrixName ? 'matrixName-error' : undefined}
                   {...register('matrixName', { required: 'Matrix name is required' })}
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                   placeholder="e.g., Web Development - Skills Matrix"
                 />
                 {errors.matrixName && (
-                  <p className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.matrixName.message}</p>
+                  <p id="matrixName-error" className="text-red-700 dark:text-red-400 text-sm mt-1">{errors.matrixName.message}</p>
                 )}
               </div>
 
               {/* Matrix Description */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="matrix-description" className="block text-sm font-medium text-gray-700 mb-2">
                   Description (Optional)
                 </label>
                 <textarea
+                  id="matrix-description"
                   {...register('description')}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
@@ -1141,7 +1153,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
               {skillSuggestions.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                    <Lightbulb className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
+                    <Lightbulb aria-hidden="true" className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
                     AI Suggested Skills ({skillSuggestions.length} skills)
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1161,7 +1173,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-gray-900">{suggestion.skill}</span>
-                          <CheckCircle
+                          <CheckCircle aria-hidden="true"
                             className={`w-4 h-4 ${
                               finalSkills.includes(suggestion.skill)
                                 ? 'text-green-700 dark:text-green-400'
@@ -1181,7 +1193,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                 <div className="mb-6">
                   <div className="bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                     <div className="flex items-center">
-                      <AlertCircle className="w-5 h-5 text-yellow-700 dark:text-yellow-400 mr-3" />
+                      <AlertCircle aria-hidden="true" className="w-5 h-5 text-yellow-700 dark:text-yellow-400 mr-3" />
                       <div>
                         <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                           No AI Suggestions Available
@@ -1217,6 +1229,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                           <input
                             type="text"
                             defaultValue={skill}
+                            aria-label={`Edit skill name: ${skill}`}
                             autoFocus
                             onBlur={(e) => editSkill(index, e.target.value)}
                             onKeyPress={(e) => {
@@ -1244,7 +1257,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                           title="Edit skill"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 aria-hidden="true" className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
@@ -1252,7 +1265,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                           className="text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           title="Remove skill"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 aria-hidden="true" className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -1265,6 +1278,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                     type="text"
                     value={newSkill}
                     onChange={(e) => setNewSkill(e.target.value)}
+                    aria-label="Custom skill name"
                     placeholder="Add custom skill..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700 dark:focus:ring-ucf-gold"
                     onKeyPress={(e) => {
@@ -1279,8 +1293,9 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                     onClick={addCustomSkill}
                     disabled={!newSkill.trim()}
                     variant="outline"
+                    aria-label="Add skill"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus aria-hidden="true" className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -1296,7 +1311,7 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
                   loading={loading}
                   disabled={loading || finalSkills.length === 0}
                 >
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save aria-hidden="true" className="w-4 h-4 mr-2" />
                   Create Skill Matrix
                 </Button>
               </div>

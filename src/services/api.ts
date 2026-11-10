@@ -24,7 +24,8 @@ import {
   QuestionSkillAssignment,
   SkillVideo,
   AddSkillVideoRequest,
-  SkillVideoVoteRequest
+  SkillVideoVoteRequest,
+  CourseSyncStatus
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -80,7 +81,7 @@ export const skillMatrixAPI = {
     api.delete(`/achieveup/matrix/delete/${matrixId}`),
   getSkillSuggestions: (data: { courseId: string; courseName: string; courseCode: string; courseDescription?: string }): Promise<AxiosResponse<unknown[]>> =>
     api.post('/achieveup/ai/suggest-skills', data),
-  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
+  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; }>> =>
     api.get(`/achieveup/import-status/${courseId}`),
 };
 
@@ -93,8 +94,6 @@ export const courseDescriptionAPI = {
 
 // Skill Assignment
 export const skillAssignmentAPI = {
-  importAssignmentsFromCourse: (sourceCourseId: string, targetCourseId: string): Promise<AxiosResponse<{ message: string; imported_count: number; matrices: SkillMatrix[]; }>> =>
-    api.post('/achieveup/skills/import', { source_course_id: sourceCourseId, target_course_id: targetCourseId, }),
   assign: (data: SkillAssignmentRequest): Promise<AxiosResponse<void>> =>
     api.post('/achieveup/skills/assign', data),
   analyzeQuestions: (data: {
@@ -110,8 +109,6 @@ export const skillAssignmentAPI = {
     questionTexts.forEach(text => params.append('question_id', text));
     return api.get(`/achieveup/skills/assignments?${params.toString()}`);
   },
-  getImportStatus: (courseId: string): Promise<AxiosResponse<{ target_course_id: string; source_course_id: string; matrices_imported: boolean; assignments_imported: boolean; }>> =>
-    api.get(`/achieveup/import-status/${courseId}`),
 };
 
 // Skill Video Recommendations
@@ -120,8 +117,6 @@ export const skillVideoAPI = {
     api.post('/achieveup/skill-videos/get', { course_id: courseId, matrix_id: matrixId, skill_name: skillName }),
   add: (data: AddSkillVideoRequest): Promise<AxiosResponse<SkillVideo>> =>
     api.post('/achieveup/skill-videos', data),
-  update: (videoId: string, updates: Partial<Pick<SkillVideo, 'title' | 'link' | 'channel' | 'thumbnail' | 'status'>>): Promise<AxiosResponse<SkillVideo>> =>
-    api.put(`/achieveup/skill-videos/${videoId}`, updates),
   remove: (videoId: string): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.delete(`/achieveup/skill-videos/${videoId}`),
   // Generates AI-recommended videos for a skill — they publish immediately (visible to
@@ -268,7 +263,7 @@ export const authAPI = {
     api.put('/auth/profile', data),
   changePassword: (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<void>> =>
     api.put('/auth/password', data),
-  validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string; user_info?: object }>> =>
+  validateCanvasToken: (data: CanvasTokenValidationRequest): Promise<AxiosResponse<{ valid: boolean; message?: string }>> =>
     api.post('/auth/validate-canvas-token', data),
 };
 
@@ -328,17 +323,18 @@ export const instructorAPI = {
   }>> =>
     api.get(`/achieveup/instructor/courses/${courseId}/student-analytics`),
 
-  // Force a data sync for a specific course (triggers Canvas → mastery → progress)
+  // Start a background data sync for a course (Canvas → mastery → progress).
+  // Returns 202 once started, or 409 if a sync of the course is already
+  // running; poll getSyncStatus to learn when it finishes.
   forceSyncCourse: (courseId: string): Promise<AxiosResponse<{
     message: string;
-    details: {
-      total_quizzes: number;
-      total_synced: number;
-      progress_synced: number;
-      total_errors: number;
-    };
+    sync_status: CourseSyncStatus;
   }>> =>
     api.post(`/achieveup/instructor/course/${courseId}/force-sync`),
+
+  // Status of the course's latest sync (manual or scheduled).
+  getSyncStatus: (courseId: string): Promise<AxiosResponse<CourseSyncStatus>> =>
+    api.get(`/achieveup/instructor/course/${courseId}/sync-status`),
 };
 
 // Enhanced Canvas API for instructor functionality

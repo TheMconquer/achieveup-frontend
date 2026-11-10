@@ -18,9 +18,9 @@ const Button: React.FC<ButtonProps> = ({
   const variants = {
     primary: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
     secondary: 'bg-ucf-grey hover:bg-gray-600 text-ucf-white focus:ring-gray-500',
-    success: 'bg-success hover:bg-green-600 text-ucf-white focus:ring-green-500',
+    success: 'bg-success hover:bg-green-800 text-ucf-white focus:ring-green-500',
     warning: 'bg-ucf-gold hover:bg-primary-600 text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
-    danger: 'bg-danger hover:bg-red-600 text-ucf-white focus:ring-red-500',
+    danger: 'bg-danger hover:bg-red-800 text-ucf-white focus:ring-red-500',
     outline: 'border-2 border-ucf-gold text-amber-700 dark:text-ucf-gold hover:bg-ucf-gold hover:text-ucf-black focus:ring-amber-700 dark:focus:ring-ucf-gold',
   };
   
@@ -45,7 +45,7 @@ const Button: React.FC<ButtonProps> = ({
     >
       {loading ? (
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" aria-hidden="true" />
           Loading...
         </div>
       ) : (

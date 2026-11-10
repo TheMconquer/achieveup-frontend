@@ -91,8 +91,9 @@ const StudentPublicBadges: React.FC = () => {
 
     if (loading) {
         return (
-            <main className="flex justify-center items-center min-h-screen bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+            <main className="flex justify-center items-center min-h-screen bg-gray-50" role="status">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+                <span className="sr-only">Loading…</span>
             </main>
         );
     }
@@ -101,7 +102,7 @@ const StudentPublicBadges: React.FC = () => {
         return (
             <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex justify-center">
                 <div className="max-w-md w-full bg-white rounded-lg shadow p-8 text-center border-t-4 border-red-500">
-                    <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+                    <AlertCircle aria-hidden="true" className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Badges</h1>
                     <p className="text-gray-600">{error}</p>
                     <Link to="/login" className="mt-6 inline-block text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-400 font-medium">
@@ -120,7 +121,7 @@ const StudentPublicBadges: React.FC = () => {
                     <div className="flex justify-between h-16">
                         <div className="flex items-center">
                             <Link to="/" className="flex-shrink-0 flex items-center">
-                                <BookOpen className="h-9 w-9 text-au-gold" />
+                                <BookOpen aria-hidden="true" className="h-9 w-9 text-au-gold" />
                                 <span className="ml-2 text-xl font-bold text-gray-900">AchieveUp</span>
                             </Link>
                         </div>
@@ -141,21 +142,22 @@ const StudentPublicBadges: React.FC = () => {
                     </p>
 
                     <button
+                        type="button"
                         onClick={handleCopyLink}
-                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all"
+                        className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-700 dark:focus:ring-ucf-gold transition-all"
                     >
                         {copied ? (
-                            <><Check className="w-5 h-5 mr-2 text-green-400" /> Copied to Clipboard!</>
+                            <><Check aria-hidden="true" className="w-5 h-5 mr-2 text-green-400" /> Copied to Clipboard!</>
                         ) : (
-                            <><Share2 className="w-5 h-5 mr-2" /> Share Profile</>
+                            <><Share2 aria-hidden="true" className="w-5 h-5 mr-2" /> Share Profile</>
                         )}
                     </button>
                 </div>
 
                 {badges.length === 0 ? (
                     <Card className="text-center p-12">
-                        <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-2xl font-medium text-gray-900 mb-2">No Badges Yet</h3>
+                        <Award aria-hidden="true" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h2 className="text-2xl font-medium text-gray-900 mb-2">No Badges Yet</h2>
                         <p className="text-gray-600">This student has not earned any badges yet.</p>
                     </Card>
                 ) : (
@@ -164,12 +166,12 @@ const StudentPublicBadges: React.FC = () => {
                             <div key={badge.badge_id} className="bg-white overflow-hidden shadow-lg rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
                                 <div className={`h-44 ${getBadgeColor(badge.badge_level)} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
                                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-                                    <Award className="absolute w-40 h-40 text-ucf-white opacity-20 z-0" />
+                                    <Award aria-hidden="true" className="absolute w-40 h-40 text-ucf-white opacity-20 z-0" />
                                     <div className="z-10 text-center flex flex-col items-center">
-                                        <Award className="w-8 h-8 text-ucf-white mb-2 shadow-sm" />
-                                        <h3 className="text-lg font-bold text-ucf-white leading-tight px-2 drop-shadow-md">
+                                        <Award aria-hidden="true" className="w-8 h-8 text-ucf-white mb-2 shadow-sm" />
+                                        <h2 className="text-lg font-bold text-ucf-white leading-tight px-2 drop-shadow-md">
                                             {badge.badge_name}
-                                        </h3>
+                                        </h2>
                                         <p className="text-xs text-ucf-white opacity-90 mt-2 font-medium bg-black bg-opacity-20 px-3 py-1 rounded-full drop-shadow-sm">
                                             AchieveUp Verified
                                         </p>
@@ -181,9 +183,9 @@ const StudentPublicBadges: React.FC = () => {
                                             <p className="text-sm font-semibold text-amber-700 dark:text-ucf-gold uppercase tracking-wider mb-1">
                                                 {badge.badge_level} Level
                                             </p>
-                                            <h3 className="text-xl font-bold text-gray-900 leading-tight">
+                                            <h2 className="text-xl font-bold text-gray-900 leading-tight">
                                                 {badge.badge_name}
-                                            </h3>
+                                            </h2>
                                         </div>
                                     </div>
 

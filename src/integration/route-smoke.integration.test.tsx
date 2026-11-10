@@ -43,6 +43,11 @@ const visitAsInstructor = (path: string) => {
   window.history.pushState({}, '', path);
 };
 
+// Route pages are lazy-loaded, so the first visit to each one in a file also
+// loads its code inside the wait. On a cold or slow disk that can take longer
+// than waitFor's 1s default, so those waits get more time.
+const LAZY_PAGE_WAIT = { timeout: 3000 };
+
 beforeEach(() => {
   localStorage.clear();
   jest.mocked(canvasInstructorAPI.getInstructorCourses).mockResolvedValue({ data: [] } as any);
@@ -56,7 +61,7 @@ describe('authenticated route smoke tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Skill Matrix Creator')).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     // Layout/Navigation is actually mounted, not just the bare page
     expect(screen.getByRole('link', { name: /skill matrix/i })).toBeInTheDocument();
   });
@@ -67,7 +72,7 @@ describe('authenticated route smoke tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Skill Assignment Interface')).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(screen.getByRole('link', { name: /skill assignment/i })).toBeInTheDocument();
   });
 
@@ -77,7 +82,7 @@ describe('authenticated route smoke tests', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /student progress tracking/i })).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     expect(screen.getByRole('link', { name: /student progress/i })).toBeInTheDocument();
   });
 
@@ -87,7 +92,7 @@ describe('authenticated route smoke tests', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /account settings/i })).toBeInTheDocument();
-    });
+    }, LAZY_PAGE_WAIT);
     // Profile section starts read-only (an "Edit" button reveals the form) -
     // confirm it's showing the real user's data, not stale/placeholder text.
     // ("Taylor Rivera" also appears in the header's UserMenu, so scope to

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { canvasAPI } from '../services/api';
 import { CanvasCourse } from '../types';
+import { isCanvasUnavailable } from '../utils/apiError';
 
 const STALE_AFTER_MS = 60_000;
 
@@ -15,6 +16,9 @@ interface UseCourseListResult<T> {
   courses: T[];
   loading: boolean;
   error: boolean;
+  // The failure looks like a Canvas outage (no answer, or a 5xx) rather
+  // than a setup problem such as a bad token.
+  canvasUnavailable: boolean;
   // Always fetches fresh, regardless of when the last load happened.
   reload: () => void;
   // Fetches if there's no data yet, the last load failed, or the last
@@ -37,20 +41,31 @@ export function useCourseList<T extends CanvasCourse = CanvasCourse>(
   const [courses, setCourses] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [canvasUnavailable, setCanvasUnavailable] = useState(false);
   const lastLoadedAtRef = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    setCanvasUnavailable(false);
     try {
       const response = isInstructor
         ? await canvasAPI.getInstructorCourses()
         : await canvasAPI.getCourses();
+      // An error body instead of a list means Canvas didn't answer.
+      if (!Array.isArray(response.data)) {
+        console.error('Unexpected courses response:', response.data);
+        setError(true);
+        setCanvasUnavailable(true);
+        lastLoadedAtRef.current = null;
+        return;
+      }
       setCourses(response.data as T[]);
       lastLoadedAtRef.current = Date.now();
     } catch (err) {
       console.error('Error loading courses:', err);
       setError(true);
+      setCanvasUnavailable(isCanvasUnavailable(err));
       lastLoadedAtRef.current = null;
     } finally {
       setLoading(false);
@@ -72,5 +87,5 @@ export function useCourseList<T extends CanvasCourse = CanvasCourse>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInstructor, eager]);
 
-  return { courses, loading, error, reload: load, ensureLoaded };
+  return { courses, loading, error, canvasUnavailable, reload: load, ensureLoaded };
 }

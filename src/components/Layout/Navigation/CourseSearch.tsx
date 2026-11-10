@@ -50,7 +50,7 @@ const CourseSearch: React.FC<CourseSearchProps> = ({
           into the box while the dropdown is open reaches the input instead
           of the invisible close-on-outside-click layer. */}
       <div className="relative z-50">
-        <Search
+        <Search aria-hidden="true"
           className={
             isDesktop
               ? 'pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500'

@@ -4,6 +4,8 @@ import { canvasInstructorAPI, instructorAPI } from '../services/api';
 import { CanvasCourse } from '../types';
 import { toast } from 'react-hot-toast';
 import Card from '../components/common/Card';
+import CoursesLoadError from '../components/common/CoursesLoadError';
+import { isCanvasUnavailable } from '../utils/apiError';
 import {
   Home,
   Target,
@@ -56,14 +58,22 @@ const InstructorDashboard: React.FC = () => {
     averageProgress: 0,
   });
   const [skillMatricesCount, setSkillMatricesCount] = useState<number>(0);
+  // Why the course list failed to load, if it did: a Canvas outage, or
+  // anything else (e.g. a token problem).
+  const [coursesError, setCoursesError] = useState<'canvas-unavailable' | 'failed' | null>(null);
 
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
+      setCoursesError(null);
 
       // Load instructor-specific data
       try {
         const coursesResponse = await canvasInstructorAPI.getInstructorCourses();
+        // An error body instead of a list means Canvas didn't answer.
+        if (!Array.isArray(coursesResponse.data)) {
+          throw Object.assign(new Error('Unexpected courses response'), { canvasUnavailable: true });
+        }
         setCourses(coursesResponse.data);
 
         // Try to get skill matrices count from all courses
@@ -112,8 +122,11 @@ const InstructorDashboard: React.FC = () => {
       } catch (error) {
         // If Canvas API fails, still provide useful interface
         console.error('Error loading courses:', error);
+        // Without a token, failing is expected; the setup prompt covers it.
         if (user?.hasCanvasToken) {
-          toast.error('Could not load courses from Canvas. Please try refreshing.');
+          const unavailable =
+            isCanvasUnavailable(error) || (error as { canvasUnavailable?: boolean }).canvasUnavailable === true;
+          setCoursesError(unavailable ? 'canvas-unavailable' : 'failed');
         }
 
         setCourses([]);
@@ -219,8 +232,9 @@ const InstructorDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold"></div>
+        <div className="flex justify-center items-center h-64" role="status">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ucf-gold" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       </div>
     );
@@ -246,7 +260,7 @@ const InstructorDashboard: React.FC = () => {
               to="/skill-matrix"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-ucf-black bg-ucf-gold hover:bg-yellow-600 transition-colors"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus aria-hidden="true" className="w-4 h-4 mr-2" />
               Get Started
             </Link>
           </div>
@@ -260,9 +274,14 @@ const InstructorDashboard: React.FC = () => {
               Instructor Dashboard
             </div>
           </div>
-          {user?.hasCanvasToken ? (
+          {user?.hasCanvasToken && coursesError ? (
+            <div className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300">
+              <AlertTriangle aria-hidden="true" className="w-3 h-3 mr-1 inline" />
+              {coursesError === 'canvas-unavailable' ? 'Canvas Unavailable' : 'Canvas Error'}
+            </div>
+          ) : user?.hasCanvasToken ? (
             <div className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
-              <CheckCircle className="w-3 h-3 mr-1 inline" />
+              <CheckCircle aria-hidden="true" className="w-3 h-3 mr-1 inline" />
               Canvas Connected
             </div>
           ) : (
@@ -270,27 +289,36 @@ const InstructorDashboard: React.FC = () => {
               to="/settings"
               className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-800/60 transition-colors"
             >
-              <AlertTriangle className="w-3 h-3 mr-1 inline" />
+              <AlertTriangle aria-hidden="true" className="w-3 h-3 mr-1 inline" />
               Canvas Setup Required
             </Link>
           )}
           {courses.length > 0 && (
             <div className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
-              <BookOpen className="w-3 h-3 mr-1 inline" />
+              <BookOpen aria-hidden="true" className="w-3 h-3 mr-1 inline" />
               {courses.length} Course{courses.length !== 1 ? 's' : ''} Loaded
             </div>
           )}
         </div>
+
+        {coursesError && (
+          <div className="mt-4">
+            <CoursesLoadError
+              canvasUnavailable={coursesError === 'canvas-unavailable'}
+              onRetry={loadDashboardData}
+            />
+          </div>
+        )}
 
         {/* Canvas Token Warning for Users Without Token */}
         {!user?.hasCanvasToken && (
           <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                <AlertTriangle aria-hidden="true" className="h-5 w-5 text-yellow-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Canvas Integration Required</h3>
+                <h2 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Canvas Integration Required</h2>
                 <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                   <p>
                     To access your courses and use AchieveUp features, you need to add your Canvas
@@ -311,16 +339,17 @@ const InstructorDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg mx-auto mb-4">
-            <Home className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <Home aria-hidden="true" className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
+          {/* A dash, not 0, when the count is unknown because loading failed. */}
+          <div className="text-2xl font-bold text-gray-900">{coursesError ? '—' : courses.length}</div>
           <div className="text-sm text-gray-600">Active Courses</div>
           <div className="text-xs text-gray-500 mt-1">From Canvas LMS</div>
         </Card>
 
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg mx-auto mb-4">
-            <Users className="w-6 h-6 text-green-700 dark:text-green-400" />
+            <Users aria-hidden="true" className="w-6 h-6 text-green-700 dark:text-green-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{instructorStats.totalStudents}</div>
           <div className="text-sm text-gray-600">Total Students</div>
@@ -329,7 +358,7 @@ const InstructorDashboard: React.FC = () => {
 
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg mx-auto mb-4">
-            <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <Target aria-hidden="true" className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">{skillMatricesCount}</div>
           <div className="text-sm text-gray-600">Skill Matrices</div>
@@ -340,7 +369,7 @@ const InstructorDashboard: React.FC = () => {
 
         <Card className="text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg mx-auto mb-4">
-            <Brain className="w-6 h-6 text-yellow-700 dark:text-yellow-400" />
+            <Brain aria-hidden="true" className="w-6 h-6 text-yellow-700 dark:text-yellow-400" />
           </div>
           <div className="text-2xl font-bold text-gray-900">AI</div>
           <div className="text-sm text-gray-600">Powered</div>
@@ -381,9 +410,9 @@ const InstructorDashboard: React.FC = () => {
                       }`}
                     >
                       {step.status === 'completed' ? (
-                        <CheckCircle className="w-5 h-5" />
+                        <CheckCircle aria-hidden="true" className="w-5 h-5" />
                       ) : (
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-5 h-5" aria-hidden="true" />
                       )}
                     </div>
 
@@ -446,7 +475,7 @@ const InstructorDashboard: React.FC = () => {
             to="/skill-matrix"
             className="text-sm text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-300 font-medium"
           >
-            Get Started <ArrowUpRight className="w-4 h-4 inline ml-1" />
+            Get Started <ArrowUpRight aria-hidden="true" className="w-4 h-4 inline ml-1" />
           </Link>
         }
       >
@@ -463,7 +492,7 @@ const InstructorDashboard: React.FC = () => {
                   <div
                     className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200`}
                   >
-                    <Icon className="w-6 h-6 text-ucf-white" />
+                    <Icon className="w-6 h-6 text-ucf-white" aria-hidden="true" />
                   </div>
                   <h3 className="font-medium text-gray-900 group-hover:text-gray-700 mb-2">
                     {action.title}
@@ -474,7 +503,7 @@ const InstructorDashboard: React.FC = () => {
                   {action.priority === 'high' && (
                     <div className="mt-3">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        <Zap className="w-3 h-3 mr-1" />
+                        <Zap aria-hidden="true" className="w-3 h-3 mr-1" />
                         Recommended
                       </span>
                     </div>
@@ -497,7 +526,7 @@ const InstructorDashboard: React.FC = () => {
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <BookOpen aria-hidden="true" className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 truncate">{course.name}</p>
@@ -522,7 +551,7 @@ const InstructorDashboard: React.FC = () => {
         ) : (
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <Lightbulb aria-hidden="true" className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Set up Canvas Integration</p>
                 <p className="text-xs text-gray-600">
@@ -531,7 +560,7 @@ const InstructorDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <Lightbulb aria-hidden="true" className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Start with One Course</p>
                 <p className="text-xs text-gray-600">
@@ -540,7 +569,7 @@ const InstructorDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <Lightbulb aria-hidden="true" className="w-5 h-5 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Use AI Suggestions</p>
                 <p className="text-xs text-gray-600">
@@ -553,7 +582,7 @@ const InstructorDashboard: React.FC = () => {
                 to="/settings"
                 className="inline-flex items-center text-sm text-amber-700 hover:text-amber-800 dark:text-ucf-gold dark:hover:text-yellow-300 font-medium"
               >
-                Configure Canvas <ArrowRight className="w-4 h-4 ml-1" />
+                Configure Canvas <ArrowRight aria-hidden="true" className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>

@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { ThumbsUp, ThumbsDown, ExternalLink } from 'lucide-react';
 import { skillVideoAPI } from '../../services/api';
 import { SkillVideo } from '../../types';
-import { withTimestamp } from '../../utils/youtubeLinks';
+import { isWebUrl, youTubeUrl, withTimestamp } from '../../utils/youtubeLinks';
+
+// Skips any video whose link isn't a YouTube link, so it never becomes a clickable link.
+// Applied at render time so every way the list is loaded goes through it.
+function playableVideos(videos: SkillVideo[]): SkillVideo[] {
+  return videos.flatMap((video) => {
+    const link = youTubeUrl(video.link);
+    return link ? [{ ...video, link }] : [];
+  });
+}
 
 export interface SkillVideoPanelProps {
   courseId: string;
@@ -74,8 +83,9 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+      <div className="flex items-center justify-center py-6" role="status">
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }
@@ -88,7 +98,9 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
     );
   }
 
-  if (videos.length === 0) {
+  const playable = playableVideos(videos);
+
+  if (playable.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-gray-500">
         No videos yet for this skill.
@@ -98,12 +110,12 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
 
   return (
     <div className="flex flex-col gap-3 py-3">
-      {videos.map((video) => (
+      {playable.map((video) => (
         <div
           key={video._id}
           className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
         >
-          {video.thumbnail && (
+          {isWebUrl(video.thumbnail) && (
             <img
               src={video.thumbnail}
               alt=""
@@ -143,7 +155,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
                 video.student_vote === 'upvote' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
-              <ThumbsUp className="h-4 w-4" />
+              <ThumbsUp aria-hidden="true" className="h-4 w-4" />
               {video.upvotes ?? 0}
             </button>
             <button
@@ -156,7 +168,7 @@ const SkillVideoPanel: React.FC<SkillVideoPanelProps> = ({ courseId, skillName }
                 video.student_vote === 'downvote' ? 'text-red-700 dark:text-red-400' : 'text-gray-500 hover:text-gray-600'
               }`}
             >
-              <ThumbsDown className="h-4 w-4" />
+              <ThumbsDown aria-hidden="true" className="h-4 w-4" />
               {video.downvotes ?? 0}
             </button>
           </div>

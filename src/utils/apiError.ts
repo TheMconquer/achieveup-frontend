@@ -16,3 +16,10 @@ export function isCanvasUnavailable(error: unknown): boolean {
   const status = error.response?.status;
   return status === undefined || status >= 500;
 }
+
+// Whether trying again could help: true for network failures and server-side
+// errors, false when the backend refused the request.
+export function isRetryableApiError(error: unknown): boolean {
+  if (!axios.isAxiosError(error) || !error.response) return true;
+  return error.response.status >= 500;
+}

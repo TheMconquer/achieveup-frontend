@@ -125,13 +125,32 @@ export const skillVideoAPI = {
     api.post('/achieveup/skill-videos/suggest', { course_id: courseId, matrix_id: matrixId, skill_name: skillName, count }),
   vote: (data: SkillVideoVoteRequest): Promise<AxiosResponse<{ success: boolean; message?: string }>> =>
     api.post('/achieveup/skill-videos/vote', data),
-  // Instructor-only, opt-in: searches a manually-added video's captions for the moment
-  // most relevant to its skill and stores it as a deep-link timestamp.
+  // Instructor-only, opt-in: searches a video's captions for the moment most relevant
+  // to its skill and stores it as a deep-link timestamp.
   findRelevantMoment: (videoId: string): Promise<AxiosResponse<SkillVideo>> =>
     api.post(`/achieveup/skill-videos/${videoId}/find-moment`),
   // Instructor-only: marks an AI-suggested video as reviewed/approved.
   verify: (videoId: string): Promise<AxiosResponse<SkillVideo>> =>
     api.post(`/achieveup/skill-videos/${videoId}/verify`),
+};
+
+// YouTube channels an instructor links to a course; AI video suggestions
+// search these first.
+export interface CourseChannel {
+  channel_id: string;
+  name: string;
+}
+
+// Matches the backend's MAX_COURSE_CHANNELS.
+export const MAX_COURSE_CHANNELS = 3;
+
+export const courseChannelsAPI = {
+  get: (courseId: string): Promise<AxiosResponse<{ channels: CourseChannel[] }>> =>
+    api.get(`/achieveup/instructor/courses/${courseId}/channels`),
+  // Replaces the whole saved list. Entries can be channel IDs or @handles;
+  // the backend resolves them and returns the saved channels.
+  update: (courseId: string, channels: string[]): Promise<AxiosResponse<{ success: boolean; channels: CourseChannel[] }>> =>
+    api.put(`/achieveup/instructor/courses/${courseId}/channels`, { channels }),
 };
 
 // Badge Management

@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { authAPI, canvasAPI, badgeAPI } from '../services/api';
 import { User as UserType } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useViewMode } from '../hooks/useViewMode';
 
 // A separate component (not nested inside Settings) so its own loading/opted-out
 // state survives re-renders of the rest of the settings form.
@@ -79,6 +80,12 @@ const BadgeSharingSettings: React.FC = () => {
 
 const Settings: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  // Settings is shared by both portals, so show what belongs to the view the
+  // user is in: a dual-role account in student view sees the student settings,
+  // and a plain student never sees instructor-only content.
+  const { displayAsInstructor, viewingAsStudent } = useViewMode();
+  const showStudentSettings = user?.role === 'student' || viewingAsStudent;
+  const viewLabel = displayAsInstructor ? 'Instructor' : 'Student';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingToken, setIsEditingToken] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,7 +109,10 @@ const Settings: React.FC = () => {
         name: user.name || '',
         email: user.email || '',
         canvasApiToken: '',
-        canvasTokenType: user.canvasTokenType || 'instructor'
+        // Validate against the account's real role: an instructor's token is
+        // checked for teaching access (so they can't accidentally swap in a
+        // student-only token), a student's just needs to be a valid token.
+        canvasTokenType: user.role === 'instructor' ? 'instructor' : 'student'
       }));
     }
   }, [user]);
@@ -268,6 +278,24 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Token type is informational only - the backend works out the role from
+  // what Canvas reports for the token, never from anything sent here.
+  const TokenTypeNote = () => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
+      <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
+        <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+          {user?.role === 'instructor' ? 'Instructor Token (Required)' : 'Student Token'}
+        </span>
+        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+          {user?.role === 'instructor'
+            ? 'Must come from a Canvas account that teaches at least one course'
+            : 'Use a token from your own Canvas account'}
+        </p>
+      </div>
+    </div>
+  );
+
   // Canvas token instructions
   const CanvasTokenInstructions = () => (
     <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
@@ -275,18 +303,18 @@ const Settings: React.FC = () => {
         <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
         <div className="text-sm text-blue-800 dark:text-blue-300">
           <p className="font-medium mb-2">
-            How to get your Canvas API {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'} Token:
+            How to get your Canvas API {viewLabel} Token:
           </p>
           <ol className="list-decimal list-inside space-y-1">
             <li>Log into your Canvas account</li>
             <li>Go to Account → Settings</li>
             <li>Scroll down to "Approved Integrations"</li>
             <li>Click "New Access Token"</li>
-            <li>Give it a name (e.g., "AchieveUp {profile.canvasTokenType === 'instructor' ? 'Instructor' : 'Student'}")</li>
+            <li>Give it a name (e.g., "AchieveUp {viewLabel}")</li>
             <li>Copy the generated token and paste it above</li>
           </ol>
           
-          {profile.canvasTokenType === 'instructor' && (
+          {displayAsInstructor && (
             <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 rounded">
               <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">Instructor Token Benefits:</p>
               <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
@@ -307,7 +335,7 @@ const Settings: React.FC = () => {
               </p>
             ) : (
               <p className="text-xs text-orange-700 dark:text-orange-400">
-                ⚠️ No token set - {profile.canvasTokenType === 'instructor' ? 'instructor features' : 'courses'} won't load until you add one
+                ⚠️ No token set - {displayAsInstructor ? 'instructor features' : 'courses'} won't load until you add one
               </p>
             )}
           </div>
@@ -338,19 +366,28 @@ const Settings: React.FC = () => {
                 Canvas Integration Required
               </h3>
               <p className="text-blue-800 dark:text-blue-300 mb-4">
-                To use AchieveUp features like course access, skill matrix creation, and student progress tracking, 
-                you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses 
+                To use AchieveUp features like {displayAsInstructor ? 'course access, skill matrix creation, and student progress tracking' : 'your courses, skill progress, and badges'},
+                you need to add your Canvas API token. This allows AchieveUp to connect to your Canvas courses
                 and provide AI-powered skill tracking.
               </p>
               <div className="bg-blue-100 dark:bg-blue-900/40 rounded-lg p-4">
                 <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">What you can do with Canvas integration:</h4>
-                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                  <li>• Access your Canvas courses and quizzes</li>
-                  <li>• Create skill matrices for your courses</li>
-                  <li>• Assign skills to quiz questions with AI assistance</li>
-                  <li>• Track student progress and skill mastery</li>
-                  <li>• Generate skill-based analytics and insights</li>
-                </ul>
+                {displayAsInstructor ? (
+                  <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    <li>• Access your Canvas courses and quizzes</li>
+                    <li>• Create skill matrices for your courses</li>
+                    <li>• Assign skills to quiz questions with AI assistance</li>
+                    <li>• Track student progress and skill mastery</li>
+                    <li>• Generate skill-based analytics and insights</li>
+                  </ul>
+                ) : (
+                  <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    <li>• See your Canvas courses in one place</li>
+                    <li>• Track your progress on each course skill</li>
+                    <li>• Earn badges as you master skills</li>
+                    <li>• Get skill videos for topics you're working on</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>
@@ -461,24 +498,7 @@ const Settings: React.FC = () => {
             {!user?.hasCanvasToken ? (
               // No token set - show input field
               <form onSubmit={handleUpdateToken} className="space-y-3">
-                {/* Token Type Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="canvasTokenType"
-                        value="instructor"
-                        checked={true}
-                        readOnly
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
-                    </div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
-                  </div>
-                </div>
+                <TokenTypeNote />
                 
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
@@ -505,24 +525,7 @@ const Settings: React.FC = () => {
             ) : isEditingToken ? (
               // Editing token - show input field
               <form onSubmit={handleUpdateToken} className="space-y-3">
-                {/* Token Type Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Token Type</label>
-                  <div className="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded p-3">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="canvasTokenType"
-                        value="instructor"
-                        checked={true}
-                        readOnly
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Instructor Token (Required)</span>
-                    </div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">This application is for instructors only</p>
-                  </div>
-                </div>
+                <TokenTypeNote />
                 
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
@@ -571,11 +574,10 @@ const Settings: React.FC = () => {
             <CanvasTokenInstructions />
           </Card>
 
-          {/* Same "does this account reach the student portal" check RequireRole
-              uses for /badges — a dual-role instructor with a student
-              enrollment (has_student_access) can share badges there, so they
-              need the opt-out control here too, not just plain students. */}
-          {(user?.role === 'student' || (user?.role === 'instructor' && !!user?.has_student_access)) && (
+          {/* Student-only setting: plain students, plus a dual-role instructor
+              (has_student_access) while they're in the student view, since
+              that's where their badges live. */}
+          {showStudentSettings && (
             <BadgeSharingSettings />
           )}
         </div>

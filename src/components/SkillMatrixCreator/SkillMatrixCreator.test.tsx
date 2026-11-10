@@ -349,16 +349,32 @@ describe('SkillMatrixCreator Component', () => {
     expect(createButton).toBeDisabled();
   });
 
-  test('handles API error for course loading', async () => {
-    mockGetInstructorCourses.mockRejectedValue(new Error('Network error'));
+  test('a Canvas outage shows the Canvas-unavailable message, not "No Courses Found"', async () => {
+    mockGetInstructorCourses.mockRejectedValue({ isAxiosError: true, response: { status: 502 } });
 
     render(<SkillMatrixCreator />);
 
-    await waitFor(() => {
-      expect(jest.mocked(toast.error)).toHaveBeenCalledWith(
-        'Failed to load courses. Please check your Canvas integration.'
-      );
-    });
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't reach Canvas to load your courses");
+    expect(screen.queryByText('No Courses Found')).not.toBeInTheDocument();
+  });
+
+  test('a non-outage course failure points to the token in Settings', async () => {
+    mockGetInstructorCourses.mockRejectedValue({ isAxiosError: true, response: { status: 400 } });
+
+    render(<SkillMatrixCreator />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check your Canvas token in Settings');
+  });
+
+  test('"Try again" reloads the courses', async () => {
+    mockGetInstructorCourses.mockRejectedValueOnce({ isAxiosError: true, response: { status: 502 } });
+
+    render(<SkillMatrixCreator />);
+    await screen.findByRole('alert');
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(await screen.findByText('Introduction to Web Development')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   test('handles API error for skill suggestions', async () => {

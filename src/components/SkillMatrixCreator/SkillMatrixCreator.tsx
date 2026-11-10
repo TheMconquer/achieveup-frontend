@@ -505,6 +505,10 @@ const SkillMatrixCreator: React.FC<SkillMatrixCreatorProps> = ({ courseId, onMat
         toast.error('Authentication failed. Please check your instructor token in Settings.');
       } else if (status === 403) {
         toast.error('Access denied. Instructor permissions required.');
+      } else if (status === 429) {
+        toast.error(
+          getApiErrorMessage(error) || 'Too many requests. Please wait a moment and try again.'
+        );
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         toast.error(

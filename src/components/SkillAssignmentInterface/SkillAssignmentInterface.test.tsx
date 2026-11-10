@@ -707,6 +707,28 @@ describe('AI analysis - real outcomes only', () => {
       expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Access denied. Instructor permissions required.');
     });
   });
+
+  test('a rate-limited AI analysis (429) shows the server\'s message', async () => {
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue(
+      { isAxiosError: true, response: { status: 429, data: { message: 'Too many requests. Please wait a moment and try again.' } } }
+    );
+
+    await setupWithOneQuestion();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Too many requests. Please wait a moment and try again.');
+    });
+  });
+
+  test('a 429 with no message body falls back to the standard rate-limit text', async () => {
+    jest.mocked(skillAssignmentAPI.analyzeQuestions).mockRejectedValue({ isAxiosError: true, response: { status: 429 } });
+
+    await setupWithOneQuestion();
+
+    await waitFor(() => {
+      expect(jest.mocked(toast.error)).toHaveBeenCalledWith('Too many requests. Please wait a moment and try again.');
+    });
+  });
 });
 
 describe('filtering, stats, and manual assignment', () => {

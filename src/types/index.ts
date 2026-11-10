@@ -131,7 +131,6 @@ export interface SkillVideo {
   thumbnail: string;
   source: 'manual' | 'ai_suggested';
   status: 'published' | 'candidate';
-  added_by: string;
   instructor_verified?: boolean;
   timestamp_seconds?: number | null;
   created_at: string;
